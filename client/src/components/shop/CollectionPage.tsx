@@ -145,7 +145,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   return (
     <div className="min-h-screen bg-cream-200 text-brown-800 pb-28 select-none font-sans">
       {/* Top Editorial Banner */}
-      <section className="relative bg-[#2E221B] text-cream-100 pt-10 pb-12 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
+      <section className="relative bg-[#2E221B] text-cream-100 pt-8 pb-10 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
         {/* Subtle Watermark */}
         <div className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-10 pointer-events-none">
           <img src="/PNG-HADAB-CREAM.png" alt="" className="w-96 h-auto" />
@@ -219,7 +219,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleUpdateFilters({ searchQuery: '' })}
-                  className="absolute right-3.5 p-1 rounded-full text-brown-400 hover:text-brown-700 hover:bg-cream-200 transition-colors"
+                  className="absolute right-3.5 p-1.5 rounded-full min-w-[32px] min-h-[32px] flex items-center justify-center text-brown-400 hover:text-brown-700 hover:bg-cream-200 transition-colors"
                   aria-label="Clear search"
                 >
                   <X size={15} />
@@ -238,7 +238,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                     handleUpdateFilters({ searchQuery: kw });
                     tactileAudio.playScrubTick(360);
                   }}
-                  className={`px-2.5 py-1 rounded-full transition-all shrink-0 ${
+                  className={`px-3 py-1.5 sm:px-2.5 sm:py-1 rounded-full transition-all shrink-0 ${
                     filters.searchQuery.toLowerCase() === kw.toLowerCase()
                       ? 'bg-blush-200 text-brown-900 font-medium'
                       : 'bg-cream-100/10 hover:bg-cream-100/20 text-cream-200'
@@ -253,7 +253,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       </section>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
         {/* NEW ENHANCED ATELIER FILTERS SYSTEM */}
         <CollectionFilters
           products={ALL_PRODUCTS}
@@ -333,7 +333,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       <button
                         type="button"
                         onClick={(e) => toggleWishlist(product.id, e)}
-                        className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-cream-100/90 hover:bg-cream-50 backdrop-blur-md border border-brown-200/60 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm z-10"
+                        className="absolute top-2.5 right-2.5 w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-cream-100/90 hover:bg-cream-50 backdrop-blur-md border border-brown-200/60 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm z-10"
                         aria-label="Wishlist"
                       >
                         <Heart
@@ -411,7 +411,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                         onAddToBag(product);
                         tactileAudio.playChime();
                       }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-[11px] uppercase tracking-[0.16em] font-semibold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-warm active:scale-[0.98] min-h-[38px]"
+                      className="w-full py-2.5 px-3 rounded-xl bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-[11px] uppercase tracking-[0.16em] font-semibold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-warm active:scale-[0.98] min-h-[44px] sm:min-h-[38px]"
                     >
                       <ShoppingBag size={13} />
                       <span>Add to Bag</span>

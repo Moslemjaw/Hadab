@@ -13,7 +13,6 @@ import { FEATURED_PRODUCTS } from './constants/mockData';
 export function App() {
   const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story'>('home');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
-  const [activeCategoryTab, setActiveCategoryTab] = useState<string>('bags');
   const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([
     { product: FEATURED_PRODUCTS[0], quantity: 1 },
   ]);
@@ -25,7 +24,9 @@ export function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#about' || hash === '#story' || hash === '#our-story') {
         setCurrentView('story');
-      } else if (hash === '#collection' || hash === '#shop' || hash === '#categories') {
+      } else if (hash === '#categories') {
+        setCurrentView('categories');
+      } else if (hash === '#collection' || hash === '#shop') {
         setCurrentView('collection');
       } else if (hash === '' || hash === '#' || hash === '#home') {
         setCurrentView('home');
@@ -62,8 +63,13 @@ export function App() {
   };
 
   const handleOpenCategories = (catId?: string) => {
-    if (catId) setActiveCategoryTab(catId);
-    handleOpenCollection(catId || 'all');
+    if (catId) {
+      handleOpenCollection(catId);
+      return;
+    }
+    setCurrentView('categories');
+    window.location.hash = 'categories';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleGoHome = () => {
@@ -118,24 +124,24 @@ export function App() {
         ) : currentView === 'collection' ? (
           /* Dedicated Full Shop / Collection Page with Search, Category Tabs, Price & Discount Filters */
           <CollectionPage
+            key={collectionCategory}
             initialCategory={collectionCategory}
             onBackToHome={handleGoHome}
             onAddToBag={handleAddToBag}
             onSelectProduct={(p) => setSelectedProduct(p)}
           />
         ) : currentView === 'categories' ? (
-          /* Dedicated 4 Categories Page */
+          /* Dedicated Categories Page */
           <CategoriesPage
-            initialCategoryId={activeCategoryTab}
             onBackToHome={handleGoHome}
-            onAddToBag={handleAddToBag}
-            onSelectProduct={(p) => setSelectedProduct(p)}
+            onSelectCategory={(catId) => handleOpenCollection(catId)}
           />
         ) : (
           /* Dedicated Our Story Page */
           <StoryPage
             onBackToHome={handleGoHome}
             onExploreCollection={() => handleOpenCollection('all')}
+            onOpenCategories={handleOpenCategories}
           />
         )}
       </main>

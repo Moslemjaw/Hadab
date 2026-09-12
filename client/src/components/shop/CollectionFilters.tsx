@@ -136,9 +136,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
   return (
     <div className="w-full space-y-4" ref={filterBarRef}>
-      {/* 1. ATELIER CATEGORY TABS (Craft Families) */}
-      <div className="relative">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+      {/* 1. ATELIER CATEGORY BUTTONS (Craft Families) */}
+      <div className="w-full">
+        <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1.5 -mx-4 px-4 sm:mx-0 sm:px-0">
           {/* "All Pieces" Tab */}
           <button
             type="button"
@@ -146,27 +146,26 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               onUpdateFilters({ selectedCategory: 'all' });
               tactileAudio.playScrubTick(300);
             }}
-            className={`group relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs uppercase tracking-[0.16em] font-medium transition-all duration-200 shrink-0 border ${
+            className={`group relative h-11 px-4 sm:px-5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300 shrink-0 flex items-center gap-2.5 border ${
               filters.selectedCategory === 'all'
                 ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-warm'
-                : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80'
+                : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80 shadow-warm-sm'
             }`}
           >
-            <div className="flex flex-col items-start leading-none">
-              <span>All Pieces</span>
-              <span
-                className={`font-arabic text-[10px] mt-0.5 normal-case ${
-                  filters.selectedCategory === 'all' ? 'text-cream-300' : 'text-brown-400'
-                }`}
-              >
-                المجموعة الكاملة
-              </span>
-            </div>
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${
+              filters.selectedCategory === 'all' ? 'bg-blush-200' : 'bg-brown-400 group-hover:bg-brown-600'
+            }`} />
+            <span>All Pieces</span>
+            <span className={`font-arabic text-[11px] font-normal normal-case transition-opacity ${
+              filters.selectedCategory === 'all' ? 'text-cream-200/80' : 'text-brown-500'
+            }`}>
+              (المجموعة)
+            </span>
             <span
-              className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-semibold transition-colors ${
+              className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-bold transition-colors ${
                 filters.selectedCategory === 'all'
                   ? 'bg-cream-100/20 text-cream-100'
-                  : 'bg-brown-200/60 text-brown-700'
+                  : 'bg-cream-200/90 text-brown-600'
               }`}
             >
               {products.length}
@@ -186,27 +185,26 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   onUpdateFilters({ selectedCategory: cat.id });
                   tactileAudio.playScrubTick(320);
                 }}
-                className={`group relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs uppercase tracking-[0.16em] font-medium transition-all duration-200 shrink-0 border ${
+                className={`group relative h-11 px-4 sm:px-5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300 shrink-0 flex items-center gap-2.5 border ${
                   isActive
                     ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-warm'
-                    : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80'
+                    : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80 shadow-warm-sm'
                 }`}
               >
-                <div className="flex flex-col items-start leading-none">
-                  <span>{cat.name}</span>
-                  <span
-                    className={`font-arabic text-[10px] mt-0.5 normal-case ${
-                      isActive ? 'text-cream-300' : 'text-brown-400'
-                    }`}
-                  >
-                    {cat.nameArabic}
-                  </span>
-                </div>
+                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  isActive ? 'bg-blush-200' : 'bg-brown-400 group-hover:bg-brown-600'
+                }`} />
+                <span>{cat.name}</span>
+                <span className={`font-arabic text-[11px] font-normal normal-case transition-opacity ${
+                  isActive ? 'text-cream-200/80' : 'text-brown-500'
+                }`}>
+                  ({cat.nameArabic})
+                </span>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-semibold transition-colors ${
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-bold transition-colors ${
                     isActive
                       ? 'bg-cream-100/20 text-cream-100'
-                      : 'bg-brown-200/60 text-brown-700'
+                      : 'bg-cream-200/90 text-brown-600'
                   }`}
                 >
                   {count}
@@ -218,10 +216,15 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
       </div>
 
       {/* 2. ELEVATED ATELIER REFINEMENT TOOLBAR */}
-      <div className="relative z-30 bg-cream-100/95 backdrop-blur-md rounded-2xl border border-brown-300/60 shadow-warm-sm p-2 sm:p-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
+      <div className="relative z-30 pt-2 pb-1 border-y border-brown-200/80">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           {/* LEFT GROUP: REFINEMENT PILLS & POPOVERS */}
           <div className="flex items-center flex-wrap gap-2">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold text-brown-500 mr-1">
+              <SlidersHorizontal size={13} className="text-brown-400" />
+              <span>Filter:</span>
+            </span>
+
             {/* Archive & Sale Toggle */}
             <button
               type="button"
@@ -229,14 +232,14 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 onUpdateFilters({ onlySale: !filters.onlySale });
                 tactileAudio.playScrubTick(380);
               }}
-              className={`h-9 px-3.5 rounded-xl text-xs font-medium flex items-center gap-2 border transition-all duration-200 ${
+              className={`h-9 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2 border transition-all duration-200 ${
                 filters.onlySale
                   ? 'bg-burgundy-600 border-burgundy-700 text-cream-100 shadow-sm'
-                  : 'bg-cream-50 hover:bg-cream-100 border-brown-300/70 text-brown-800 hover:border-burgundy-400'
+                  : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-burgundy-300'
               }`}
             >
-              <Percent size={13} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
-              <span className="tracking-wide">Archive & Sale</span>
+              <Percent size={12} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
+              <span>Archive & Sale</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                   filters.onlySale
@@ -253,13 +256,13 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               <button
                 type="button"
                 onClick={() => togglePopover('price')}
-                className={`h-9 px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
+                className={`h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
                   activePopover === 'price' || filters.priceBracket !== 'all' || filters.maxPrice < maxDatasetPrice
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
-                    : 'bg-cream-50 hover:bg-cream-100 border-brown-300/70 text-brown-800 hover:border-brown-500'
+                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm font-semibold'
+                    : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-brown-400'
                 }`}
               >
-                <DollarSign size={13} className={activePopover === 'price' || filters.priceBracket !== 'all' || filters.maxPrice < maxDatasetPrice ? 'text-cream-300' : 'text-brown-600'} />
+                <DollarSign size={13} className={activePopover === 'price' || filters.priceBracket !== 'all' || filters.maxPrice < maxDatasetPrice ? 'text-cream-300' : 'text-brown-500'} />
                 <span>
                   {filters.priceBracket !== 'all'
                     ? filters.priceBracket === 'under-75'
@@ -279,7 +282,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
               {/* Price Popover Panel */}
               {activePopover === 'price' && (
-                <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-cream-50 rounded-2xl border border-brown-300 shadow-warm-lg p-4 z-40 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute top-full left-0 sm:left-0 -left-4 mt-2.5 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-4 z-40 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between pb-3 border-b border-brown-200/60">
                     <div className="flex items-center gap-1.5">
                       <DollarSign size={14} className="text-brown-700" />
@@ -354,7 +357,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     <button
                       type="button"
                       onClick={() => setActivePopover(null)}
-                      className="px-3.5 py-1.5 rounded-lg bg-brown-900 text-cream-100 font-medium hover:bg-burgundy-600 transition-colors"
+                      className="px-4 py-1.5 rounded-full bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider hover:bg-burgundy-600 transition-colors"
                     >
                       Apply
                     </button>
@@ -368,13 +371,13 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               <button
                 type="button"
                 onClick={() => togglePopover('material')}
-                className={`h-9 px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
+                className={`h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
                   activePopover === 'material' || filters.selectedMaterial !== 'all'
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
-                    : 'bg-cream-50 hover:bg-cream-100 border-brown-300/70 text-brown-800 hover:border-brown-500'
+                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm font-semibold'
+                    : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-brown-400'
                 }`}
               >
-                <Layers size={13} className={activePopover === 'material' || filters.selectedMaterial !== 'all' ? 'text-cream-300' : 'text-brown-600'} />
+                <Layers size={13} className={activePopover === 'material' || filters.selectedMaterial !== 'all' ? 'text-cream-300' : 'text-brown-500'} />
                 <span>
                   {filters.selectedMaterial !== 'all'
                     ? FIBER_OPTIONS.find((f) => f.id === filters.selectedMaterial)?.label.split(' ')[0] || 'Material'
@@ -388,7 +391,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
               {/* Material Popover Panel */}
               {activePopover === 'material' && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-cream-50 rounded-2xl border border-brown-300 shadow-warm-lg p-3 z-40 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute top-full -left-16 sm:left-0 mt-2.5 w-[calc(100vw-2rem)] sm:w-72 max-w-sm bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-3 z-40 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center gap-1.5 pb-2.5 mb-1.5 border-b border-brown-200/60">
                     <Layers size={14} className="text-brown-700" />
                     <span className="font-serif text-sm font-semibold text-brown-900">Craft Fiber & Yarn</span>
@@ -440,13 +443,13 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               <button
                 type="button"
                 onClick={() => togglePopover('color')}
-                className={`h-9 px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
+                className={`h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
                   activePopover === 'color' || filters.selectedColor !== 'all'
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
-                    : 'bg-cream-50 hover:bg-cream-100 border-brown-300/70 text-brown-800 hover:border-brown-500'
+                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm font-semibold'
+                    : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-brown-400'
                 }`}
               >
-                <Palette size={13} className={activePopover === 'color' || filters.selectedColor !== 'all' ? 'text-cream-300' : 'text-brown-600'} />
+                <Palette size={13} className={activePopover === 'color' || filters.selectedColor !== 'all' ? 'text-cream-300' : 'text-brown-500'} />
                 {filters.selectedColor !== 'all' ? (
                   <span className="flex items-center gap-1.5">
                     <span
@@ -469,7 +472,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
               {/* Color Popover Panel */}
               {activePopover === 'color' && (
-                <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-cream-50 rounded-2xl border border-brown-300 shadow-warm-lg p-3.5 z-40 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute top-full -left-28 sm:left-0 mt-2.5 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-3.5 z-40 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-brown-200/60">
                     <div className="flex items-center gap-1.5">
                       <Palette size={14} className="text-brown-700" />
@@ -542,10 +545,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 setIsMobileDrawerOpen(true);
                 tactileAudio.playScrubTick(300);
               }}
-              className="lg:hidden h-9 px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 bg-cream-50 hover:bg-cream-100 border border-brown-300/70 text-brown-800"
+              className="lg:hidden h-9 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5 bg-cream-100/80 hover:bg-cream-100 border border-brown-200/80 text-brown-800"
             >
               <SlidersHorizontal size={13} />
-              <span>Filter Sheet</span>
+              <span>Filters</span>
               {activeFiltersCount > 0 && (
                 <span className="w-4 h-4 rounded-full bg-burgundy-600 text-cream-100 text-[9px] flex items-center justify-center font-bold">
                   {activeFiltersCount}
@@ -555,20 +558,20 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
           </div>
 
           {/* RIGHT GROUP: RESULTS COUNT, SORT & GRID TOGGLE */}
-          <div className="flex items-center justify-between w-full lg:w-auto gap-3 pt-1 lg:pt-0">
+          <div className="flex items-center justify-between w-full lg:w-auto gap-4 pt-1 lg:pt-0">
             {/* Live Count */}
             <span className="text-xs text-brown-600 font-light whitespace-nowrap">
-              Showing <strong className="text-brown-900 font-semibold">{filteredCount}</strong> of{' '}
+              Showing <strong className="text-brown-900 font-semibold font-serif text-sm">{filteredCount}</strong> of{' '}
               {products.length} works
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {/* Custom Luxury Sort Dropdown */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => togglePopover('sort')}
-                  className="h-9 px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 bg-cream-50 hover:bg-cream-100 border border-brown-300/70 text-brown-800 hover:border-brown-500 transition-colors"
+                  className="h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-cream-100/80 hover:bg-cream-100 border border-brown-200/80 text-brown-800 hover:border-brown-400 transition-colors"
                 >
                   <ArrowUpDown size={12} className="text-brown-500" />
                   <span className="hidden sm:inline text-brown-400 font-normal">Sort:</span>
@@ -580,7 +583,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 </button>
 
                 {activePopover === 'sort' && (
-                  <div className="absolute top-full right-0 mt-2 w-52 bg-cream-50 rounded-2xl border border-brown-300 shadow-warm-lg p-2 z-40 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute top-full right-0 mt-2.5 w-52 bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-2 z-40 animate-in fade-in zoom-in-95 duration-150">
                     {(Object.keys(sortLabels) as SortOption[]).map((opt) => {
                       const isSelected = filters.sortBy === opt;
                       return (
@@ -608,7 +611,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               </div>
 
               {/* Grid Column Switcher (Editorial 3-col vs Compact 4-col) */}
-              <div className="hidden sm:flex items-center bg-cream-50 p-1 rounded-xl border border-brown-300/70">
+              <div className="hidden sm:flex items-center bg-cream-100/80 p-0.5 rounded-full border border-brown-200/80">
                 <button
                   type="button"
                   title="Editorial 3-column view"
@@ -616,7 +619,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     onUpdateFilters({ gridCols: 3 });
                     tactileAudio.playScrubTick(320);
                   }}
-                  className={`p-1.5 rounded-lg transition-colors ${
+                  className={`p-1.5 rounded-full transition-colors ${
                     filters.gridCols === 3
                       ? 'bg-brown-900 text-cream-100 shadow-sm'
                       : 'text-brown-500 hover:text-brown-900'
@@ -631,7 +634,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     onUpdateFilters({ gridCols: 4 });
                     tactileAudio.playScrubTick(320);
                   }}
-                  className={`p-1.5 rounded-lg transition-colors ${
+                  className={`p-1.5 rounded-full transition-colors ${
                     filters.gridCols === 4
                       ? 'bg-brown-900 text-cream-100 shadow-sm'
                       : 'text-brown-500 hover:text-brown-900'
@@ -647,13 +650,13 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
       {/* 3. ACTIVE FILTERS CHIP STRIP */}
       {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 animate-in fade-in duration-200">
-          <span className="text-[11px] text-brown-400 font-medium uppercase tracking-wider mr-1">
-            Active Filters:
+        <div className="flex flex-wrap items-center gap-2 pt-2 animate-in fade-in duration-200">
+          <span className="text-[11px] text-brown-400 font-medium uppercase tracking-wider mr-0.5">
+            Active:
           </span>
 
           {filters.searchQuery && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-brown-800 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>Search: "{filters.searchQuery}"</span>
               <button
                 type="button"
@@ -662,16 +665,16 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ searchQuery: '' });
                 }}
-                className="p-0.5 rounded-full hover:bg-brown-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-brown-200 text-brown-500 hover:text-brown-800 transition-colors"
                 aria-label="Remove search filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
 
           {filters.selectedCategory !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-brown-800 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>Category: {CATEGORIES.find((c) => c.id === filters.selectedCategory)?.name}</span>
               <button
                 type="button"
@@ -680,16 +683,16 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ selectedCategory: 'all' });
                 }}
-                className="p-0.5 rounded-full hover:bg-brown-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-brown-200 text-brown-500 hover:text-brown-800 transition-colors"
                 aria-label="Remove category filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
 
           {filters.onlySale && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-burgundy-600 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-burgundy-50 border border-burgundy-200 text-burgundy-600 text-xs shadow-warm-sm font-medium">
               <span>Archive & Sale</span>
               <button
                 type="button"
@@ -698,16 +701,16 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ onlySale: false });
                 }}
-                className="p-0.5 rounded-full hover:bg-burgundy-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-burgundy-100 text-burgundy-500 hover:text-burgundy-700 transition-colors"
                 aria-label="Remove sale filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
 
           {filters.priceBracket !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-brown-800 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>
                 Price: {filters.priceBracket === 'under-75' ? '< $75' : filters.priceBracket === '75-120' ? '$75–$120' : '$120+'}
               </span>
@@ -718,16 +721,16 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ priceBracket: 'all' });
                 }}
-                className="p-0.5 rounded-full hover:bg-brown-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-brown-200 text-brown-500 hover:text-brown-800 transition-colors"
                 aria-label="Remove price bracket filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
 
           {filters.maxPrice < maxDatasetPrice && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-brown-800 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>Max: ${filters.maxPrice}</span>
               <button
                 type="button"
@@ -736,16 +739,16 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ maxPrice: maxDatasetPrice });
                 }}
-                className="p-0.5 rounded-full hover:bg-brown-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-brown-200 text-brown-500 hover:text-brown-800 transition-colors"
                 aria-label="Reset max price filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
 
           {filters.selectedMaterial !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-brown-800 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>Fiber: {FIBER_OPTIONS.find((f) => f.id === filters.selectedMaterial)?.label}</span>
               <button
                 type="button"
@@ -754,18 +757,18 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ selectedMaterial: 'all' });
                 }}
-                className="p-0.5 rounded-full hover:bg-brown-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-brown-200 text-brown-500 hover:text-brown-800 transition-colors"
                 aria-label="Remove material filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
 
           {filters.selectedColor !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-brown-800 text-cream-100 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span
-                className="w-2 h-2 rounded-full border border-white/20"
+                className="w-2 h-2 rounded-full border border-black/15"
                 style={{
                   backgroundColor:
                     distinctColors.find((c) => c.name === filters.selectedColor)?.hex || '#4A382F',
@@ -779,10 +782,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   e.stopPropagation();
                   onUpdateFilters({ selectedColor: 'all' });
                 }}
-                className="p-0.5 rounded-full hover:bg-brown-700 transition-colors"
+                className="p-0.5 rounded-full hover:bg-brown-200 text-brown-500 hover:text-brown-800 transition-colors"
                 aria-label="Remove color filter"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </span>
           )}
@@ -795,10 +798,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               e.stopPropagation();
               onResetFilters();
             }}
-            className="inline-flex items-center gap-1 text-[11px] text-burgundy-600 hover:text-burgundy-800 underline underline-offset-2 ml-2 font-medium cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs text-burgundy-600 hover:text-burgundy-800 underline underline-offset-2 ml-2 font-medium cursor-pointer"
           >
-            <RotateCcw size={11} />
-            <span>Clear all filters</span>
+            <RotateCcw size={12} />
+            <span>Reset All</span>
           </button>
         </div>
       )}
@@ -950,7 +953,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                         onUpdateFilters({ selectedMaterial: f.id });
                         tactileAudio.playScrubTick(320);
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center justify-between ${
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between ${
                         filters.selectedMaterial === f.id
                           ? 'bg-brown-900 text-cream-100 font-medium'
                           : 'text-brown-700 hover:bg-cream-200/60'
@@ -1024,11 +1027,11 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             </div>
 
             {/* Bottom Actions */}
-            <div className="pt-5 border-t border-brown-200 flex gap-2">
+            <div className="pt-5 pb-[env(safe-area-inset-bottom)] border-t border-brown-200 flex gap-2">
               <button
                 type="button"
                 onClick={onResetFilters}
-                className="w-1/3 py-2.5 rounded-xl border border-brown-300 text-brown-800 text-xs font-medium"
+                className="w-1/3 py-3 rounded-xl border border-brown-300 text-brown-800 text-xs font-medium"
               >
                 Reset
               </button>
@@ -1038,7 +1041,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   setIsMobileDrawerOpen(false);
                   tactileAudio.playChime();
                 }}
-                className="w-2/3 py-2.5 rounded-xl bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider shadow-warm"
+                className="w-2/3 py-3 rounded-xl bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider shadow-warm"
               >
                 Show {filteredCount} Works
               </button>
