@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background-color: #F2E8DD;
+  color: #4A382F;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+}
+
+/* Enhanced heading typography */
+h1, h2, h3, h4 {
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+h3 {
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+
+/* Improved paragraph readability */
+p {
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  max-width: 65ch;
+}
+
+/* Small / detail text */
+small, .text-xs, .text-\[10px\], .text-\[11px\] {
+  letter-spacing: 0.02em;
+}
+
+/* Custom scrollbar matching HADAB cream and brown tone */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F2E8DD;
+}
+::-webkit-scrollbar-thumb {
+  background: #D5C7BD;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B09C8F;
+}
+
+/* Subtle fabric/linen background grain effect */
+.texture-subtle {
+  background-image: radial-gradient(rgba(74, 56, 47, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Thread dash line animation */
+@keyframes threadDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-thread {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: threadDraw 2.5s ease-out forwards;
+}
+
+/* Gentle float animation */
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+.animate-float {
+  animation: gentleFloat 6s ease-in-out infinite;
+}
+
+/* Luxurious continuous breathing typography animations */
+@keyframes breatheLeft {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-5px) translateX(-3px);
+  }
+}
+
+@keyframes breatheRight {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-5px) translateX(3px);
+  }
+}
+
+.animate-breathe-left {
+  animation: breatheLeft 5s ease-in-out infinite;
+}
+
+.animate-breathe-right {
+  animation: breatheRight 5s ease-in-out infinite 0.6s;
+}
+
+/* Elegant card slide transition */
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(28px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-slide-swap {
+  animation: slideInFromRight 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Safe area insets utilities for mobile / iOS / Android notches */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Hide scrollbar for clean touch horizontal scroll experiences */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Dynamic Viewport Height for mobile address bars */
+.h-dvh {
+  height: 100vh;
+  height: 100dvh;
+}
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+
