@@ -55,6 +55,14 @@ const FIBER_OPTIONS = [
   { id: 'trapillo', label: 'Trapillo Cord', match: 'trapillo' },
 ];
 
+const SHORT_CATEGORY_NAMES: Record<string, string> = {
+  all: 'All',
+  bags: 'Bags',
+  headwear: 'Headwear',
+  wearables: 'Wearables',
+  accessories: 'Accessories',
+};
+
 export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   products,
   filteredCount,
@@ -141,34 +149,26 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
     <div className="w-full space-y-4" ref={filterBarRef}>
       {/* 1. ATELIER CATEGORY BUTTONS (Craft Families) */}
       <div className="w-full">
-        <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
-          {/* "All Pieces" Tab */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
+          {/* "All" Tab */}
           <button
             type="button"
             onClick={() => {
               onUpdateFilters({ selectedCategory: 'all' });
               tactileAudio.playScrubTick(300);
             }}
-            className={`group relative h-9 sm:h-11 px-3 sm:px-5 rounded-full text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-all duration-300 shrink-0 flex items-center gap-2 border ${
+            className={`group relative h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs font-medium tracking-wide transition-all duration-200 shrink-0 flex items-center gap-1.5 border ${
               filters.selectedCategory === 'all'
-                ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-warm'
-                : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80 shadow-warm-sm'
+                ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
+                : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80'
             }`}
           >
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${
-              filters.selectedCategory === 'all' ? 'bg-blush-200' : 'bg-brown-400 group-hover:bg-brown-600'
-            }`} />
-            <span>All Pieces</span>
-            <span className={`font-arabic text-[10px] sm:text-[11px] font-normal normal-case transition-opacity ${
-              filters.selectedCategory === 'all' ? 'text-cream-200/80' : 'text-brown-500'
-            }`}>
-              (المجموعة)
-            </span>
+            <span>All</span>
             <span
-              className={`text-[9.5px] sm:text-[10px] px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full font-sans font-bold transition-colors ${
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                 filters.selectedCategory === 'all'
                   ? 'bg-cream-100/20 text-cream-100'
-                  : 'bg-cream-200/90 text-brown-600'
+                  : 'bg-cream-200 text-brown-600'
               }`}
             >
               {products.length}
@@ -179,6 +179,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
           {CATEGORIES.map((cat) => {
             const isActive = filters.selectedCategory === cat.id;
             const count = products.filter((p) => p.category === cat.id).length;
+            const shortName = SHORT_CATEGORY_NAMES[cat.id] || cat.name;
 
             return (
               <button
@@ -188,26 +189,22 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   onUpdateFilters({ selectedCategory: cat.id });
                   tactileAudio.playScrubTick(320);
                 }}
-                className={`group relative h-9 sm:h-11 px-3 sm:px-5 rounded-full text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-all duration-300 shrink-0 flex items-center gap-2 border ${
+                className={`group relative h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs font-medium tracking-wide transition-all duration-200 shrink-0 flex items-center gap-1.5 border ${
                   isActive
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-warm'
-                    : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80 shadow-warm-sm'
+                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
+                    : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  isActive ? 'bg-blush-200' : 'bg-brown-400 group-hover:bg-brown-600'
-                }`} />
-                <span>{cat.name}</span>
-                <span className={`font-arabic text-[10px] sm:text-[11px] font-normal normal-case transition-opacity ${
-                  isActive ? 'text-cream-200/80' : 'text-brown-500'
-                }`}>
+                <span className="sm:hidden">{shortName}</span>
+                <span className="hidden sm:inline">{cat.name}</span>
+                <span className="hidden sm:inline font-arabic text-[10.5px] opacity-75">
                   ({cat.nameArabic})
                 </span>
                 <span
-                  className={`text-[9.5px] sm:text-[10px] px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full font-sans font-bold transition-colors ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                     isActive
                       ? 'bg-cream-100/20 text-cream-100'
-                      : 'bg-cream-200/90 text-brown-600'
+                      : 'bg-cream-200 text-brown-600'
                   }`}
                 >
                   {count}
@@ -219,26 +216,26 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
       </div>
 
       {/* 2. ELEVATED ATELIER REFINEMENT TOOLBAR */}
-      {/* 2A. DEDICATED MOBILE TOOLBAR (Single-row, zero awkward wrapping, 2-col toggle) */}
-      <div className="md:hidden pt-2 pb-2 border-y border-brown-200/80 space-y-2">
+      {/* 2A. DEDICATED COMPACT MOBILE TOOLBAR */}
+      <div className="md:hidden pt-1.5 pb-1.5 border-y border-brown-200/80 space-y-1.5">
         <div className="flex items-center gap-1.5 justify-between">
-          {/* Main Mobile Filters Drawer Button */}
+          {/* Filters Drawer Button */}
           <button
             type="button"
             onClick={() => {
               setIsMobileDrawerOpen(true);
               tactileAudio.playScrubTick(300);
             }}
-            className={`flex-1 h-9 px-3 rounded-full text-xs font-semibold tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+            className={`flex-1 h-8 px-2.5 rounded-full text-[11px] font-semibold tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 ${
               activeFiltersCount > 0
                 ? 'bg-burgundy-600 text-cream-100'
                 : 'bg-brown-900 text-cream-100 shadow-warm-sm'
             }`}
           >
-            <SlidersHorizontal size={13} />
+            <SlidersHorizontal size={12} />
             <span>Filters</span>
             {activeFiltersCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-cream-100 text-burgundy-600 text-[9.5px] flex items-center justify-center font-bold">
+              <span className="w-3.5 h-3.5 rounded-full bg-cream-100 text-burgundy-600 text-[9px] flex items-center justify-center font-bold">
                 {activeFiltersCount}
               </span>
             )}
@@ -251,16 +248,16 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               onUpdateFilters({ onlySale: !filters.onlySale });
               tactileAudio.playScrubTick(380);
             }}
-            className={`h-9 px-3 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5 border transition-all ${
+            className={`h-8 px-2.5 rounded-full text-[11px] font-semibold tracking-wide flex items-center gap-1 border transition-all ${
               filters.onlySale
                 ? 'bg-burgundy-600 border-burgundy-700 text-cream-100 shadow-sm'
                 : 'bg-cream-100/90 border-brown-200/80 text-brown-800'
             }`}
           >
-            <Percent size={11} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
+            <Percent size={10} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
             <span>Sale</span>
             <span
-              className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ${
+              className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
                 filters.onlySale ? 'bg-cream-100/20 text-cream-100' : 'bg-burgundy-100 text-burgundy-700'
               }`}
             >
@@ -273,9 +270,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             <button
               type="button"
               onClick={() => togglePopover('sort-mobile')}
-              className="h-9 px-2.5 rounded-full text-xs font-medium flex items-center gap-1 bg-cream-100/90 border border-brown-200/80 text-brown-800"
+              className="h-8 px-2 rounded-full text-[11px] font-medium flex items-center gap-1 bg-cream-100/90 border border-brown-200/80 text-brown-800"
             >
-              <ArrowUpDown size={11} className="text-brown-500" />
+              <ArrowUpDown size={10} className="text-brown-500" />
               <span className="text-[11px] font-semibold truncate max-w-[65px]">
                 {filters.sortBy === 'featured'
                   ? 'Featured'
@@ -285,7 +282,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   ? 'High-Low'
                   : 'A-Z'}
               </span>
-              <ChevronDown size={11} className={`transition-transform duration-150 ${activePopover === 'sort-mobile' ? 'rotate-180' : ''}`} />
+              <ChevronDown size={10} className={`transition-transform duration-150 ${activePopover === 'sort-mobile' ? 'rotate-180' : ''}`} />
             </button>
 
             {activePopover === 'sort-mobile' && (
@@ -328,7 +325,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   : 'text-brown-500 hover:text-brown-900'
               }`}
             >
-              <Grid2X2 size={13} />
+              <Grid2X2 size={12} />
             </button>
             <button
               type="button"
@@ -343,16 +340,15 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   : 'text-brown-500 hover:text-brown-900'
               }`}
             >
-              <Square size={13} />
+              <Square size={12} />
             </button>
           </div>
         </div>
 
         {/* Mobile Sub-Row: Count & Reset */}
-        <div className="flex items-center justify-between text-[11px] text-brown-600 font-light px-1">
+        <div className="flex items-center justify-between text-[10.5px] text-brown-600 font-light px-1">
           <span>
-            Showing <strong className="font-serif font-semibold text-brown-900">{filteredCount}</strong> of{' '}
-            {products.length} pieces
+            Showing <strong className="font-serif font-semibold text-brown-900">{filteredCount}</strong> pieces
           </span>
           {activeFiltersCount > 0 && (
             <button

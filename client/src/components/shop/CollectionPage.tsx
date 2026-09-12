@@ -166,10 +166,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   return (
     <div className="min-h-screen bg-cream-200 text-brown-800 pb-28 select-none font-sans">
       {/* Top Editorial Banner */}
-      <section className="relative bg-[#2E221B] text-cream-100 pt-6 pb-7 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
+      <section className="relative bg-[#2E221B] text-cream-100 pt-3.5 pb-4 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
         {/* Subtle Watermark */}
         <div className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-10 pointer-events-none">
-          <img src="/PNG-HADAB-CREAM.png" alt="" className="w-72 sm:w-96 h-auto" />
+          <img src="/PNG-HADAB-CREAM.png" alt="" className="w-64 sm:w-96 h-auto" />
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
@@ -177,35 +177,30 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
           <button
             type="button"
             onClick={onBackToHome}
-            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-cream-300 hover:text-blush-200 transition-colors mb-3 sm:mb-6 group"
+            className="inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] text-cream-300 hover:text-blush-200 transition-colors mb-1.5 sm:mb-6 group"
           >
-            <ArrowLeft size={13} className="group-hover:-translate-x-1 transition-transform" />
-            <span>Return to Atelier Experience</span>
+            <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="hidden sm:inline">Return to Atelier Experience</span>
+            <span className="sm:hidden inline">Atelier</span>
           </button>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream-100/10 border border-cream-200/20 text-[9.5px] sm:text-[10px] uppercase font-semibold tracking-[0.26em] text-blush-200 mb-2 sm:mb-3">
+              <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream-100/10 border border-cream-200/20 text-[10px] uppercase font-semibold tracking-[0.26em] text-blush-200 mb-3">
                 <Sparkles size={11} className="text-blush-300" />
                 <span>The Permanent Archive • Jordan & Kuwait</span>
               </div>
-              <h1 className="font-serif text-2xl xs:text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-cream-100 leading-tight">
-                The Complete Collection
-              </h1>
-              <p className="font-arabic text-base sm:text-2xl text-cream-300/80 font-normal mt-0.5 sm:mt-1">
-                المجموعة الكاملة — مشغولة غرزة تلو الأخرى
-              </p>
-              <p className="mt-2 text-cream-300/80 text-xs sm:text-sm font-light max-w-xl leading-relaxed line-clamp-2 sm:line-clamp-none">
+              <div className="flex items-baseline gap-2.5">
+                <h1 className="font-serif text-2xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-cream-100 leading-tight">
+                  The Collection
+                </h1>
+                <span className="font-arabic text-base sm:text-2xl text-cream-300/80 font-normal">
+                  المجموعة
+                </span>
+              </div>
+              <p className="hidden sm:block mt-2 text-cream-300/80 text-xs sm:text-sm font-light max-w-xl leading-relaxed">
                 Hand-hooked in numbered studio batches with unbleached 5mm cotton cord, organic linen, and raw plant dyes.
               </p>
-
-              {/* Mobile Inline Stats */}
-              <div className="sm:hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream-100/10 border border-cream-200/15 text-[11px] text-cream-200 font-light mt-2.5">
-                <Sparkles size={11} className="text-blush-300" />
-                <span>{filteredProducts.length} pieces available</span>
-                <span className="text-cream-400">•</span>
-                <span>4 craft families</span>
-              </div>
             </div>
 
             {/* Desktop Quick Stats Card */}
@@ -377,7 +372,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             )}
 
             {/* Keyword Quick Chips below Search */}
-            <div className="flex items-center gap-1.5 sm:gap-2 mt-2.5 overflow-x-auto no-scrollbar py-1 text-[10.5px]">
+            <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 mt-2.5 overflow-x-auto no-scrollbar py-1 text-[10.5px]">
               <span className="text-cream-300/60 shrink-0 font-light text-[10px] sm:text-xs">Quick search:</span>
               {popularKeywords.map((kw) => (
                 <button
@@ -402,7 +397,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       </section>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-8">
         {/* NEW ENHANCED ATELIER FILTERS SYSTEM */}
         <CollectionFilters
           products={ALL_PRODUCTS}
