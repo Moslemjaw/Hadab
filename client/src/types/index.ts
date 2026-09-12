@@ -8,10 +8,15 @@ export interface Product {
   image: string;
   textureImage: string;
   tag?: string;
+  tagArabic?: string;
   description: string;
+  descriptionArabic?: string;
   stitchDetail: string;
+  stitchDetailArabic?: string;
   yarnType: string;
+  yarnTypeArabic?: string;
   colorName: string;
+  colorNameArabic?: string;
   colorHex: string;
   isFeatured?: boolean;
   isSale?: boolean;
@@ -22,6 +27,7 @@ export interface Category {
   name: string;
   nameArabic: string;
   description: string;
+  descriptionArabic?: string;
   count: number;
   image: string;
   accentBg: string;
@@ -31,8 +37,12 @@ export interface Category {
 export interface Testimonial {
   id: string;
   quote: string;
+  quoteArabic?: string;
   author: string;
+  authorArabic?: string;
   location: string;
+  locationArabic?: string;
   pieceName: string;
+  pieceNameArabic?: string;
   image: string;
 }

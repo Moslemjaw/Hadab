@@ -3,6 +3,7 @@ import { FEATURED_PRODUCTS, SALE_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { Eye, ShoppingBag, Sparkles } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ProductGridProps {
   onAddToBag: (product: Product) => void;
@@ -13,6 +14,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onAddToBag,
   onSelectProduct,
 }) => {
+  const { language, t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeTextureId, setActiveTextureId] = useState<string | null>(null);
 
@@ -23,32 +25,35 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     return item.category === selectedCategory;
   });
 
+  const categoryTabs = [
+    { id: 'all', label: language === 'ar' ? 'جميع القطع' : 'All Pieces' },
+    { id: 'bags', label: language === 'ar' ? 'الحقائب والتوت' : 'Bags & Totes' },
+    { id: 'clothing', label: language === 'ar' ? 'الملابس المحبوكة' : 'Wearables' },
+    { id: 'headwear', label: language === 'ar' ? 'أغطية الرأس' : 'Hats & Headwear' },
+    { id: 'pouches', label: language === 'ar' ? 'الإكسسوارات' : 'Accessories' },
+  ];
+
   return (
     <section id="catalog" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col items-center text-center mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream-100 border border-brown-200 text-xs font-semibold uppercase tracking-widest text-brown-600 mb-4">
           <Sparkles size={12} className="text-burgundy-500" />
-          <span>The Complete Studio Work</span>
+          <span>{language === 'ar' ? 'أعمال الاستوديو الكاملة' : 'The Complete Studio Work'}</span>
         </div>
         <h2 className="font-serif text-3xl sm:text-5xl text-brown-800 font-normal">
-          Hand-hooked collection
+          {language === 'ar' ? 'مجموعة محبوكة يدوياً' : 'Hand-hooked collection'}
         </h2>
         <p className="mt-3 text-brown-500 max-w-md font-light text-base">
-          Explore individual bags, structured totes, and everyday accessories
-          created in small numbered batches.
+          {language === 'ar'
+            ? 'استكشف الحقائب الفردية وحقائب التسوق والإكسسوارات المصنوعة بدقة يدوية عالية.'
+            : 'Explore individual bags, structured totes, and everyday accessories created in small numbered batches.'}
         </p>
       </div>
 
       {/* Filter Tabs - Smooth horizontal swipe on mobile, wrapped on desktop */}
       <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap mb-10 sm:mb-14">
-        {[
-          { id: 'all', label: 'All Pieces' },
-          { id: 'bags', label: 'Bags & Totes' },
-          { id: 'clothing', label: 'Wearables' },
-          { id: 'headwear', label: 'Hats & Headwear' },
-          { id: 'pouches', label: 'Accessories' },
-        ].map((tab) => {
+        {categoryTabs.map((tab) => {
           const isActive = selectedCategory === tab.id;
           return (
             <button
@@ -102,10 +107,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     e.stopPropagation();
                     onSelectProduct(product);
                   }}
-                  className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-brown-800/85 text-cream-100 text-[10px] font-medium backdrop-blur-md flex items-center gap-1.5 transition-all opacity-95 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-brown-900 min-h-[32px]"
+                  className={`absolute bottom-3 ${language === 'ar' ? 'left-3' : 'right-3'} px-3 py-1.5 rounded-full bg-brown-800/85 text-cream-100 text-[10px] font-medium backdrop-blur-md flex items-center gap-1.5 transition-all opacity-95 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-brown-900 min-h-[32px]`}
                 >
                   <Eye size={12} />
-                  <span>Inspect Piece</span>
+                  <span>{language === 'ar' ? 'معاينة القطعة' : 'Inspect Piece'}</span>
                 </button>
               </div>
 
@@ -117,7 +122,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       onClick={() => onSelectProduct(product)}
                       className="font-serif text-lg text-brown-800 font-medium group-hover:text-burgundy-500 transition-colors cursor-pointer"
                     >
-                      {product.name}
+                      {language === 'ar' ? (product.nameArabic || product.name) : product.name}
                     </h3>
                     <div className="flex items-center gap-1.5">
                       {product.originalPrice && (
@@ -131,23 +136,17 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     </div>
                   </div>
 
-                  {product.nameArabic && (
-                    <div className="font-arabic text-xs text-brown-400 mb-2">
-                      {product.nameArabic}
-                    </div>
-                  )}
-
                   <p className="text-xs text-brown-500 font-light leading-relaxed mb-4 line-clamp-2">
-                    {product.description}
+                    {language === 'ar' ? (product.descriptionArabic || product.description) : product.description}
                   </p>
 
                   <div className="pt-2 border-t border-brown-200/50 text-[11px] text-brown-400 space-y-1 mb-4">
                     <div className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-sage-500" />
-                      <span>{product.stitchDetail}</span>
+                      <span>{language === 'ar' ? (product.stitchDetailArabic || product.stitchDetail) : product.stitchDetail}</span>
                     </div>
                     <div className="text-brown-500 font-medium">
-                      {product.yarnType}
+                      {language === 'ar' ? (product.yarnTypeArabic || product.yarnType) : product.yarnType}
                     </div>
                   </div>
                 </div>
@@ -162,7 +161,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                   className="w-full py-2.5 px-4 rounded-xl bg-brown-700 hover:bg-burgundy-500 text-cream-100 text-xs font-medium tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-warm-sm min-h-[42px] active:scale-[0.98]"
                 >
                   <ShoppingBag size={14} />
-                  <span>Add to bag</span>
+                  <span>{t.addToBag}</span>
                 </button>
               </div>
             </div>

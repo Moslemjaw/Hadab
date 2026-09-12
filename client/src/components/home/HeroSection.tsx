@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowDown, Sparkles } from 'lucide-react';
 import { Logo } from '../common/Logo';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const HeroSection: React.FC = () => {
+  const { language } = useLanguage();
   const [stitchCount, setStitchCount] = useState(1);
   const [isPulling, setIsPulling] = useState(false);
 
@@ -35,7 +37,7 @@ export const HeroSection: React.FC = () => {
       {/* Top pill badge */}
       <div className="relative z-10 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cream-100/90 border border-brown-200 shadow-warm-sm text-xs text-brown-700 tracking-wider font-medium uppercase mb-6 animate-in fade-in slide-in-from-top-4 duration-700">
         <span className="w-2 h-2 rounded-full bg-burgundy-500 animate-pulse" />
-        <span>New Autumn Batch • Now Available</span>
+        <span>{language === 'ar' ? 'تشكيلة الخريف الجديدة • متوفرة الآن' : 'New Autumn Batch • Now Available'}</span>
       </div>
 
       {/* Centerpiece: Interactive Thread & Crochet Visual */}
@@ -125,24 +127,28 @@ export const HeroSection: React.FC = () => {
             className="absolute bottom-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cream-100 hover:bg-blush-100 text-brown-700 text-xs font-medium border border-brown-200 transition-colors shadow-warm-sm"
           >
             <Sparkles size={12} className="text-burgundy-500" />
-            <span>Pull loop ({stitchCount} {stitchCount === 1 ? 'stitch' : 'stitches'})</span>
+            <span>
+              {language === 'ar'
+                ? `سحب الغرزة (${stitchCount} ${stitchCount === 1 ? 'غرزة' : 'غرز'})`
+                : `Pull loop (${stitchCount} ${stitchCount === 1 ? 'stitch' : 'stitches'})`}
+            </span>
           </button>
         </div>
 
         {/* Brand Logo & Wordmark Reveal */}
         <div className="mb-4">
-          <Logo size="hero" showArabic={true} />
+          <Logo size="hero" />
         </div>
 
         {/* Tagline per Brand Skill & Experience Plan */}
         <p className="font-serif italic text-xl sm:text-2xl md:text-3xl text-brown-700 max-w-2xl font-normal leading-relaxed mb-4">
-          &ldquo;a word inspired by the little details.&rdquo;
+          {language === 'ar' ? '«اسم مستوحى من أدق التفاصيل.»' : '“a word inspired by the little details.”'}
         </p>
 
         <p className="text-base sm:text-lg text-brown-500 max-w-xl mx-auto font-light leading-relaxed mb-8">
-          Handmade crochet bags, wearables, and accessories. Rooted in the Arabic
-          concept of <span className="font-arabic font-semibold text-brown-700">هَدَب</span> — the delicate fringe
-          at the edge of a piece that gives it character.
+          {language === 'ar'
+            ? 'حقائب وإكسسوارات كروشيه مصنوعة يدوياً بحب وعناية فائقة، مستوحاة من مفهوم الهَدَب الذي يمنح القطعة شخصيتها واكتمالها.'
+            : 'Handmade crochet bags, wearables, and accessories. Hand-hooked in small numbered runs, celebrating quiet craft and enduring texture.'}
         </p>
 
         {/* Action CTAs */}
@@ -151,13 +157,13 @@ export const HeroSection: React.FC = () => {
             href="#featured"
             className="w-full sm:w-auto px-8 py-3.5 bg-burgundy-500 hover:bg-burgundy-600 text-cream-100 text-sm font-medium tracking-wide rounded-full shadow-warm transition-all duration-200 transform hover:-translate-y-0.5 text-center"
           >
-            Explore The Pieces
+            {language === 'ar' ? 'استكشف القطع' : 'Explore The Pieces'}
           </a>
           <a
             href="#craft"
             className="w-full sm:w-auto px-8 py-3.5 bg-cream-100 hover:bg-cream-50 text-brown-700 border border-brown-300 text-sm font-medium tracking-wide rounded-full transition-all duration-200 text-center"
           >
-            Our Handcrafted Story
+            {language === 'ar' ? 'قصة حياكتنا اليدوية' : 'Our Handcrafted Story'}
           </a>
         </div>
 
@@ -165,26 +171,26 @@ export const HeroSection: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-10 mt-14 pt-8 border-t border-brown-200/80 w-full max-w-3xl text-center">
           <div>
             <div className="text-xs uppercase tracking-widest text-brown-400 font-semibold mb-1">
-              Material
+              {language === 'ar' ? 'الخامات' : 'Material'}
             </div>
             <div className="text-sm font-medium text-brown-800">
-              100% Cotton Cord & Natural Fibers
+              {language === 'ar' ? 'خيوط قطنية 100% وألياف طبيعية' : '100% Cotton Cord & Natural Fibers'}
             </div>
           </div>
           <div>
             <div className="text-xs uppercase tracking-widest text-brown-400 font-semibold mb-1">
-              Patience
+              {language === 'ar' ? 'الصبر والإتقان' : 'Patience'}
             </div>
             <div className="text-sm font-medium text-brown-800">
-              Up to 18 Hours of Work Per Piece
+              {language === 'ar' ? 'تصل إلى 18 ساعة عمل لكل قطعة' : 'Up to 18 Hours of Work Per Piece'}
             </div>
           </div>
           <div>
             <div className="text-xs uppercase tracking-widest text-brown-400 font-semibold mb-1">
-              Philosophy
+              {language === 'ar' ? 'الفلسفة' : 'Philosophy'}
             </div>
             <div className="text-sm font-medium text-brown-800">
-              Every Stitch Has Its Own Voice
+              {language === 'ar' ? 'لكل غرزة صوتها وفرادتها الخاصة' : 'Every Stitch Has Its Own Voice'}
             </div>
           </div>
         </div>
@@ -193,12 +199,12 @@ export const HeroSection: React.FC = () => {
       {/* Scroll Down Indicator with Thread Tail */}
       <div className="relative z-10 flex flex-col items-center mt-10 text-brown-500">
         <span className="text-[11px] tracking-widest uppercase mb-2 font-medium">
-          Follow the thread
+          {language === 'ar' ? 'اتبع خيط الحكاية' : 'Follow the thread'}
         </span>
         <a
           href="#brand-line"
           className="p-2 rounded-full border border-brown-300/80 hover:border-brown-700 hover:text-brown-800 transition-colors animate-bounce"
-          aria-label="Scroll to narrative"
+          aria-label={language === 'ar' ? 'انتقل إلى الرواية' : 'Scroll to narrative'}
         >
           <ArrowDown size={16} />
         </a>

@@ -1,8 +1,36 @@
 import React from 'react';
 import { ThreadKnot } from '../common/ThreadSpine';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const CraftProcessSection: React.FC = () => {
-  const steps = [
+  const { language } = useLanguage();
+
+  const steps = language === 'ar' ? [
+    {
+      num: '٠١',
+      title: 'انتقاء الألياف بعناية',
+      detail: 'حبال قطنية معاد تدويرها وكتان طبيعي نقي يحفظ قوام القطعة بدون مقويات كيميائية.',
+      tag: 'المواد الطبيعية',
+    },
+    {
+      num: '٠٢',
+      title: 'إيقاع اليد وتناغمها',
+      detail: 'دون آلات أو خطوط إنتاج صناعية؛ كل غرزة مفردة تُسحب وتُحاك بحرص يدوي كامل.',
+      tag: 'صنعة متأنية',
+    },
+    {
+      num: '٠٣',
+      title: 'المتانة الهيكلية',
+      detail: 'غرز قاعدة معززة وأذرع حمل مستمرة تتكيف بنعومة مع الاستخدام اليومي المستمر.',
+      tag: 'رفيق يومي',
+    },
+    {
+      num: '٠٤',
+      title: 'أطراف الهَدَب',
+      detail: 'تُختم القطعة بلمستنا المميزة من الهَدَب المنسوج، وهو التفصيل الدقيق الذي يمنحها الاكتمال.',
+      tag: 'الروح والفرادة',
+    },
+  ] : [
     {
       num: '01',
       title: 'Fiber Selection',
@@ -23,8 +51,8 @@ export const CraftProcessSection: React.FC = () => {
     },
     {
       num: '04',
-      title: 'The Edge (هَدَب)',
-      detail: 'Tied off with our signature delicate fringe or loop tassel — the finishing detail that makes it whole.',
+      title: 'The Signature Edge',
+      detail: 'Tied off with delicate fringe or loop tassel — the finishing detail that makes it whole.',
       tag: 'Character',
     },
   ];
@@ -32,13 +60,18 @@ export const CraftProcessSection: React.FC = () => {
   return (
     <section id="craft" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="flex flex-col items-center text-center mb-16">
-        <ThreadKnot color="sage" label="STITCH V • OUR PROCESS" className="mb-6" />
+        <ThreadKnot
+          color="sage"
+          label={language === 'ar' ? 'الغرزة الخامسة • مراحل العمل' : 'STITCH V • OUR PROCESS'}
+          className="mb-6"
+        />
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-brown-800 font-normal">
-          How every piece comes to life
+          {language === 'ar' ? 'كيف تُبصر كل قطعة النور' : 'How every piece comes to life'}
         </h2>
         <p className="mt-3 text-brown-500 max-w-lg font-light text-base">
-          In a world of mass production, we take pride in the quiet, meditative
-          hours spent between the needle and the yarn.
+          {language === 'ar'
+            ? 'في عالم تسوده السرعة والإنتاج الضخم، نفخر بالساعات الهادئة والتأملية بين الإبرة والخيط.'
+            : 'In a world of mass production, we take pride in the quiet, meditative hours spent between the needle and the yarn.'}
         </p>
       </div>
 
@@ -55,10 +88,12 @@ export const CraftProcessSection: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-brown-900/40 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 text-cream-100">
               <span className="text-[11px] uppercase tracking-widest bg-brown-800/80 px-3 py-1 rounded-full backdrop-blur-sm">
-                Studio Journal
+                {language === 'ar' ? 'مذكرات الاستوديو' : 'Studio Journal'}
               </span>
               <p className="mt-2 font-serif italic text-lg sm:text-xl">
-                &ldquo;There is an honesty in each stitch — you can feel the maker&rsquo;s presence in the piece.&rdquo;
+                {language === 'ar'
+                  ? '«ثمة صدق نابض في كل غرزة — تشعر بحضور الصانع ودفء يديه في تفاصيل القطعة.»'
+                  : '“There is an honesty in each stitch — you can feel the maker’s presence in the piece.”'}
               </p>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Search, Menu, X, Globe } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface NavbarProps {
   cartCount?: number;
@@ -20,9 +21,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenStory,
   currentPage = 'home',
 }) => {
+  const { language, toggleLanguage, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState<'en' | 'ar'>('en');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,11 +37,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-50 w-full transition-all duration-500 font-sans">
       {/* Top Luxury Ticker — Warm Cream */}
       <div className="bg-cream-200 text-brown-700 py-1.5 px-3 sm:px-6 text-center text-[9.5px] xs:text-[10px] sm:text-[10.5px] uppercase tracking-[0.22em] sm:tracking-[0.28em] font-medium border-b border-brown-200/60 flex items-center justify-center gap-3 sm:gap-6 overflow-hidden">
-        <span className="hidden sm:inline text-brown-500 font-semibold shrink-0">JORDAN • KUWAIT</span>
+        <span className="hidden sm:inline text-brown-500 font-semibold shrink-0">{t.tickerLocation}</span>
         <span className="hidden sm:inline w-1 h-1 rounded-full bg-brown-400 shrink-0" />
-        <span className="text-brown-600 truncate">SLOW CRAFT CROCHET ATELIER • EACH PIECE HOOKED BY HAND</span>
+        <span className="text-brown-600 truncate">{t.tickerCraft}</span>
         <span className="hidden md:inline w-1 h-1 rounded-full bg-brown-400 shrink-0" />
-        <span className="hidden md:inline text-brown-500 shrink-0">COMPLIMENTARY ARCHIVE WRAPPING</span>
+        <span className="hidden md:inline text-brown-500 shrink-0">{t.tickerArchive}</span>
       </div>
 
       {/* Main Luxury Nav — Rich Brown, Sleek & Compact */}
@@ -60,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             className="md:hidden p-2 text-cream-100 hover:text-blush-200 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center -ml-1"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle navigation menu"
+            aria-label={t.toggleMenuAria}
           >
             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -82,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-cream-100 after:w-0 hover:after:w-full'
               }`}
             >
-              {currentLang === 'en' ? 'Collection' : 'المجموعة'}
+              {t.navCollection}
             </button>
             <button
               type="button"
@@ -93,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-cream-100 after:w-0 hover:after:w-full'
               }`}
             >
-              {currentLang === 'en' ? 'Categories' : 'التصنيفات'}
+              {t.navCategories}
             </button>
             <button
               type="button"
@@ -114,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-cream-100 after:w-0 hover:after:w-full'
               }`}
             >
-              {currentLang === 'en' ? 'Our Story' : 'قصتنا'}
+              {t.navStory}
             </button>
           </div>
 
@@ -140,15 +141,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="cursor-default">USD ($)</span>
             </div>
 
-            {/* Language Switcher (EN / العربية) */}
+            {/* Language Switcher */}
             <button
               type="button"
-              onClick={() => setCurrentLang(currentLang === 'en' ? 'ar' : 'en')}
-              className="p-1.5 sm:px-2.5 sm:py-1 min-h-[34px] sm:min-h-[36px] rounded-full border border-cream-200/40 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10px] sm:text-[10.5px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-semibold transition-all flex items-center gap-1 bg-cream-100/10 hover:bg-cream-100/15"
-              aria-label="Toggle Language"
+              onClick={toggleLanguage}
+              className="p-1.5 sm:px-2.5 sm:py-1 min-h-[34px] sm:min-h-[36px] rounded-full border border-cream-200/40 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10px] sm:text-[10.5px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-semibold transition-all flex items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/15"
+              aria-label={t.toggleLangAria}
             >
               <Globe size={14} className="text-cream-100" />
-              <span className="hidden sm:inline">{currentLang === 'en' ? 'العربية' : 'EN'}</span>
+              <span className="inline">{t.switchLanguageName}</span>
             </button>
 
             {/* Search Icon */}
@@ -162,7 +163,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-              aria-label="Search Collection"
+              aria-label={t.searchAria}
             >
               <Search size={17} strokeWidth={2} />
             </button>
@@ -172,7 +173,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={onOpenCart}
               className="relative p-1.5 xs:px-3 xs:py-1.5 hover:bg-white/5 rounded-full transition-all flex items-center gap-2 group text-cream-100 min-w-[40px] min-h-[40px] justify-center"
-              aria-label="Open Shopping Bag"
+              aria-label={t.bagAria}
             >
               <div className="relative">
                 <ShoppingBag size={18} strokeWidth={2} className="group-hover:text-blush-200 transition-colors" />
@@ -183,7 +184,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </div>
               <span className="text-[11.5px] uppercase tracking-[0.2em] font-semibold hidden sm:inline text-cream-100 group-hover:text-blush-200 transition-colors">
-                {currentLang === 'en' ? 'Bag' : 'الحقيبة'}
+                {language === 'ar' ? 'الحقيبة' : 'Bag'}
               </span>
             </button>
           </div>
@@ -218,7 +219,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="relative z-10 h-full flex flex-col items-center justify-center gap-8">
           {[
             {
-              label: currentLang === 'en' ? 'Collection' : 'المجموعة',
+              label: t.navCollection,
               action: () => {
                 if (onOpenCollection) {
                   onOpenCollection('all');
@@ -228,13 +229,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               },
             },
             {
-              label: currentLang === 'en' ? 'Categories' : 'التصنيفات',
+              label: t.navCategories,
               action: () => {
                 if (onOpenCategories) onOpenCategories();
               },
             },
             {
-              label: currentLang === 'en' ? 'Our Story' : 'قصتنا',
+              label: t.navStory,
               action: () => {
                 if (onOpenStory) {
                   onOpenStory();
@@ -275,16 +276,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
             style={{ transitionDelay: isMobileMenuOpen ? '450ms' : '0ms' }}
           >
-            <span>Jordan • Kuwait</span>
+            <span>{t.tickerLocation}</span>
             <button
               type="button"
               onClick={() => {
-                setCurrentLang(currentLang === 'en' ? 'ar' : 'en');
+                toggleLanguage();
                 setIsMobileMenuOpen(false);
               }}
               className="text-cream-200/80 hover:text-cream-100 font-medium py-1 px-2 rounded-md transition-colors"
             >
-              {currentLang === 'en' ? 'العربية' : 'English'}
+              {t.switchLanguageName}
             </button>
           </div>
         </div>

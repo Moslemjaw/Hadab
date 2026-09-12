@@ -180,4 +180,28 @@ small, .text-xs, .text-\[10px\], .text-\[11px\] {
   min-height: 100dvh;
 }
 
+/* Arabic mode typography enhancements */
+[dir="rtl"] {
+  font-family: 'Amiri', 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+[dir="rtl"] .font-serif {
+  font-family: 'Amiri', 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+[dir="rtl"] .font-display {
+  font-family: 'Amiri', 'Outfit', sans-serif;
+  font-weight: 700;
+}
+
+[dir="rtl"] [class*="tracking-"],
+[dir="rtl"] .tracking-widest,
+[dir="rtl"] .tracking-wider {
+  letter-spacing: 0.02em !important;
+}
+
+
+
 

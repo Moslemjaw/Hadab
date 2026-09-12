@@ -13,6 +13,7 @@ import { ALL_PRODUCTS, CATEGORIES } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { tactileAudio } from '../../utils/audio';
 import { CollectionFilters, type FilterState } from './CollectionFilters';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface CollectionPageProps {
   onAddToBag: (product: Product) => void;
@@ -29,6 +30,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   initialCategory = 'all',
   initialSearch = '',
 }) => {
+  const { language, t } = useLanguage();
   // Price bounds from dataset
   const minDatasetPrice = useMemo(
     () => Math.min(...ALL_PRODUCTS.map((p) => p.price)),
@@ -94,7 +96,23 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   };
 
   // Quick search keywords
-  const popularKeywords = ['Tote', 'Bucket Hat', 'Cardigan', 'Clutch', 'Cotton Cord', 'Organic Linen'];
+  const popularKeywords = language === 'ar'
+    ? [
+        { label: 'حقائب توت', query: 'توت' },
+        { label: 'قبعات', query: 'قبعة' },
+        { label: 'كارديجان', query: 'كارديجان' },
+        { label: 'كلاتش', query: 'كلاتش' },
+        { label: 'حبال قطنية', query: 'قطن' },
+        { label: 'كتان طبيعي', query: 'كتان' },
+      ]
+    : [
+        { label: 'Tote', query: 'Tote' },
+        { label: 'Bucket Hat', query: 'Bucket Hat' },
+        { label: 'Cardigan', query: 'Cardigan' },
+        { label: 'Clutch', query: 'Clutch' },
+        { label: 'Cotton Cord', query: 'Cotton Cord' },
+        { label: 'Organic Linen', query: 'Organic Linen' },
+      ];
 
   // Filtering & Sorting pipeline
   const filteredProducts = useMemo(() => {
@@ -179,47 +197,44 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             onClick={onBackToHome}
             className="inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] text-cream-300 hover:text-blush-200 transition-colors mb-1.5 sm:mb-6 group"
           >
-            <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline">Return to Atelier Experience</span>
-            <span className="sm:hidden inline">Atelier</span>
+            <ArrowLeft size={12} className={language === 'ar' ? 'rotate-180 group-hover:translate-x-1 transition-transform' : 'group-hover:-translate-x-1 transition-transform'} />
+            <span className="hidden sm:inline">{language === 'ar' ? 'العودة لتجربة المشغل' : 'Return to Atelier Experience'}</span>
+            <span className="sm:hidden inline">{language === 'ar' ? 'المشغل' : 'Atelier'}</span>
           </button>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-6">
             <div>
               <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream-100/10 border border-cream-200/20 text-[10px] uppercase font-semibold tracking-[0.26em] text-blush-200 mb-3">
                 <Sparkles size={11} className="text-blush-300" />
-                <span>The Permanent Archive • Jordan & Kuwait</span>
+                <span>{language === 'ar' ? 'الأرشيف الدائم • الأردن والكويت' : 'The Permanent Archive • Jordan & Kuwait'}</span>
               </div>
               <div className="flex items-baseline gap-2.5">
                 <h1 className="font-serif text-2xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-cream-100 leading-tight">
-                  The Collection
+                  {t.collectionHeroTitle}
                 </h1>
-                <span className="font-arabic text-base sm:text-2xl text-cream-300/80 font-normal">
-                  المجموعة
-                </span>
               </div>
               <p className="hidden sm:block mt-2 text-cream-300/80 text-xs sm:text-sm font-light max-w-xl leading-relaxed">
-                Hand-hooked in numbered studio batches with unbleached 5mm cotton cord, organic linen, and raw plant dyes.
+                {t.collectionHeroSubtitle}
               </p>
             </div>
 
             {/* Desktop Quick Stats Card */}
             <div className="hidden sm:flex items-center gap-3 self-start md:self-end bg-cream-100/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-cream-200/15">
-              <div className="text-right">
+              <div className={language === 'ar' ? 'text-left' : 'text-right'}>
                 <span className="block text-2xl font-serif font-medium text-cream-100 leading-none">
                   {filteredProducts.length}
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-cream-300/70 font-light">
-                  Pieces Available
+                  {language === 'ar' ? 'قطعة متوفرة' : 'Pieces Available'}
                 </span>
               </div>
               <div className="h-8 w-[1px] bg-cream-100/20" />
-              <div className="text-left">
+              <div className={language === 'ar' ? 'text-right' : 'text-left'}>
                 <span className="block text-2xl font-serif font-medium text-cream-100 leading-none">
                   4
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-cream-300/70 font-light">
-                  Craft Families
+                  {language === 'ar' ? 'عائلات حرفة' : 'Craft Families'}
                 </span>
               </div>
             </div>
@@ -230,7 +245,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             <div className="relative flex items-center">
               <Search
                 size={17}
-                className="absolute left-4 text-brown-400 pointer-events-none"
+                className={`absolute ${language === 'ar' ? 'right-4' : 'left-4'} text-brown-400 pointer-events-none`}
               />
               <input
                 type="text"
@@ -240,16 +255,16 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                   handleUpdateFilters({ searchQuery: e.target.value });
                   setIsSearchFocused(true);
                 }}
-                placeholder="Search by piece name, stitch, yarn, or color..."
-                className="w-full pl-11 pr-24 py-3 sm:py-3.5 rounded-full bg-cream-100 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light shadow-warm focus:outline-none focus:ring-2 focus:ring-blush-300/80 transition-all"
+                placeholder={t.searchCollectionPlaceholder}
+                className={`w-full ${language === 'ar' ? 'pr-11 pl-24' : 'pl-11 pr-24'} py-3 sm:py-3.5 rounded-full bg-cream-100 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light shadow-warm focus:outline-none focus:ring-2 focus:ring-blush-300/80 transition-all`}
               />
 
               {/* Action buttons inside search */}
-              <div className="absolute right-3 flex items-center gap-1.5">
+              <div className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} flex items-center gap-1.5`}>
                 {filters.searchQuery && (
                   <>
                     <span className="text-[10.5px] text-brown-500 font-medium hidden xs:inline px-1">
-                      {filteredProducts.length} {filteredProducts.length === 1 ? 'work' : 'works'}
+                      {filteredProducts.length} {t.searchCountWorks}
                     </span>
                     <button
                       type="button"
@@ -274,54 +289,60 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                   <div>
                     <div className="flex items-center justify-between pb-2 mb-2 border-b border-brown-200/60 text-xs">
                       <span className="font-semibold font-serif text-brown-900">
-                        Matching Atelier Pieces ({filteredProducts.length})
+                        {language === 'ar' ? `نتائج مطابقة من المشغل (${filteredProducts.length})` : `Matching Atelier Pieces (${filteredProducts.length})`}
                       </span>
                       <button
                         type="button"
                         onClick={() => setIsSearchFocused(false)}
                         className="text-[11px] text-brown-500 hover:text-brown-800"
                       >
-                        Close
+                        {language === 'ar' ? 'إغلاق' : 'Close'}
                       </button>
                     </div>
 
                     {filteredProducts.length === 0 ? (
                       <p className="text-xs text-brown-500 py-3 text-center">
-                        No pieces found for "{filters.searchQuery}". Try searching by yarn like "cotton", "linen" or piece type like "tote".
+                        {language === 'ar' ? `لم نجد قطعاً تطابق "${filters.searchQuery}". جربي البحث بنوع الخيط أو القطعة.` : `No pieces found for "${filters.searchQuery}". Try searching by yarn like "cotton", "linen" or piece type like "tote".`}
                       </p>
                     ) : (
                       <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                        {filteredProducts.slice(0, 4).map((p) => (
-                          <div
-                            key={p.id}
-                            onClick={() => {
-                              onSelectProduct(p);
-                              setIsSearchFocused(false);
-                            }}
-                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-cream-200/70 cursor-pointer transition-colors group"
-                          >
-                            <img
-                              src={p.image}
-                              alt={p.name}
-                              className="w-10 h-10 rounded-lg object-cover bg-cream-200 shrink-0 border border-brown-200/60"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <span className="font-serif text-xs sm:text-sm font-medium text-brown-900 group-hover:text-burgundy-600 transition-colors truncate">
-                                  {p.name}
-                                </span>
-                                <span className="font-serif text-xs font-semibold text-brown-900 shrink-0">
-                                  ${p.price}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 text-[10px] text-brown-500">
-                                <span>{CATEGORIES.find((c) => c.id === p.category)?.name}</span>
-                                <span>•</span>
-                                <span className="truncate">{p.yarnType}</span>
+                        {filteredProducts.slice(0, 4).map((p) => {
+                          const pName = language === 'ar' && p.nameArabic ? p.nameArabic : p.name;
+                          const pYarn = language === 'ar' && p.yarnTypeArabic ? p.yarnTypeArabic : p.yarnType;
+                          const catObj = CATEGORIES.find((c) => c.id === p.category);
+                          const pCat = catObj ? (language === 'ar' ? catObj.nameArabic : catObj.name) : p.category;
+                          return (
+                            <div
+                              key={p.id}
+                              onClick={() => {
+                                onSelectProduct(p);
+                                setIsSearchFocused(false);
+                              }}
+                              className="flex items-center gap-3 p-2 rounded-xl hover:bg-cream-200/70 cursor-pointer transition-colors group"
+                            >
+                              <img
+                                src={p.image}
+                                alt={pName}
+                                className="w-10 h-10 rounded-lg object-cover bg-cream-200 shrink-0 border border-brown-200/60"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-serif text-xs sm:text-sm font-medium text-brown-900 group-hover:text-burgundy-600 transition-colors truncate">
+                                    {pName}
+                                  </span>
+                                  <span className="font-serif text-xs font-semibold text-brown-900 shrink-0">
+                                    ${p.price}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-brown-500">
+                                  <span>{pCat}</span>
+                                  <span>•</span>
+                                  <span className="truncate">{pYarn}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
 
                         {filteredProducts.length > 4 && (
                           <button
@@ -329,7 +350,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                             onClick={() => setIsSearchFocused(false)}
                             className="w-full py-2 text-center text-xs font-semibold text-burgundy-600 hover:underline pt-2 border-t border-brown-200/40"
                           >
-                            View all {filteredProducts.length} pieces in collection
+                            {language === 'ar' ? `عرض كل الـ ${filteredProducts.length} قطعة في المجموعة` : `View all ${filteredProducts.length} pieces in collection`}
                           </button>
                         )}
                       </div>
@@ -339,30 +360,30 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[10.5px] uppercase tracking-wider font-semibold text-brown-500">
-                        Popular Atelier Searches
+                        {language === 'ar' ? 'عمليات البحث الشائعة' : 'Popular Atelier Searches'}
                       </span>
                       <button
                         type="button"
                         onClick={() => setIsSearchFocused(false)}
                         className="text-[11px] text-brown-400 hover:text-brown-700"
                       >
-                        Close
+                        {language === 'ar' ? 'إغلاق' : 'Close'}
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {popularKeywords.map((kw) => (
                         <button
-                          key={kw}
+                          key={kw.label}
                           type="button"
                           onClick={() => {
-                            handleUpdateFilters({ searchQuery: kw });
+                            handleUpdateFilters({ searchQuery: kw.query });
                             tactileAudio.playScrubTick(340);
                             setIsSearchFocused(false);
                           }}
                           className="px-3 py-1.5 rounded-full bg-cream-200/80 hover:bg-brown-900 hover:text-cream-100 text-brown-800 text-xs transition-all flex items-center gap-1.5 border border-brown-200/60"
                         >
                           <Tag size={11} className="text-burgundy-600" />
-                          <span>{kw}</span>
+                          <span>{kw.label}</span>
                         </button>
                       ))}
                     </div>
@@ -373,22 +394,24 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
 
             {/* Keyword Quick Chips below Search */}
             <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 mt-2.5 overflow-x-auto no-scrollbar py-1 text-[10.5px]">
-              <span className="text-cream-300/60 shrink-0 font-light text-[10px] sm:text-xs">Quick search:</span>
+              <span className="text-cream-300/60 shrink-0 font-light text-[10px] sm:text-xs">
+                {language === 'ar' ? 'بحث سريع:' : 'Quick search:'}
+              </span>
               {popularKeywords.map((kw) => (
                 <button
-                  key={kw}
+                  key={kw.label}
                   type="button"
                   onClick={() => {
-                    handleUpdateFilters({ searchQuery: kw });
+                    handleUpdateFilters({ searchQuery: kw.query });
                     tactileAudio.playScrubTick(360);
                   }}
                   className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all shrink-0 ${
-                    filters.searchQuery.toLowerCase() === kw.toLowerCase()
+                    filters.searchQuery.toLowerCase() === kw.query.toLowerCase()
                       ? 'bg-blush-200 text-brown-900 font-medium'
                       : 'bg-cream-100/10 hover:bg-cream-100/20 text-cream-200'
                   }`}
                 >
-                  {kw}
+                  {kw.label}
                 </button>
               ))}
             </div>
@@ -416,17 +439,17 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
               <Search size={24} />
             </div>
             <h3 className="font-serif text-2xl text-brown-800 font-normal">
-              No Pieces Match Your Filter
+              {t.noMatchTitle}
             </h3>
             <p className="text-xs sm:text-sm text-brown-500 font-light mt-2 max-w-sm">
-              We couldn't find any atelier works matching your current selection. Try resetting or adjusting your search.
+              {t.noMatchSubtitle}
             </p>
             <button
               type="button"
               onClick={resetFilters}
               className="mt-6 px-5 py-2.5 rounded-full bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider hover:bg-burgundy-600 transition-colors shadow-warm"
             >
-              Clear All Filters
+              {t.clearAllFilters}
             </button>
           </div>
         ) : (
@@ -464,10 +487,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       <div className="absolute inset-0 bg-gradient-to-t from-brown-950/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                       {/* Top Badges */}
-                      <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 flex flex-col gap-1 z-10">
+                      <div className="absolute top-2 start-2 sm:top-2.5 sm:start-2.5 flex flex-col gap-1 z-10">
                         {product.tag && (
                           <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full bg-cream-100/95 backdrop-blur-md text-brown-800 text-[8px] sm:text-[9.5px] uppercase tracking-wider font-semibold border border-brown-200/60 shadow-sm">
-                            {product.tag}
+                            {language === 'ar' && product.tagArabic ? product.tagArabic : product.tag}
                           </span>
                         )}
                         {hasDiscount && (
@@ -481,8 +504,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       <button
                         type="button"
                         onClick={(e) => toggleWishlist(product.id, e)}
-                        className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cream-100/90 hover:bg-cream-50 backdrop-blur-md border border-brown-200/60 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm z-10"
-                        aria-label="Wishlist"
+                        className="absolute top-2 end-2 sm:top-2.5 sm:end-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cream-100/90 hover:bg-cream-50 backdrop-blur-md border border-brown-200/60 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm z-10"
+                        aria-label={language === 'ar' ? 'المفضلة' : 'Wishlist'}
                       >
                         <Heart
                           size={13}
@@ -495,10 +518,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       </button>
 
                       {/* Inspect Piece Pill button (Desktop only to prevent mobile clutter) */}
-                      <div className="hidden sm:inline-flex absolute bottom-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="hidden sm:inline-flex absolute bottom-2.5 end-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-brown-900/85 backdrop-blur-md text-cream-100 text-[10px] font-medium shadow-sm">
                           <Eye size={11} />
-                          <span>Inspect</span>
+                          <span>{t.inspect}</span>
                         </span>
                       </div>
                     </div>
@@ -507,12 +530,15 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                     <div className="p-2.5 sm:p-4">
                       {/* Craft Family indicator */}
                       <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-brown-400 font-semibold block mb-0.5">
-                        {CATEGORIES.find((c) => c.id === product.category)?.name || product.category}
+                        {(() => {
+                          const cat = CATEGORIES.find((c) => c.id === product.category);
+                          return cat ? (language === 'ar' ? cat.nameArabic : cat.name) : product.category;
+                        })()}
                       </span>
 
                       {/* Product Name */}
                       <h3 className="font-serif text-xs sm:text-base font-semibold text-brown-900 group-hover:text-burgundy-600 transition-colors line-clamp-1 leading-snug">
-                        {product.name}
+                        {language === 'ar' && product.nameArabic ? product.nameArabic : product.name}
                       </h3>
 
                       {/* Price */}
@@ -529,7 +555,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
 
                       {/* Description (Desktop only to keep 2-column mobile cards clean) */}
                       <p className="hidden md:block text-xs text-brown-600 font-light line-clamp-2 leading-relaxed mt-1.5 mb-2">
-                        {product.description}
+                        {language === 'ar' && product.descriptionArabic ? product.descriptionArabic : product.description}
                       </p>
 
                       {/* Clean Yarn & Color Line */}
@@ -538,7 +564,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                           className="w-2 h-2 rounded-full border border-black/10 shrink-0"
                           style={{ backgroundColor: product.colorHex }}
                         />
-                        <span className="truncate">{product.colorName}</span>
+                        <span className="truncate">
+                          {language === 'ar' && product.colorNameArabic ? product.colorNameArabic : product.colorName}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -555,7 +583,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       className="w-full py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-[10.5px] sm:text-[11px] uppercase tracking-[0.14em] font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] min-h-[34px] sm:min-h-[38px]"
                     >
                       <ShoppingBag size={12} className="shrink-0" />
-                      <span>Add to Bag</span>
+                      <span>{t.addToBag}</span>
                     </button>
                   </div>
                 </div>

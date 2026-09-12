@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Product } from '../../types';
 import { X, ShoppingBag, Eye, Sparkles, Check } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ProductModalProps {
   product: Product | null;
@@ -14,6 +15,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onClose,
   onAddToBag,
 }) => {
+  const { language, t } = useLanguage();
+  const isAr = language === 'ar';
   const [showTexture, setShowTexture] = useState(false);
   const [added, setAdded] = useState(false);
 
@@ -44,8 +47,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     setTimeout(() => setAdded(false), 2000);
   };
 
+  const displayName = isAr && product.nameArabic ? product.nameArabic : product.name;
+  const displayTag = isAr && product.tagArabic ? product.tagArabic : (product.tag || t.studioOriginal);
+  const displayDesc = isAr && product.descriptionArabic ? product.descriptionArabic : product.description;
+  const displayYarn = isAr && product.yarnTypeArabic ? product.yarnTypeArabic : product.yarnType;
+  const displayStitch = isAr && product.stitchDetailArabic ? product.stitchDetailArabic : product.stitchDetail;
+  const displayColor = isAr && product.colorNameArabic ? product.colorNameArabic : product.colorName;
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6 lg:p-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6 lg:p-8 font-sans">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-brown-900/60 backdrop-blur-sm transition-opacity"
@@ -57,8 +67,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 w-10 h-10 rounded-full bg-cream-200/90 hover:bg-cream-300 text-brown-600 hover:text-brown-900 transition-colors z-20 flex items-center justify-center shadow-sm"
-          aria-label="Close details"
+          className={`absolute top-3 ${isAr ? 'left-3 sm:left-4' : 'right-3 sm:right-4'} sm:top-4 w-10 h-10 rounded-full bg-cream-200/90 hover:bg-cream-300 text-brown-600 hover:text-brown-900 transition-colors z-20 flex items-center justify-center shadow-sm`}
+          aria-label={isAr ? 'إغلاق التفاصيل' : 'Close details'}
         >
           <X size={18} />
         </button>
@@ -68,7 +78,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           <div className="relative aspect-[4/3] sm:aspect-square md:aspect-auto max-h-[35vh] sm:max-h-[45vh] md:max-h-none bg-cream-200 shrink-0">
             <img
               src={showTexture ? product.textureImage : product.image}
-              alt={product.name}
+              alt={displayName}
               className="w-full h-full object-cover transition-all duration-500"
             />
 
@@ -82,7 +92,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 py-2 px-3 rounded-full bg-brown-800/85 text-cream-100 text-xs font-medium backdrop-blur-md flex items-center justify-center gap-2 hover:bg-brown-900 transition-colors shadow-warm-sm min-h-[38px] active:scale-95"
             >
               <Eye size={14} />
-              <span>{showTexture ? 'Show Full Piece' : 'Inspect Yarn Stitch Detail'}</span>
+              <span>{showTexture ? t.showFullPiece : t.inspectStitch}</span>
             </button>
           </div>
 
@@ -91,17 +101,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2.5 py-0.5 rounded-full bg-cream-200 text-brown-700 text-[10px] uppercase tracking-wider font-semibold border border-brown-300">
-                  {product.tag || 'Studio Original'}
+                  {displayTag}
                 </span>
-                {product.nameArabic && (
-                  <span className="font-arabic text-xs text-brown-400">
-                    {product.nameArabic}
-                  </span>
-                )}
               </div>
 
               <h3 className="font-serif text-2xl text-brown-800 font-normal">
-                {product.name}
+                {displayName}
               </h3>
 
               <div className="mt-2 flex items-baseline gap-3">
@@ -116,27 +121,31 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               </div>
 
               <p className="mt-4 text-xs sm:text-sm text-brown-600 font-light leading-relaxed">
-                {product.description}
+                {displayDesc}
               </p>
 
               <div className="mt-6 pt-5 border-t border-brown-200 space-y-2.5 text-xs text-brown-600">
                 <div className="flex justify-between">
-                  <span className="text-brown-400">Yarn Type</span>
-                  <span className="font-medium text-brown-800">{product.yarnType}</span>
+                  <span className="text-brown-400">{t.yarnMaterial}</span>
+                  <span className="font-medium text-brown-800">{displayYarn}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-brown-400">Stitch Pattern</span>
-                  <span className="font-medium text-brown-800">{product.stitchDetail}</span>
+                  <span className="text-brown-400">{t.stitchPattern}</span>
+                  <span className="font-medium text-brown-800">{displayStitch}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-brown-400">Colorway</span>
-                  <span className="font-medium text-brown-800">{product.colorName}</span>
+                  <span className="text-brown-400">{t.colorPalette}</span>
+                  <span className="font-medium text-brown-800">{displayColor}</span>
                 </div>
               </div>
 
               <div className="mt-4 p-3 rounded-xl bg-cream-200/50 border border-brown-200 text-[11px] text-brown-500 font-light flex items-center gap-2">
                 <Sparkles size={14} className="text-burgundy-500 flex-shrink-0" />
-                <span>Individually hand-crocheted over 14–18 hours. Arrives gift-wrapped with yarn ribbon.</span>
+                <span>
+                  {isAr
+                    ? 'محبوك يدوياً على مدار ١٤ إلى ١٨ ساعة. يصل مغلّفاً بشرائط الخيوط الطبيعية الفاخرة.'
+                    : 'Individually hand-crocheted over 14–18 hours. Arrives gift-wrapped with yarn ribbon.'}
+                </span>
               </div>
             </div>
 
@@ -152,12 +161,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               {added ? (
                 <>
                   <Check size={16} />
-                  <span>Stitched into Bag</span>
+                  <span>{t.addedToBagNotification}</span>
                 </>
               ) : (
                 <>
                   <ShoppingBag size={16} />
-                  <span>Add to bag • ${product.price}</span>
+                  <span>{t.addToBag} • ${product.price}</span>
                 </>
               )}
             </button>
@@ -167,3 +176,4 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     </div>
   );
 };
+

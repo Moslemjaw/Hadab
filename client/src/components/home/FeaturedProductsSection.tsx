@@ -3,6 +3,7 @@ import { FEATURED_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { ThreadKnot } from '../common/ThreadSpine';
 import { Eye, ShoppingBag, Check } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface FeaturedProductsSectionProps {
   onAddToBag?: (product: Product) => void;
@@ -11,6 +12,7 @@ interface FeaturedProductsSectionProps {
 export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = ({
   onAddToBag,
 }) => {
+  const { language, t } = useLanguage();
   const [activeTextureId, setActiveTextureId] = useState<string | null>(null);
   const [addedIds, setAddedIds] = useState<string[]>([]);
 
@@ -26,13 +28,18 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
     <section id="featured" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Section Header */}
       <div className="flex flex-col items-center text-center mb-16">
-        <ThreadKnot color="brown" label="STITCH II • FEATURED PIECES" className="mb-6" />
+        <ThreadKnot
+          color="brown"
+          label={language === 'ar' ? 'الغرزة الثانية • قطع مختارة' : 'STITCH II • FEATURED PIECES'}
+          className="mb-6"
+        />
         <h2 className="font-serif text-3xl sm:text-4xl text-brown-800 font-normal">
-          Pieces made with time
+          {language === 'ar' ? 'قطع صُنعت بتأنٍ وصبر' : 'Pieces made with time'}
         </h2>
         <p className="mt-3 text-brown-500 max-w-lg font-light text-base">
-          Curated shapes for your day-to-day. Hover each piece to inspect the
-          close-up yarn stitch and texture.
+          {language === 'ar'
+            ? 'تصاميم منتقاة ليومياتك الأنيقة. مرر الفأرة أو انقر لفحص ملمس وتفاصيل الغرزة الدقيقة.'
+            : 'Curated shapes for your day-to-day. Hover each piece to inspect the close-up yarn stitch and texture.'}
         </p>
       </div>
 
@@ -57,16 +64,26 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                 {/* Main Product Image */}
                 <img
                   src={isTextureView ? product.textureImage : product.image}
-                  alt={product.name}
+                  alt={language === 'ar' ? (product.nameArabic || product.name) : product.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
 
-
-
                 {/* Texture view toggle button / indicator */}
-                <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-brown-800/80 text-cream-100 text-[10px] font-medium backdrop-blur-sm flex items-center gap-1.5 transition-opacity min-h-[30px]">
+                <div
+                  className={`absolute bottom-3 ${
+                    language === 'ar' ? 'left-3' : 'right-3'
+                  } px-2.5 py-1 rounded-full bg-brown-800/80 text-cream-100 text-[10px] font-medium backdrop-blur-sm flex items-center gap-1.5 transition-opacity min-h-[30px]`}
+                >
                   <Eye size={12} />
-                  <span>{isTextureView ? 'Stitch View' : 'Inspect Yarn'}</span>
+                  <span>
+                    {language === 'ar'
+                      ? isTextureView
+                        ? 'عرض الغرزة'
+                        : 'فحص الخيط'
+                      : isTextureView
+                      ? 'Stitch View'
+                      : 'Inspect Yarn'}
+                  </span>
                 </div>
               </div>
 
@@ -75,30 +92,24 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                 <div>
                   <div className="flex items-baseline justify-between gap-2 mb-1.5">
                     <h3 className="font-serif text-lg text-brown-800 font-medium group-hover:text-burgundy-500 transition-colors">
-                      {product.name}
+                      {language === 'ar' ? (product.nameArabic || product.name) : product.name}
                     </h3>
                     <span className="text-base font-semibold text-brown-800">
                       ${product.price}
                     </span>
                   </div>
 
-                  {product.nameArabic && (
-                    <div className="font-arabic text-xs text-brown-400 mb-2">
-                      {product.nameArabic}
-                    </div>
-                  )}
-
                   <p className="text-xs text-brown-500 leading-relaxed font-light mb-4 line-clamp-2">
-                    {product.description}
+                    {language === 'ar' ? (product.descriptionArabic || product.description) : product.description}
                   </p>
 
                   <div className="pt-2 border-t border-brown-200/50 text-[11px] text-brown-400 space-y-1 mb-4">
                     <div className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-sage-500" />
-                      <span>{product.stitchDetail}</span>
+                      <span>{language === 'ar' ? (product.stitchDetailArabic || product.stitchDetail) : product.stitchDetail}</span>
                     </div>
                     <div className="text-brown-500 font-medium">
-                      {product.yarnType}
+                      {language === 'ar' ? (product.yarnTypeArabic || product.yarnType) : product.yarnType}
                     </div>
                   </div>
                 </div>
@@ -116,12 +127,12 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   {isAdded ? (
                     <>
                       <Check size={14} />
-                      <span>Stitched into Bag</span>
+                      <span>{language === 'ar' ? 'تمت الإضافة للحقيبة' : 'Stitched into Bag'}</span>
                     </>
                   ) : (
                     <>
                       <ShoppingBag size={14} />
-                      <span>Add to bag</span>
+                      <span>{t.addToBag}</span>
                     </>
                   )}
                 </button>

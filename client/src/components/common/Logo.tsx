@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface LogoProps {
   className?: string;
@@ -10,9 +11,9 @@ interface LogoProps {
 export const Logo: React.FC<LogoProps> = ({
   className = '',
   size = 'md',
-  showArabic = true,
   variant = 'dark',
 }) => {
+  const { language } = useLanguage();
   const iconDimensions = {
     sm: { w: 24, h: 24, stroke: 2.2 },
     md: { w: 32, h: 32, stroke: 2.4 },
@@ -25,13 +26,6 @@ export const Logo: React.FC<LogoProps> = ({
     md: 'text-2xl',
     lg: 'text-3xl',
     hero: 'text-5xl md:text-6xl',
-  }[size];
-
-  const arabicSize = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base',
-    hero: 'text-xl md:text-2xl',
   }[size];
 
   const isLight = variant === 'light';
@@ -59,19 +53,19 @@ export const Logo: React.FC<LogoProps> = ({
         <circle cx="32" cy="28" r="2.5" fill="currentColor" />
       </svg>
 
-      {/* Rounded Lowercase Wordmark */}
+      {/* Brand Wordmark - pure Arabic or pure English according to active language */}
       <div className="flex flex-col leading-none">
-        <div className="flex items-baseline gap-2">
+        {language === 'ar' ? (
+          <span className={`font-arabic font-normal tracking-wide ${isLight ? 'text-cream-100' : 'text-brown-800'} ${textSize}`}>
+            هَدَب
+          </span>
+        ) : (
           <span className={`font-display font-medium tracking-tight lowercase ${isLight ? 'text-cream-100' : 'text-brown-700'} ${textSize}`}>
             hadab
           </span>
-          {showArabic && (
-            <span className={`font-arabic font-normal tracking-wide ${isLight ? 'text-blush-200' : 'text-brown-500'} ${arabicSize}`}>
-              هَدَب
-            </span>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 };
+

@@ -15,6 +15,7 @@ import {
 import { CATEGORIES } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { tactileAudio } from '../../utils/audio';
+import { useLanguage } from '../../context/LanguageContext';
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name-asc';
 export type PriceBracket = 'all' | 'under-75' | '75-120' | 'over-120';
@@ -44,12 +45,13 @@ interface CollectionFiltersProps {
 
 // Curated fiber families for artisan crochet
 const FIBER_OPTIONS = [
-  { id: 'all', label: 'All Fibers', match: '' },
-  { id: 'cotton', label: 'Organic & Recycled Cotton', match: 'cotton' },
-  { id: 'linen', label: 'Natural Linen & Flax', match: 'linen' },
-  { id: 'bamboo', label: 'Bamboo & Silk Blends', match: 'bamboo' },
-  { id: 'trapillo', label: 'Trapillo Cord', match: 'trapillo' },
+  { id: 'all', label: 'All Fibers', labelArabic: 'جميع الخيوط', match: '' },
+  { id: 'cotton', label: 'Organic & Recycled Cotton', labelArabic: 'قطن نقي ومعاد تدويره', match: 'cotton' },
+  { id: 'linen', label: 'Natural Linen & Flax', labelArabic: 'كتان طبيعي', match: 'linen' },
+  { id: 'bamboo', label: 'Bamboo & Silk Blends', labelArabic: 'مزيج بامبو وحرير', match: 'bamboo' },
+  { id: 'trapillo', label: 'Trapillo Cord', labelArabic: 'حبال ترابيلو سميكة', match: 'trapillo' },
 ];
+
 
 
 export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
@@ -61,6 +63,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   onUpdateFilters,
   onResetFilters,
 }) => {
+  const { language, t } = useLanguage();
   // Popover state: 'price' | 'material' | 'color' | 'sort' | null
   const [activePopover, setActivePopover] = useState<string | null>(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -97,10 +100,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
   // Distinct colors extracted from product catalog
   const distinctColors = useMemo(() => {
-    const colorMap = new Map<string, { name: string; hex: string; count: number }>();
+    const colorMap = new Map<string, { name: string; nameArabic?: string; hex: string; count: number }>();
     products.forEach((p) => {
       if (!colorMap.has(p.colorName)) {
-        colorMap.set(p.colorName, { name: p.colorName, hex: p.colorHex, count: 1 });
+        colorMap.set(p.colorName, { name: p.colorName, nameArabic: p.colorNameArabic, hex: p.colorHex, count: 1 });
       } else {
         colorMap.get(p.colorName)!.count++;
       }
@@ -128,10 +131,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   }, [filters, maxDatasetPrice]);
 
   const sortLabels: Record<SortOption, string> = {
-    featured: 'Featured First',
-    'price-asc': 'Price: Low to High',
-    'price-desc': 'Price: High to Low',
-    'name-asc': 'Alphabetical (A–Z)',
+    featured: t.sortFeatured,
+    'price-asc': t.sortPriceAsc,
+    'price-desc': t.sortPriceDesc,
+    'name-asc': t.sortNameAsc,
   };
 
   return (
@@ -151,13 +154,14 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 : 'text-brown-400 hover:text-brown-800 font-medium border-transparent'
             }`}
           >
-            <span>All Works</span>
+            <span>{t.allCategories}</span>
             <span className="text-[10px] font-normal opacity-60">({products.length})</span>
           </button>
 
           {CATEGORIES.map((cat) => {
             const isActive = filters.selectedCategory === cat.id;
             const count = products.filter((p) => p.category === cat.id).length;
+            const label = language === 'ar' ? cat.nameArabic : cat.name;
             return (
               <button
                 key={cat.id}
@@ -172,7 +176,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     : 'text-brown-400 hover:text-brown-800 font-medium border-transparent'
                 }`}
               >
-                <span>{cat.name}</span>
+                <span>{label}</span>
                 <span className="text-[10px] font-normal opacity-60">({count})</span>
               </button>
             );
@@ -197,7 +201,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             }`}
           >
             <SlidersHorizontal size={13} />
-            <span>Filters</span>
+            <span>{t.filtersButton}</span>
             {activeFiltersCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-cream-100 text-burgundy-600 text-[9.5px] flex items-center justify-center font-bold">
                 {activeFiltersCount}
@@ -219,7 +223,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             }`}
           >
             <Percent size={11} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
-            <span>Sale</span>
+            <span>{t.saleFilter}</span>
             <span className={`text-[9.5px] font-bold ${filters.onlySale ? 'text-cream-100' : 'text-burgundy-700'}`}>
               {saleCount}
             </span>
@@ -228,7 +232,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
         {/* MIDDLE: Piece Count (Hidden on mobile) */}
         <div className="hidden sm:block text-xs text-brown-500 font-light">
-          Showing <strong className="font-serif text-sm font-semibold text-brown-900">{filteredCount}</strong> of {products.length} pieces
+          {t.showingOf} <strong className="font-serif text-sm font-semibold text-brown-900">{filteredCount}</strong> {language === 'ar' ? 'من' : 'of'} {products.length} {t.pieces}
         </div>
 
         {/* RIGHT: Sort Dropdown & Grid View Toggle */}
@@ -241,15 +245,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               className="h-8.5 px-3 rounded-full text-xs font-medium flex items-center gap-1.5 bg-cream-100/80 hover:bg-cream-100 border border-brown-200/80 text-brown-800 transition-colors"
             >
               <ArrowUpDown size={11} className="text-brown-500" />
-              <span className="hidden xs:inline text-brown-400 font-normal">Sort:</span>
+              <span className="hidden xs:inline text-brown-400 font-normal">{t.sortLabel}:</span>
               <span className="font-semibold text-brown-900 text-xs">
-                {filters.sortBy === 'featured'
-                  ? 'Featured'
-                  : filters.sortBy === 'price-asc'
-                  ? 'Price: Low'
-                  : filters.sortBy === 'price-desc'
-                  ? 'Price: High'
-                  : 'A–Z'}
+                {sortLabels[filters.sortBy]}
               </span>
               <ChevronDown size={11} className={`transition-transform duration-150 ${activePopover === 'sort' ? 'rotate-180' : ''}`} />
             </button>
@@ -283,7 +281,8 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
           <div className="sm:hidden flex items-center bg-cream-100/80 p-0.5 rounded-full border border-brown-200/80">
             <button
               type="button"
-              title="2 pieces per row"
+              title={language === 'ar' ? 'قطعتان لكل صف' : '2 pieces per row'}
+              aria-label={language === 'ar' ? 'قطعتان لكل صف' : '2 pieces per row'}
               onClick={() => {
                 onUpdateFilters({ mobileGridCols: 2 });
                 tactileAudio.playScrubTick(320);
@@ -296,7 +295,8 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             </button>
             <button
               type="button"
-              title="1 piece per row"
+              title={language === 'ar' ? 'قطعة واحدة لكل صف' : '1 piece per row'}
+              aria-label={language === 'ar' ? 'قطعة واحدة لكل صف' : '1 piece per row'}
               onClick={() => {
                 onUpdateFilters({ mobileGridCols: 1 });
                 tactileAudio.playScrubTick(320);
@@ -313,7 +313,8 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
           <div className="hidden sm:flex items-center bg-cream-100/80 p-0.5 rounded-full border border-brown-200/80">
             <button
               type="button"
-              title="Editorial 3-column view"
+              title={language === 'ar' ? 'عرض تحريري ۳ أعمدة' : 'Editorial 3-column view'}
+              aria-label={language === 'ar' ? 'عرض تحريري ۳ أعمدة' : 'Editorial 3-column view'}
               onClick={() => {
                 onUpdateFilters({ gridCols: 3 });
                 tactileAudio.playScrubTick(320);
@@ -326,7 +327,8 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             </button>
             <button
               type="button"
-              title="Compact 4-column view"
+              title={language === 'ar' ? 'عرض مدمج ٤ أعمدة' : 'Compact 4-column view'}
+              aria-label={language === 'ar' ? 'عرض مدمج ٤ أعمدة' : 'Compact 4-column view'}
               onClick={() => {
                 onUpdateFilters({ gridCols: 4 });
                 tactileAudio.playScrubTick(320);
@@ -345,12 +347,12 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap items-center gap-2 pt-2 animate-in fade-in duration-200">
           <span className="text-[11px] text-brown-400 font-medium uppercase tracking-wider mr-0.5">
-            Active:
+            {language === 'ar' ? 'المفعلة:' : 'Active:'}
           </span>
 
           {filters.searchQuery && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
-              <span>Search: "{filters.searchQuery}"</span>
+              <span>{language === 'ar' ? `بحث: "${filters.searchQuery}"` : `Search: "${filters.searchQuery}"`}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -368,7 +370,11 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
           {filters.selectedCategory !== 'all' && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
-              <span>Category: {CATEGORIES.find((c) => c.id === filters.selectedCategory)?.name}</span>
+              <span>
+                {language === 'ar'
+                  ? `التصنيف: ${CATEGORIES.find((c) => c.id === filters.selectedCategory)?.nameArabic || filters.selectedCategory}`
+                  : `Category: ${CATEGORIES.find((c) => c.id === filters.selectedCategory)?.name || filters.selectedCategory}`}
+              </span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -386,7 +392,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
           {filters.onlySale && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-burgundy-50 border border-burgundy-200 text-burgundy-600 text-xs shadow-warm-sm font-medium">
-              <span>Archive & Sale</span>
+              <span>{language === 'ar' ? 'التخفيضات والأرشيف' : 'Archive & Sale'}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -405,7 +411,8 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
           {filters.priceBracket !== 'all' && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>
-                Price: {filters.priceBracket === 'under-75' ? '< $75' : filters.priceBracket === '75-120' ? '$75–$120' : '$120+'}
+                {language === 'ar' ? 'السعر: ' : 'Price: '}
+                {filters.priceBracket === 'under-75' ? (language === 'ar' ? 'أقل من ٧٥$' : '< $75') : filters.priceBracket === '75-120' ? '$75–$120' : '$120+'}
               </span>
               <button
                 type="button"
@@ -424,7 +431,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
           {filters.maxPrice < maxDatasetPrice && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
-              <span>Max: ${filters.maxPrice}</span>
+              <span>{language === 'ar' ? `الحد الأقصى: $${filters.maxPrice}` : `Max: $${filters.maxPrice}`}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -442,7 +449,11 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
           {filters.selectedMaterial !== 'all' && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
-              <span>Fiber: {FIBER_OPTIONS.find((f) => f.id === filters.selectedMaterial)?.label}</span>
+              <span>
+                {language === 'ar'
+                  ? `الخيط: ${FIBER_OPTIONS.find((f) => f.id === filters.selectedMaterial)?.labelArabic || filters.selectedMaterial}`
+                  : `Fiber: ${FIBER_OPTIONS.find((f) => f.id === filters.selectedMaterial)?.label}`}
+              </span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -467,7 +478,11 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     distinctColors.find((c) => c.name === filters.selectedColor)?.hex || '#4A382F',
                 }}
               />
-              <span>Color: {filters.selectedColor}</span>
+              <span>
+                {language === 'ar'
+                  ? `اللون: ${distinctColors.find((c) => c.name === filters.selectedColor)?.nameArabic || filters.selectedColor}`
+                  : `Color: ${filters.selectedColor}`}
+              </span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -494,7 +509,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             className="inline-flex items-center gap-1 text-xs text-burgundy-600 hover:text-burgundy-800 underline underline-offset-2 ml-2 font-medium cursor-pointer"
           >
             <RotateCcw size={12} />
-            <span>Reset All</span>
+            <span>{language === 'ar' ? 'إعادة ضبط الكل' : 'Reset All'}</span>
           </button>
         </div>
       )}
@@ -507,18 +522,19 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             onClick={() => setIsMobileDrawerOpen(false)}
           />
 
-          <div className="relative ml-auto w-full max-w-sm bg-cream-50 h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto z-10 animate-in slide-in-from-right duration-300">
+          <div className={`relative ${language === 'ar' ? 'mr-auto ml-0 animate-in slide-in-from-left' : 'ml-auto mr-0 animate-in slide-in-from-right'} w-full max-w-sm bg-cream-50 h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto z-10 duration-300`}>
             <div className="space-y-6">
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-brown-200">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal size={17} className="text-brown-900" />
-                  <h3 className="font-serif text-lg text-brown-900 font-medium">Refine Collection</h3>
+                  <h3 className="font-serif text-lg text-brown-900 font-medium">{t.filterDrawerTitle}</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsMobileDrawerOpen(false)}
                   className="p-1.5 rounded-full text-brown-400 hover:text-brown-800 hover:bg-cream-200"
+                  aria-label={language === 'ar' ? 'إغلاق الفلاتر' : 'Close filters'}
                 >
                   <X size={18} />
                 </button>
@@ -527,7 +543,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               {/* Craft Families (Categories) */}
               <div>
                 <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold mb-2.5">
-                  Craft Family
+                  {t.craftFamiliesBadge}
                 </h4>
                 <div className="space-y-1">
                   <button
@@ -536,42 +552,43 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                       onUpdateFilters({ selectedCategory: 'all' });
                       tactileAudio.playScrubTick(320);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
+                    className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
                       filters.selectedCategory === 'all'
                         ? 'bg-brown-900 text-cream-100 font-medium'
                         : 'text-brown-700 hover:bg-cream-200/70'
                     }`}
                   >
-                    <span>All Pieces (المجموعة الكاملة)</span>
+                    <span>{t.allCategories}</span>
                     <span>{products.length}</span>
                   </button>
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        onUpdateFilters({ selectedCategory: cat.id });
-                        tactileAudio.playScrubTick(320);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
-                        filters.selectedCategory === cat.id
-                          ? 'bg-brown-900 text-cream-100 font-medium'
-                          : 'text-brown-700 hover:bg-cream-200/70'
-                      }`}
-                    >
-                      <span>
-                        {cat.name} ({cat.nameArabic})
-                      </span>
-                      <span>{products.filter((p) => p.category === cat.id).length}</span>
-                    </button>
-                  ))}
+                  {CATEGORIES.map((cat) => {
+                    const label = language === 'ar' ? cat.nameArabic : cat.name;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          onUpdateFilters({ selectedCategory: cat.id });
+                          tactileAudio.playScrubTick(320);
+                        }}
+                        className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
+                          filters.selectedCategory === cat.id
+                            ? 'bg-brown-900 text-cream-100 font-medium'
+                            : 'text-brown-700 hover:bg-cream-200/70'
+                        }`}
+                      >
+                        <span>{label}</span>
+                        <span>{products.filter((p) => p.category === cat.id).length}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Archive & Offers */}
               <div className="pt-4 border-t border-brown-200/60">
                 <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold mb-2.5">
-                  Special Releases
+                  {language === 'ar' ? 'إصدارات خاصة' : 'Special Releases'}
                 </h4>
                 <label className="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl bg-cream-100/60 border border-brown-200">
                   <input
@@ -584,7 +601,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     className="w-4 h-4 rounded accent-burgundy-600"
                   />
                   <span className="text-xs text-brown-900 font-medium">
-                    Archive Drops & Seasonal Sale ({saleCount})
+                    {language === 'ar' ? `تخفيضات وإصدارات الأرشيف (${saleCount})` : `Archive Drops & Seasonal Sale (${saleCount})`}
                   </span>
                 </label>
               </div>
@@ -593,7 +610,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               <div className="pt-4 border-t border-brown-200/60">
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold">
-                    Price Ceiling
+                    {t.priceCeiling}
                   </h4>
                   <span className="text-xs font-bold text-brown-900">${filters.maxPrice}</span>
                 </div>
@@ -608,10 +625,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 />
                 <div className="grid grid-cols-2 gap-1.5 mt-3">
                   {[
-                    { id: 'all', label: 'All Prices' },
-                    { id: 'under-75', label: '< $75' },
-                    { id: '75-120', label: '$75–$120' },
-                    { id: 'over-120', label: '$120+' },
+                    { id: 'all', label: 'All Prices', labelArabic: 'جميع الأسعار' },
+                    { id: 'under-75', label: '< $75', labelArabic: 'أقل من ٧٥$' },
+                    { id: '75-120', label: '$75–$120', labelArabic: '٧٥$–١٢٠$' },
+                    { id: 'over-120', label: '$120+', labelArabic: 'أكثر من ١٢٠$' },
                   ].map((b) => (
                     <button
                       key={b.id}
@@ -626,7 +643,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                           : 'border-brown-200 text-brown-700 bg-cream-100'
                       }`}
                     >
-                      {b.label}
+                      {language === 'ar' ? b.labelArabic : b.label}
                     </button>
                   ))}
                 </div>
@@ -635,7 +652,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               {/* Fiber / Materials */}
               <div className="pt-4 border-t border-brown-200/60">
                 <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold mb-2.5">
-                  Fiber & Yarn
+                  {language === 'ar' ? 'الخيوط والألياف' : 'Fiber & Yarn'}
                 </h4>
                 <div className="space-y-1">
                   {FIBER_OPTIONS.map((f) => (
@@ -646,13 +663,13 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                         onUpdateFilters({ selectedMaterial: f.id });
                         tactileAudio.playScrubTick(320);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between ${
+                      className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-3 py-2 rounded-lg text-xs flex items-center justify-between ${
                         filters.selectedMaterial === f.id
                           ? 'bg-brown-900 text-cream-100 font-medium'
                           : 'text-brown-700 hover:bg-cream-200/60'
                       }`}
                     >
-                      <span>{f.label}</span>
+                      <span>{language === 'ar' ? (f.labelArabic || f.label) : f.label}</span>
                       {filters.selectedMaterial === f.id && <Check size={12} />}
                     </button>
                   ))}
@@ -662,39 +679,42 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               {/* Color Palette */}
               <div className="pt-4 border-t border-brown-200/60">
                 <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold mb-2.5">
-                  Natural Plant Dyes
+                  {language === 'ar' ? 'الألوان والصبغات الطبيعية' : 'Natural Plant Dyes'}
                 </h4>
                 <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
-                  {distinctColors.map((color) => (
-                    <button
-                      key={color.name}
-                      type="button"
-                      onClick={() => {
-                        onUpdateFilters({
-                          selectedColor: filters.selectedColor === color.name ? 'all' : color.name,
-                        });
-                        tactileAudio.playScrubTick(340);
-                      }}
-                      className={`flex items-center gap-2 p-1.5 rounded-lg text-[11px] text-left border ${
-                        filters.selectedColor === color.name
-                          ? 'bg-brown-900 text-cream-100 border-brown-900 font-medium'
-                          : 'border-brown-200 text-brown-800 bg-cream-100/70'
-                      }`}
-                    >
-                      <span
-                        className="w-3 h-3 rounded-full border border-black/20 shrink-0"
-                        style={{ backgroundColor: color.hex }}
-                      />
-                      <span className="truncate">{color.name}</span>
-                    </button>
-                  ))}
+                  {distinctColors.map((color) => {
+                    const colorLabel = language === 'ar' && color.nameArabic ? color.nameArabic : color.name;
+                    return (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => {
+                          onUpdateFilters({
+                            selectedColor: filters.selectedColor === color.name ? 'all' : color.name,
+                          });
+                          tactileAudio.playScrubTick(340);
+                        }}
+                        className={`flex items-center gap-2 p-1.5 rounded-lg text-[11px] ${language === 'ar' ? 'text-right' : 'text-left'} border ${
+                          filters.selectedColor === color.name
+                            ? 'bg-brown-900 text-cream-100 border-brown-900 font-medium'
+                            : 'border-brown-200 text-brown-800 bg-cream-100/70'
+                        }`}
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/20 shrink-0"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="truncate">{colorLabel}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Sort Order */}
               <div className="pt-4 border-t border-brown-200/60">
                 <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold mb-2.5">
-                  Sort Order
+                  {language === 'ar' ? 'ترتيب النتائج' : 'Sort Order'}
                 </h4>
                 <div className="space-y-1">
                   {(Object.keys(sortLabels) as SortOption[]).map((opt) => (
@@ -705,7 +725,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                         onUpdateFilters({ sortBy: opt });
                         tactileAudio.playScrubTick(300);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
+                      className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
                         filters.sortBy === opt
                           ? 'bg-brown-900 text-cream-100 font-medium'
                           : 'text-brown-700 hover:bg-cream-200/60'
@@ -724,9 +744,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
               <button
                 type="button"
                 onClick={onResetFilters}
-                className="w-1/3 py-3 rounded-xl border border-brown-300 text-brown-800 text-xs font-medium"
+                className="w-1/3 py-3 rounded-xl border border-brown-300 text-brown-800 text-xs font-medium hover:bg-cream-100 transition-colors"
               >
-                Reset
+                {t.resetFilters}
               </button>
               <button
                 type="button"
@@ -734,9 +754,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   setIsMobileDrawerOpen(false);
                   tactileAudio.playChime();
                 }}
-                className="w-2/3 py-3 rounded-xl bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider shadow-warm"
+                className="w-2/3 py-3 rounded-xl bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider shadow-warm hover:bg-burgundy-600 transition-colors"
               >
-                Show {filteredCount} Works
+                {language === 'ar' ? `عرض (${filteredCount}) قطعة` : `Show ${filteredCount} Works`}
               </button>
             </div>
           </div>

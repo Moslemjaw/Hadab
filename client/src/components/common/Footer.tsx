@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Mail, ArrowRight, Check } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface FooterProps {
   onOpenCategories?: (catId?: string) => void;
@@ -14,6 +15,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenStory,
   onGoHome,
 }) => {
+  const { language, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -47,16 +49,13 @@ export const Footer: React.FC<FooterProps> = ({
                 alt="HADAB Motif"
                 className="w-7 h-7 object-contain"
               />
-              <span className="font-display text-2xl tracking-tight text-cream-100 font-medium lowercase leading-none">
-                hadab
-              </span>
-              <span className="font-arabic text-xl text-cream-200/90 font-normal leading-none">
-                هَدَب
+              <span className="font-display text-2xl tracking-tight text-cream-100 font-medium leading-none">
+                {language === 'ar' ? 'هَدَب' : 'hadab'}
               </span>
             </div>
 
             <p className="text-cream-300/80 text-xs font-light leading-relaxed max-w-sm">
-              Slow-craft crochet atelier based between Jordan & Kuwait. Hand-hooked from unbleached cotton cord.
+              {t.footerDesc}
             </p>
 
             <div className="flex items-center gap-2.5 pt-1">
@@ -88,7 +87,7 @@ export const Footer: React.FC<FooterProps> = ({
             {/* Column 2: Navigation */}
             <div>
               <h4 className="font-serif text-cream-100 font-semibold tracking-[0.2em] uppercase text-[11px] pb-2.5 border-b border-brown-800/70 md:border-none">
-                Collection
+                {t.navCollection}
               </h4>
               <ul className="mt-3 space-y-1.5 text-xs text-cream-300/80 font-light">
                 <li>
@@ -103,7 +102,7 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className="block py-1 hover:text-cream-100 transition-colors text-left"
                   >
-                    Permanent Archive
+                    {t.archiveBadge}
                   </button>
                 </li>
                 <li>
@@ -116,9 +115,9 @@ export const Footer: React.FC<FooterProps> = ({
                         onOpenCategories('bags');
                       }
                     }}
-                    className="block py-1 hover:text-cream-100 transition-colors text-left"
+                    className="block py-1 hover:text-cream-100 transition-colors text-start"
                   >
-                    Bags & Totes
+                    {language === 'ar' ? 'الحقائب' : 'Bags & Totes'}
                   </button>
                 </li>
                 <li>
@@ -131,9 +130,9 @@ export const Footer: React.FC<FooterProps> = ({
                         onOpenCategories('clothing');
                       }
                     }}
-                    className="block py-1 hover:text-cream-100 transition-colors text-left"
+                    className="block py-1 hover:text-cream-100 transition-colors text-start"
                   >
-                    Wearables & Accessories
+                    {language === 'ar' ? 'الملابس' : 'Wearables'}
                   </button>
                 </li>
               </ul>
@@ -142,7 +141,7 @@ export const Footer: React.FC<FooterProps> = ({
             {/* Column 3: Atelier Care */}
             <div>
               <h4 className="font-serif text-cream-100 font-semibold tracking-[0.2em] uppercase text-[11px] pb-2.5 border-b border-brown-800/70 md:border-none">
-                Craft & Care
+                {t.footerCareJournal}
               </h4>
               <ul className="mt-3 space-y-1.5 text-xs text-cream-300/80 font-light">
                 <li>
@@ -158,18 +157,18 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className="block py-1 hover:text-cream-100 transition-colors text-left text-xs text-cream-300/80 font-light"
                   >
-                    The Story of هَدَب
+                    {t.navStory}
                   </button>
                 </li>
                 <li>
-                  <a href="#craft" className="block py-1 hover:text-cream-100 transition-colors">
-                    Recycled Cotton Cord
-                  </a>
+                  <span className="block py-1 text-cream-300/80">
+                    {t.footerCareHandwash}
+                  </span>
                 </li>
                 <li>
-                  <a href="#craft" className="block py-1 hover:text-cream-100 transition-colors">
-                    Care & Shaping Guide
-                  </a>
+                  <span className="block py-1 text-cream-300/80">
+                    {t.footerCareDrying}
+                  </span>
                 </li>
               </ul>
             </div>
@@ -178,16 +177,16 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Column 4: Newsletter */}
           <div className="pt-2 md:pt-0">
             <h4 className="font-serif text-cream-100 font-semibold tracking-[0.2em] uppercase text-[11px] pb-2.5 md:pb-0 border-b border-brown-800/70 md:border-none">
-              Studio Dispatches
+              {t.footerNewsletterTitle}
             </h4>
             <p className="mt-3 text-xs text-cream-300/80 font-light leading-relaxed mb-3">
-              Invitations to small-batch drops & atelier archives.
+              {t.footerNewsletterDesc}
             </p>
 
             {subscribed ? (
               <div className="flex items-center gap-2 text-xs text-sage-300 py-2.5 px-3.5 rounded-xl bg-sage-950/40 border border-sage-800/60">
                 <Check size={14} />
-                <span>Subscribed to atelier dispatches.</span>
+                <span>{t.footerSubscribed}</span>
               </div>
             ) : (
               <form onSubmit={handleSubmit}>
@@ -196,16 +195,20 @@ export const Footer: React.FC<FooterProps> = ({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Your email address"
+                    placeholder={t.footerEmailPlaceholder}
                     required
-                    className="w-full h-11 bg-brown-800/70 border border-brown-700/80 rounded-xl px-3.5 text-xs text-cream-100 placeholder:text-brown-400 focus:outline-none focus:border-blush-300/70 focus:ring-1 focus:ring-blush-300/40 transition-all pr-12"
+                    className={`w-full h-11 bg-brown-800/70 border border-brown-700/80 rounded-xl px-3.5 text-xs text-cream-100 placeholder:text-brown-400 focus:outline-none focus:border-blush-300/70 focus:ring-1 focus:ring-blush-300/40 transition-all ${
+                      language === 'ar' ? 'pl-12 pr-3.5' : 'pr-12 pl-3.5'
+                    }`}
                   />
                   <button
                     type="submit"
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-brown-700 hover:bg-burgundy-600 text-cream-100 transition-colors flex items-center justify-center active:scale-95 shadow-sm"
-                    aria-label="Subscribe"
+                    className={`absolute ${
+                      language === 'ar' ? 'left-1.5' : 'right-1.5'
+                    } top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-brown-700 hover:bg-burgundy-600 text-cream-100 transition-colors flex items-center justify-center active:scale-95 shadow-sm`}
+                    aria-label={language === 'ar' ? 'اشتراك' : 'Subscribe'}
                   >
-                    <ArrowRight size={14} />
+                    {language === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
                   </button>
                 </div>
               </form>
@@ -218,19 +221,11 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="flex flex-col xs:flex-row items-center gap-2 xs:gap-3 text-center sm:text-left">
             <span>© {new Date().getFullYear()} HADAB ATELIER.</span>
             <span className="hidden xs:inline text-brown-600">•</span>
-            <span className="font-arabic text-xs text-cream-300/90 font-normal">صنع باليد، غرزة تلو الأخرى</span>
+            <span>{t.footerRights}</span>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-5 flex-wrap justify-center text-cream-400/70">
-            <span className="text-center text-[10.5px] xs:text-[11px]">Jordan • Kuwait</span>
-            <span className="text-brown-700">•</span>
-            <a href="#" className="hover:text-cream-200 transition-colors py-1">
-              Privacy
-            </a>
-            <span className="text-brown-700">•</span>
-            <a href="#" className="hover:text-cream-200 transition-colors py-1">
-              Terms
-            </a>
+            <span className="text-center text-[10.5px] xs:text-[11px]">{t.tickerLocation}</span>
           </div>
         </div>
       </div>

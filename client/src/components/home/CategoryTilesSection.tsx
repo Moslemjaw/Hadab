@@ -1,18 +1,27 @@
 import React from 'react';
 import { CATEGORIES } from '../../constants/mockData';
 import { ThreadKnot } from '../common/ThreadSpine';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const CategoryTilesSection: React.FC = () => {
+  const { language } = useLanguage();
+
   return (
     <section id="categories" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="flex flex-col items-center text-center mb-14">
-        <ThreadKnot color="blush" label="STITCH III • COLLECTIONS" className="mb-6" />
+        <ThreadKnot
+          color="blush"
+          label={language === 'ar' ? 'الغرزة الثالثة • المجموعات' : 'STITCH III • COLLECTIONS'}
+          className="mb-6"
+        />
         <h2 className="font-serif text-3xl sm:text-4xl text-brown-800 font-normal">
-          Explore by category
+          {language === 'ar' ? 'استكشف حسب الفئة' : 'Explore by category'}
         </h2>
         <p className="mt-2 text-brown-500 max-w-md font-light text-base">
-          From heavy cotton cord carriers to delicate open-weave layers.
+          {language === 'ar'
+            ? 'من حقائب الحبال القطنية المتينة إلى القطع المنسوجة خفيفة الوزن.'
+            : 'From heavy cotton cord carriers to delicate open-weave layers.'}
         </p>
       </div>
 
@@ -27,17 +36,14 @@ export const CategoryTilesSection: React.FC = () => {
             <div className="relative z-10 mb-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs uppercase tracking-widest text-brown-500 font-semibold">
-                  {cat.count} Pieces
-                </span>
-                <span className="font-arabic text-base text-brown-600 font-medium">
-                  {cat.nameArabic}
+                  {cat.count} {language === 'ar' ? 'قطعة' : 'Pieces'}
                 </span>
               </div>
               <h3 className="font-serif text-2xl sm:text-3xl text-brown-800 font-normal group-hover:text-burgundy-500 transition-colors">
-                {cat.name}
+                {language === 'ar' ? cat.nameArabic : cat.name}
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-brown-600 font-light leading-relaxed">
-                {cat.description}
+                {language === 'ar' ? cat.descriptionArabic : cat.description}
               </p>
             </div>
 
@@ -53,9 +59,9 @@ export const CategoryTilesSection: React.FC = () => {
 
             {/* Bottom arrow affordance */}
             <div className="relative z-10 mt-6 flex items-center justify-between text-xs font-medium tracking-wider uppercase text-brown-700 group-hover:text-burgundy-500 transition-colors">
-              <span>View collection</span>
-              <div className="w-8 h-8 rounded-full bg-cream-100 flex items-center justify-center transition-transform group-hover:translate-x-1 shadow-warm-sm">
-                <ArrowRight size={14} />
+              <span>{language === 'ar' ? 'عرض المجموعة' : 'View collection'}</span>
+              <div className="w-8 h-8 rounded-full bg-cream-100 flex items-center justify-center transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 shadow-warm-sm">
+                {language === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
               </div>
             </div>
           </a>
