@@ -30,11 +30,13 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <footer className="relative bg-brown-900 text-cream-200 pt-12 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 px-4 xs:px-6 sm:px-12 border-t border-brown-950 overflow-hidden select-none font-sans">
       {/* Atmospheric Watermark - refined opacity so text is completely legible on mobile */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.018] sm:opacity-[0.04] select-none overflow-hidden px-6">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.016] sm:opacity-[0.03] select-none overflow-hidden px-6">
         <img
-          src="/PNG-HADAB-CREAM.png"
+          src={language === 'ar' ? '/arabic.png' : '/PNG-HADAB-CREAM.png'}
           alt=""
-          className="w-[82vw] max-w-5xl object-contain"
+          className={`${
+            language === 'ar' ? 'w-[45vw] max-w-md sm:max-w-lg' : 'w-[82vw] max-w-5xl'
+          } object-contain`}
         />
       </div>
 
@@ -47,13 +49,13 @@ export const Footer: React.FC<FooterProps> = ({
               <img
                 src="/motif-cream.png"
                 alt="HADAB Motif"
-                className="w-7 h-7 object-contain"
+                className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
               />
               {language === 'ar' ? (
                 <img
                   src="/arabic.png"
                   alt="هَدَب"
-                  className="h-6 w-auto object-contain"
+                  className="h-5 sm:h-6 w-auto object-contain"
                 />
               ) : (
                 <span className="font-display text-2xl tracking-tight text-cream-100 font-medium leading-none">

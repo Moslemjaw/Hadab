@@ -484,7 +484,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         <div className="p-8 sm:p-14 rounded-3xl bg-brown-900 text-cream-100 relative overflow-hidden shadow-warm-lg text-center">
           {/* Subtle Watermark Wordmark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] select-none">
-            <img src="/PNG-HADAB-CREAM.png" alt="" className="w-[80vw] max-w-4xl object-contain" />
+            <img src={isAr ? '/arabic.png' : '/PNG-HADAB-CREAM.png'} alt="" className={`${isAr ? 'w-[50vw] max-w-2xl' : 'w-[80vw] max-w-4xl'} object-contain`} />
           </div>
 
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">

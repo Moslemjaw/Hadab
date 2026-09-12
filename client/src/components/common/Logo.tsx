@@ -60,7 +60,7 @@ export const Logo: React.FC<LogoProps> = ({
             src={isLight ? '/arabic.png' : '/arabic-dark.png'}
             alt="هَدَب"
             className={`${
-              size === 'sm' ? 'h-5' : size === 'md' ? 'h-6' : size === 'lg' ? 'h-8' : 'h-10 md:h-12'
+              size === 'sm' ? 'h-4' : size === 'md' ? 'h-5' : size === 'lg' ? 'h-7' : 'h-9 md:h-10'
             } w-auto object-contain`}
           />
         ) : (
