@@ -6,15 +6,11 @@ import {
   Check,
   RotateCcw,
   Percent,
-  Layers,
-  Palette,
-  DollarSign,
   ArrowUpDown,
   LayoutGrid,
   Grid3X3,
   Grid2X2,
   Square,
-  Sparkles,
 } from 'lucide-react';
 import { CATEGORIES } from '../../constants/mockData';
 import type { Product } from '../../types';
@@ -55,13 +51,6 @@ const FIBER_OPTIONS = [
   { id: 'trapillo', label: 'Trapillo Cord', match: 'trapillo' },
 ];
 
-const SHORT_CATEGORY_NAMES: Record<string, string> = {
-  all: 'All',
-  bags: 'Bags',
-  headwear: 'Headwear',
-  wearables: 'Wearables',
-  accessories: 'Accessories',
-};
 
 export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   products,
@@ -147,40 +136,28 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
   return (
     <div className="w-full space-y-4" ref={filterBarRef}>
-      {/* 1. ATELIER CATEGORY BUTTONS (Craft Families) */}
-      <div className="w-full">
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
-          {/* "All" Tab */}
+      {/* 1. EDITORIAL CRAFT FAMILIES NAVIGATION (Pure luxury text tabs, zero chunky buttons) */}
+      <div className="w-full border-b border-brown-300/60">
+        <div className="flex items-center gap-6 sm:gap-9 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
           <button
             type="button"
             onClick={() => {
               onUpdateFilters({ selectedCategory: 'all' });
               tactileAudio.playScrubTick(300);
             }}
-            className={`group relative h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs font-medium tracking-wide transition-all duration-200 shrink-0 flex items-center gap-1.5 border ${
+            className={`pb-2.5 text-xs sm:text-[13px] tracking-[0.14em] uppercase transition-all whitespace-nowrap border-b-2 flex items-center gap-1.5 ${
               filters.selectedCategory === 'all'
-                ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
-                : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80'
+                ? 'text-brown-950 font-bold border-brown-900'
+                : 'text-brown-400 hover:text-brown-800 font-medium border-transparent'
             }`}
           >
-            <span>All</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                filters.selectedCategory === 'all'
-                  ? 'bg-cream-100/20 text-cream-100'
-                  : 'bg-cream-200 text-brown-600'
-              }`}
-            >
-              {products.length}
-            </span>
+            <span>All Works</span>
+            <span className="text-[10px] font-normal opacity-60">({products.length})</span>
           </button>
 
-          {/* Individual Category Tabs */}
           {CATEGORIES.map((cat) => {
             const isActive = filters.selectedCategory === cat.id;
             const count = products.filter((p) => p.category === cat.id).length;
-            const shortName = SHORT_CATEGORY_NAMES[cat.id] || cat.name;
-
             return (
               <button
                 key={cat.id}
@@ -189,103 +166,95 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   onUpdateFilters({ selectedCategory: cat.id });
                   tactileAudio.playScrubTick(320);
                 }}
-                className={`group relative h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs font-medium tracking-wide transition-all duration-200 shrink-0 flex items-center gap-1.5 border ${
+                className={`pb-2.5 text-xs sm:text-[13px] tracking-[0.14em] uppercase transition-all whitespace-nowrap border-b-2 flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
-                    : 'bg-cream-100/90 hover:bg-cream-50 text-brown-800 border-brown-200/80 hover:border-brown-400/80'
+                    ? 'text-brown-950 font-bold border-brown-900'
+                    : 'text-brown-400 hover:text-brown-800 font-medium border-transparent'
                 }`}
               >
-                <span className="sm:hidden">{shortName}</span>
-                <span className="hidden sm:inline">{cat.name}</span>
-                <span className="hidden sm:inline font-arabic text-[10.5px] opacity-75">
-                  ({cat.nameArabic})
-                </span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    isActive
-                      ? 'bg-cream-100/20 text-cream-100'
-                      : 'bg-cream-200 text-brown-600'
-                  }`}
-                >
-                  {count}
-                </span>
+                <span>{cat.name}</span>
+                <span className="text-[10px] font-normal opacity-60">({count})</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 2. ELEVATED ATELIER REFINEMENT TOOLBAR */}
-      {/* 2A. DEDICATED COMPACT MOBILE TOOLBAR */}
-      <div className="md:hidden pt-1.5 pb-1.5 border-y border-brown-200/80 space-y-1.5">
-        <div className="flex items-center gap-1.5 justify-between">
-          {/* Filters Drawer Button */}
+      {/* 2. UNIFIED ATELIER REFINEMENT BAR (Mobile & Computer) */}
+      <div className="py-2 border-b border-brown-200/60 flex items-center justify-between gap-3">
+        {/* LEFT: Master Filters Trigger & Quick Sale Toggle */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => {
               setIsMobileDrawerOpen(true);
               tactileAudio.playScrubTick(300);
             }}
-            className={`flex-1 h-8 px-2.5 rounded-full text-[11px] font-semibold tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+            className={`h-8.5 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-sm active:scale-95 border ${
               activeFiltersCount > 0
-                ? 'bg-burgundy-600 text-cream-100'
-                : 'bg-brown-900 text-cream-100 shadow-warm-sm'
+                ? 'bg-burgundy-600 border-burgundy-700 text-cream-100'
+                : 'bg-cream-100/90 hover:bg-cream-50 text-brown-900 border-brown-300/80 hover:border-brown-400'
             }`}
           >
-            <SlidersHorizontal size={12} />
+            <SlidersHorizontal size={13} />
             <span>Filters</span>
             {activeFiltersCount > 0 && (
-              <span className="w-3.5 h-3.5 rounded-full bg-cream-100 text-burgundy-600 text-[9px] flex items-center justify-center font-bold">
+              <span className="w-4 h-4 rounded-full bg-cream-100 text-burgundy-600 text-[9.5px] flex items-center justify-center font-bold">
                 {activeFiltersCount}
               </span>
             )}
           </button>
 
-          {/* Quick Sale Toggle */}
+          {/* Quick Sale Pill */}
           <button
             type="button"
             onClick={() => {
               onUpdateFilters({ onlySale: !filters.onlySale });
               tactileAudio.playScrubTick(380);
             }}
-            className={`h-8 px-2.5 rounded-full text-[11px] font-semibold tracking-wide flex items-center gap-1 border transition-all ${
+            className={`h-8.5 px-3 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5 border transition-all ${
               filters.onlySale
                 ? 'bg-burgundy-600 border-burgundy-700 text-cream-100 shadow-sm'
-                : 'bg-cream-100/90 border-brown-200/80 text-brown-800'
+                : 'bg-cream-100/60 hover:bg-cream-100 border-brown-200/70 text-brown-700'
             }`}
           >
-            <Percent size={10} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
+            <Percent size={11} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
             <span>Sale</span>
-            <span
-              className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                filters.onlySale ? 'bg-cream-100/20 text-cream-100' : 'bg-burgundy-100 text-burgundy-700'
-              }`}
-            >
+            <span className={`text-[9.5px] font-bold ${filters.onlySale ? 'text-cream-100' : 'text-burgundy-700'}`}>
               {saleCount}
             </span>
           </button>
+        </div>
 
-          {/* Mobile Sort Dropdown */}
+        {/* MIDDLE: Piece Count (Hidden on mobile) */}
+        <div className="hidden sm:block text-xs text-brown-500 font-light">
+          Showing <strong className="font-serif text-sm font-semibold text-brown-900">{filteredCount}</strong> of {products.length} pieces
+        </div>
+
+        {/* RIGHT: Sort Dropdown & Grid View Toggle */}
+        <div className="flex items-center gap-2">
+          {/* Sort Dropdown */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => togglePopover('sort-mobile')}
-              className="h-8 px-2 rounded-full text-[11px] font-medium flex items-center gap-1 bg-cream-100/90 border border-brown-200/80 text-brown-800"
+              onClick={() => togglePopover('sort')}
+              className="h-8.5 px-3 rounded-full text-xs font-medium flex items-center gap-1.5 bg-cream-100/80 hover:bg-cream-100 border border-brown-200/80 text-brown-800 transition-colors"
             >
-              <ArrowUpDown size={10} className="text-brown-500" />
-              <span className="text-[11px] font-semibold truncate max-w-[65px]">
+              <ArrowUpDown size={11} className="text-brown-500" />
+              <span className="hidden xs:inline text-brown-400 font-normal">Sort:</span>
+              <span className="font-semibold text-brown-900 text-xs">
                 {filters.sortBy === 'featured'
                   ? 'Featured'
                   : filters.sortBy === 'price-asc'
-                  ? 'Low-High'
+                  ? 'Price: Low'
                   : filters.sortBy === 'price-desc'
-                  ? 'High-Low'
-                  : 'A-Z'}
+                  ? 'Price: High'
+                  : 'A–Z'}
               </span>
-              <ChevronDown size={10} className={`transition-transform duration-150 ${activePopover === 'sort-mobile' ? 'rotate-180' : ''}`} />
+              <ChevronDown size={11} className={`transition-transform duration-150 ${activePopover === 'sort' ? 'rotate-180' : ''}`} />
             </button>
 
-            {activePopover === 'sort-mobile' && (
+            {activePopover === 'sort' && (
               <div className="absolute top-full right-0 mt-2 w-48 bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                 {(Object.keys(sortLabels) as SortOption[]).map((opt) => (
                   <button
@@ -296,7 +265,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                       tactileAudio.playScrubTick(300);
                       setActivePopover(null);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors ${
                       filters.sortBy === opt
                         ? 'bg-brown-900 text-cream-100 font-medium'
                         : 'text-brown-800 hover:bg-cream-200/70'
@@ -310,8 +279,8 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             )}
           </div>
 
-          {/* Mobile Grid Layout Switcher (2-col vs 1-col) */}
-          <div className="flex items-center bg-cream-100/90 p-0.5 rounded-full border border-brown-200/80 shrink-0">
+          {/* Mobile Grid Switcher (2-col vs 1-col) */}
+          <div className="sm:hidden flex items-center bg-cream-100/80 p-0.5 rounded-full border border-brown-200/80">
             <button
               type="button"
               title="2 pieces per row"
@@ -320,9 +289,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 tactileAudio.playScrubTick(320);
               }}
               className={`p-1.5 rounded-full transition-colors ${
-                filters.mobileGridCols !== 1
-                  ? 'bg-brown-900 text-cream-100 shadow-sm'
-                  : 'text-brown-500 hover:text-brown-900'
+                filters.mobileGridCols !== 1 ? 'bg-brown-900 text-cream-100 shadow-sm' : 'text-brown-500 hover:text-brown-900'
               }`}
             >
               <Grid2X2 size={12} />
@@ -335,445 +302,41 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 tactileAudio.playScrubTick(320);
               }}
               className={`p-1.5 rounded-full transition-colors ${
-                filters.mobileGridCols === 1
-                  ? 'bg-brown-900 text-cream-100 shadow-sm'
-                  : 'text-brown-500 hover:text-brown-900'
+                filters.mobileGridCols === 1 ? 'bg-brown-900 text-cream-100 shadow-sm' : 'text-brown-500 hover:text-brown-900'
               }`}
             >
               <Square size={12} />
             </button>
           </div>
-        </div>
 
-        {/* Mobile Sub-Row: Count & Reset */}
-        <div className="flex items-center justify-between text-[10.5px] text-brown-600 font-light px-1">
-          <span>
-            Showing <strong className="font-serif font-semibold text-brown-900">{filteredCount}</strong> pieces
-          </span>
-          {activeFiltersCount > 0 && (
+          {/* Desktop Grid Switcher (Editorial 3-col vs Compact 4-col) */}
+          <div className="hidden sm:flex items-center bg-cream-100/80 p-0.5 rounded-full border border-brown-200/80">
             <button
               type="button"
-              onClick={onResetFilters}
-              className="text-burgundy-600 hover:text-burgundy-800 font-medium underline flex items-center gap-1"
-            >
-              <RotateCcw size={10} />
-              <span>Reset all ({activeFiltersCount})</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 2B. SPACIOUS DESKTOP TOOLBAR (md+) */}
-      <div className="hidden md:block relative z-30 pt-2 pb-1 border-y border-brown-200/80">
-        <div className="flex items-center justify-between gap-3">
-          {/* LEFT GROUP: REFINEMENT PILLS & POPOVERS */}
-          <div className="flex items-center flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold text-brown-500 mr-1">
-              <SlidersHorizontal size={13} className="text-brown-400" />
-              <span>Filter:</span>
-            </span>
-
-            {/* Archive & Sale Toggle */}
-            <button
-              type="button"
+              title="Editorial 3-column view"
               onClick={() => {
-                onUpdateFilters({ onlySale: !filters.onlySale });
-                tactileAudio.playScrubTick(380);
+                onUpdateFilters({ gridCols: 3 });
+                tactileAudio.playScrubTick(320);
               }}
-              className={`h-9 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2 border transition-all duration-200 ${
-                filters.onlySale
-                  ? 'bg-burgundy-600 border-burgundy-700 text-cream-100 shadow-sm'
-                  : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-burgundy-300'
+              className={`p-1.5 rounded-full transition-colors ${
+                filters.gridCols === 3 ? 'bg-brown-900 text-cream-100 shadow-sm' : 'text-brown-500 hover:text-brown-900'
               }`}
             >
-              <Percent size={12} className={filters.onlySale ? 'text-cream-100' : 'text-burgundy-600'} />
-              <span>Archive & Sale</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  filters.onlySale
-                    ? 'bg-cream-100/20 text-cream-100'
-                    : 'bg-burgundy-100 text-burgundy-700'
-                }`}
-              >
-                {saleCount}
-              </span>
+              <LayoutGrid size={13} />
             </button>
-
-            {/* Price Filter Popover Trigger */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => togglePopover('price')}
-                className={`h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
-                  activePopover === 'price' || filters.priceBracket !== 'all' || filters.maxPrice < maxDatasetPrice
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm font-semibold'
-                    : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-brown-400'
-                }`}
-              >
-                <DollarSign size={13} className={activePopover === 'price' || filters.priceBracket !== 'all' || filters.maxPrice < maxDatasetPrice ? 'text-cream-300' : 'text-brown-500'} />
-                <span>
-                  {filters.priceBracket !== 'all'
-                    ? filters.priceBracket === 'under-75'
-                      ? '< $75'
-                      : filters.priceBracket === '75-120'
-                      ? '$75–$120'
-                      : '$120+'
-                    : filters.maxPrice < maxDatasetPrice
-                    ? `≤ $${filters.maxPrice}`
-                    : 'Price'}
-                </span>
-                <ChevronDown
-                  size={12}
-                  className={`transition-transform duration-200 ${activePopover === 'price' ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              {/* Price Popover Panel */}
-              {activePopover === 'price' && (
-                <div className="absolute top-full left-0 mt-2.5 w-80 bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-4 z-40 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between pb-3 border-b border-brown-200/60">
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign size={14} className="text-brown-700" />
-                      <span className="font-serif text-sm font-semibold text-brown-900">Price Range</span>
-                    </div>
-                    <span className="text-xs font-serif font-bold text-burgundy-600">
-                      Up to ${filters.maxPrice}
-                    </span>
-                  </div>
-
-                  {/* Preset Price Brackets */}
-                  <div className="py-3">
-                    <span className="text-[10px] uppercase tracking-wider text-brown-400 font-semibold block mb-2">
-                      Quick Brackets
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { id: 'all', label: 'All Prices' },
-                        { id: 'under-75', label: 'Under $75' },
-                        { id: '75-120', label: '$75 – $120' },
-                        { id: 'over-120', label: '$120+' },
-                      ].map((b) => (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onClick={() => {
-                            onUpdateFilters({ priceBracket: b.id as PriceBracket });
-                            tactileAudio.playScrubTick(320);
-                          }}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border text-center transition-all ${
-                            filters.priceBracket === b.id
-                              ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm'
-                              : 'bg-cream-100/80 border-brown-200 text-brown-700 hover:bg-cream-100'
-                          }`}
-                        >
-                          {b.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Custom Range Slider */}
-                  <div className="py-3 border-t border-brown-200/60">
-                    <div className="flex items-center justify-between text-xs text-brown-500 mb-2">
-                      <span>Min: ${minDatasetPrice}</span>
-                      <span className="font-semibold text-brown-900">Max: ${filters.maxPrice}</span>
-                      <span>Cap: ${maxDatasetPrice}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={minDatasetPrice}
-                      max={maxDatasetPrice}
-                      step={5}
-                      value={filters.maxPrice}
-                      onChange={(e) => onUpdateFilters({ maxPrice: Number(e.target.value) })}
-                      className="w-full accent-brown-900 cursor-pointer h-1.5 bg-brown-200 rounded-lg"
-                    />
-                  </div>
-
-                  {/* Footer Actions */}
-                  <div className="flex items-center justify-between pt-3 border-t border-brown-200/60 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onUpdateFilters({ maxPrice: maxDatasetPrice, priceBracket: 'all' });
-                        tactileAudio.playScrubTick(280);
-                      }}
-                      className="text-brown-500 hover:text-burgundy-600 font-medium"
-                    >
-                      Reset Price
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActivePopover(null)}
-                      className="px-4 py-1.5 rounded-full bg-brown-900 text-cream-100 text-xs font-semibold uppercase tracking-wider hover:bg-burgundy-600 transition-colors"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Fiber / Material Popover Trigger */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => togglePopover('material')}
-                className={`h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
-                  activePopover === 'material' || filters.selectedMaterial !== 'all'
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm font-semibold'
-                    : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-brown-400'
-                }`}
-              >
-                <Layers size={13} className={activePopover === 'material' || filters.selectedMaterial !== 'all' ? 'text-cream-300' : 'text-brown-500'} />
-                <span>
-                  {filters.selectedMaterial !== 'all'
-                    ? FIBER_OPTIONS.find((f) => f.id === filters.selectedMaterial)?.label.split(' ')[0] || 'Material'
-                    : 'Fiber'}
-                </span>
-                <ChevronDown
-                  size={12}
-                  className={`transition-transform duration-200 ${activePopover === 'material' ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              {/* Material Popover Panel */}
-              {activePopover === 'material' && (
-                <div className="absolute top-full left-0 mt-2.5 w-72 bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-3 z-40 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center gap-1.5 pb-2.5 mb-1.5 border-b border-brown-200/60">
-                    <Layers size={14} className="text-brown-700" />
-                    <span className="font-serif text-sm font-semibold text-brown-900">Craft Fiber & Yarn</span>
-                  </div>
-                  <div className="space-y-1">
-                    {FIBER_OPTIONS.map((fiber) => {
-                      const isSelected = filters.selectedMaterial === fiber.id;
-                      const count =
-                        fiber.id === 'all'
-                          ? products.length
-                          : products.filter((p) => p.yarnType.toLowerCase().includes(fiber.match)).length;
-
-                      return (
-                        <button
-                          key={fiber.id}
-                          type="button"
-                          onClick={() => {
-                            onUpdateFilters({ selectedMaterial: fiber.id });
-                            tactileAudio.playScrubTick(320);
-                            setActivePopover(null);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors ${
-                            isSelected
-                              ? 'bg-brown-900 text-cream-100 font-medium'
-                              : 'text-brown-800 hover:bg-cream-200/70'
-                          }`}
-                        >
-                          <span className="truncate">{fiber.label}</span>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                                isSelected ? 'bg-cream-100/20 text-cream-100' : 'text-brown-400'
-                              }`}
-                            >
-                              {count}
-                            </span>
-                            {isSelected && <Check size={13} className="text-cream-100" />}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Color Palette Popover Trigger */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => togglePopover('color')}
-                className={`h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-200 ${
-                  activePopover === 'color' || filters.selectedColor !== 'all'
-                    ? 'bg-brown-900 border-brown-900 text-cream-100 shadow-sm font-semibold'
-                    : 'bg-cream-100/80 hover:bg-cream-100 border-brown-200/80 text-brown-800 hover:border-brown-400'
-                }`}
-              >
-                <Palette size={13} className={activePopover === 'color' || filters.selectedColor !== 'all' ? 'text-cream-300' : 'text-brown-500'} />
-                {filters.selectedColor !== 'all' ? (
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full border border-black/20 inline-block"
-                      style={{
-                        backgroundColor:
-                          distinctColors.find((c) => c.name === filters.selectedColor)?.hex || '#4A382F',
-                      }}
-                    />
-                    <span className="truncate max-w-[80px]">{filters.selectedColor}</span>
-                  </span>
-                ) : (
-                  <span>Palette</span>
-                )}
-                <ChevronDown
-                  size={12}
-                  className={`transition-transform duration-200 ${activePopover === 'color' ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              {/* Color Popover Panel */}
-              {activePopover === 'color' && (
-                <div className="absolute top-full left-0 mt-2.5 w-80 bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-3.5 z-40 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-brown-200/60">
-                    <div className="flex items-center gap-1.5">
-                      <Palette size={14} className="text-brown-700" />
-                      <span className="font-serif text-sm font-semibold text-brown-900">Organic Plant Dyes</span>
-                    </div>
-                    {filters.selectedColor !== 'all' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onUpdateFilters({ selectedColor: 'all' });
-                          tactileAudio.playScrubTick(280);
-                        }}
-                        className="text-[11px] text-burgundy-600 hover:underline font-medium"
-                      >
-                        Reset
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onUpdateFilters({ selectedColor: 'all' });
-                        tactileAudio.playScrubTick(320);
-                        setActivePopover(null);
-                      }}
-                      className={`flex items-center gap-2 p-2 rounded-xl text-xs text-left transition-colors col-span-2 ${
-                        filters.selectedColor === 'all'
-                          ? 'bg-brown-900 text-cream-100 font-medium'
-                          : 'text-brown-800 hover:bg-cream-200/70'
-                      }`}
-                    >
-                      <Sparkles size={12} className="text-blush-300" />
-                      <span>All Natural Tones</span>
-                    </button>
-                    {distinctColors.map((color) => {
-                      const isSelected = filters.selectedColor === color.name;
-                      return (
-                        <button
-                          key={color.name}
-                          type="button"
-                          onClick={() => {
-                            onUpdateFilters({ selectedColor: color.name });
-                            tactileAudio.playScrubTick(340);
-                            setActivePopover(null);
-                          }}
-                          className={`flex items-center gap-2 p-2 rounded-xl text-xs text-left transition-all ${
-                            isSelected
-                              ? 'bg-brown-900 text-cream-100 font-medium shadow-sm'
-                              : 'text-brown-800 hover:bg-cream-200/70 bg-cream-100/50'
-                          }`}
-                        >
-                          <span
-                            className="w-3.5 h-3.5 rounded-full border border-black/15 shrink-0 shadow-sm"
-                            style={{ backgroundColor: color.hex }}
-                          />
-                          <span className="truncate text-[11px]">{color.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT GROUP: RESULTS COUNT, SORT & GRID TOGGLE */}
-          <div className="flex items-center gap-4">
-            {/* Live Count */}
-            <span className="text-xs text-brown-600 font-light whitespace-nowrap">
-              Showing <strong className="text-brown-900 font-semibold font-serif text-sm">{filteredCount}</strong> of{' '}
-              {products.length} works
-            </span>
-
-            <div className="flex items-center gap-2.5">
-              {/* Custom Luxury Sort Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => togglePopover('sort')}
-                  className="h-9 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-cream-100/80 hover:bg-cream-100 border border-brown-200/80 text-brown-800 hover:border-brown-400 transition-colors"
-                >
-                  <ArrowUpDown size={12} className="text-brown-500" />
-                  <span className="text-brown-400 font-normal">Sort:</span>
-                  <span className="font-semibold text-brown-900">{sortLabels[filters.sortBy]}</span>
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform duration-200 ${activePopover === 'sort' ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {activePopover === 'sort' && (
-                  <div className="absolute top-full right-0 mt-2.5 w-52 bg-cream-50 rounded-2xl border border-brown-200 shadow-warm-lg p-2 z-40 animate-in fade-in zoom-in-95 duration-150">
-                    {(Object.keys(sortLabels) as SortOption[]).map((opt) => {
-                      const isSelected = filters.sortBy === opt;
-                      return (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => {
-                            onUpdateFilters({ sortBy: opt });
-                            tactileAudio.playScrubTick(300);
-                            setActivePopover(null);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors ${
-                            isSelected
-                              ? 'bg-brown-900 text-cream-100 font-medium'
-                              : 'text-brown-800 hover:bg-cream-200/70'
-                          }`}
-                        >
-                          <span>{sortLabels[opt]}</span>
-                          {isSelected && <Check size={13} className="text-cream-100" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Grid Column Switcher (Editorial 3-col vs Compact 4-col) */}
-              <div className="flex items-center bg-cream-100/80 p-0.5 rounded-full border border-brown-200/80">
-                <button
-                  type="button"
-                  title="Editorial 3-column view"
-                  onClick={() => {
-                    onUpdateFilters({ gridCols: 3 });
-                    tactileAudio.playScrubTick(320);
-                  }}
-                  className={`p-1.5 rounded-full transition-colors ${
-                    filters.gridCols === 3
-                      ? 'bg-brown-900 text-cream-100 shadow-sm'
-                      : 'text-brown-500 hover:text-brown-900'
-                  }`}
-                >
-                  <LayoutGrid size={14} />
-                </button>
-                <button
-                  type="button"
-                  title="Compact 4-column view"
-                  onClick={() => {
-                    onUpdateFilters({ gridCols: 4 });
-                    tactileAudio.playScrubTick(320);
-                  }}
-                  className={`p-1.5 rounded-full transition-colors ${
-                    filters.gridCols === 4
-                      ? 'bg-brown-900 text-cream-100 shadow-sm'
-                      : 'text-brown-500 hover:text-brown-900'
-                  }`}
-                >
-                  <Grid3X3 size={14} />
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              title="Compact 4-column view"
+              onClick={() => {
+                onUpdateFilters({ gridCols: 4 });
+                tactileAudio.playScrubTick(320);
+              }}
+              className={`p-1.5 rounded-full transition-colors ${
+                filters.gridCols === 4 ? 'bg-brown-900 text-cream-100 shadow-sm' : 'text-brown-500 hover:text-brown-900'
+              }`}
+            >
+              <Grid3X3 size={13} />
+            </button>
           </div>
         </div>
       </div>
@@ -936,9 +499,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
         </div>
       )}
 
-      {/* 4. MASTER MOBILE FILTER DRAWER */}
+      {/* 4. MASTER FILTER DRAWER (Mobile & Computer) */}
       {isMobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex">
           <div
             className="fixed inset-0 bg-brown-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
             onClick={() => setIsMobileDrawerOpen(false)}

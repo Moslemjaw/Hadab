@@ -506,52 +506,45 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                     {/* Metadata */}
                     <div className="p-2.5 sm:p-4">
                       {/* Craft Family indicator */}
-                      <div className="flex items-center justify-between text-[8.5px] sm:text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.2em] text-brown-400 font-semibold mb-0.5 sm:mb-1">
-                        <span className="truncate">
-                          {CATEGORIES.find((c) => c.id === product.category)?.name || product.category}
+                      <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-brown-400 font-semibold block mb-0.5">
+                        {CATEGORIES.find((c) => c.id === product.category)?.name || product.category}
+                      </span>
+
+                      {/* Product Name */}
+                      <h3 className="font-serif text-xs sm:text-base font-semibold text-brown-900 group-hover:text-burgundy-600 transition-colors line-clamp-1 leading-snug">
+                        {product.name}
+                      </h3>
+
+                      {/* Price */}
+                      <div className="flex items-baseline gap-1.5 mt-0.5 sm:mt-1">
+                        <span className={`font-serif text-xs sm:text-base font-semibold ${hasDiscount ? 'text-burgundy-600' : 'text-brown-900'}`}>
+                          ${product.price}
                         </span>
-                        {product.nameArabic && (
-                          <span className="font-arabic text-[10.5px] sm:text-xs text-brown-400 font-normal truncate max-w-[45%]">
-                            {product.nameArabic}
+                        {hasDiscount && (
+                          <span className="font-serif text-[10px] sm:text-xs text-brown-400 line-through">
+                            ${product.originalPrice}
                           </span>
                         )}
                       </div>
 
-                      {/* Name & Price */}
-                      <div className="flex items-baseline justify-between gap-1 sm:gap-2 mb-1 sm:mb-1.5">
-                        <h3 className="font-serif text-xs sm:text-base font-semibold text-brown-900 group-hover:text-burgundy-600 transition-colors truncate">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-baseline gap-1 sm:gap-1.5 shrink-0">
-                          {hasDiscount && (
-                            <span className="font-serif text-[10px] sm:text-xs text-brown-400 line-through">
-                              ${product.originalPrice}
-                            </span>
-                          )}
-                          <span className={`font-serif text-xs sm:text-base font-semibold ${hasDiscount ? 'text-burgundy-600' : 'text-brown-900'}`}>
-                            ${product.price}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Description / Stitch info (Hidden or line-clamp-1 on small screens) */}
-                      <p className="hidden xs:line-clamp-1 sm:line-clamp-2 text-[10px] sm:text-[11px] text-brown-600 font-light leading-relaxed mb-1.5 sm:mb-3">
+                      {/* Description (Desktop only to keep 2-column mobile cards clean) */}
+                      <p className="hidden md:block text-xs text-brown-600 font-light line-clamp-2 leading-relaxed mt-1.5 mb-2">
                         {product.description}
                       </p>
 
-                      {/* Yarn Pill */}
-                      <div className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-md bg-brown-200/50 text-[8.5px] sm:text-[10px] text-brown-700 font-light max-w-full">
+                      {/* Clean Yarn & Color Line */}
+                      <div className="flex items-center gap-1.5 text-[10px] text-brown-500 mt-1.5">
                         <span
-                          className="w-2 h-2 rounded-full shrink-0 border border-black/10"
+                          className="w-2 h-2 rounded-full border border-black/10 shrink-0"
                           style={{ backgroundColor: product.colorHex }}
                         />
-                        <span className="truncate max-w-[130px] sm:max-w-[170px]">{product.yarnType}</span>
+                        <span className="truncate">{product.colorName}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Add to Bag Action */}
-                  <div className="p-2.5 pt-0 sm:p-4 sm:pt-0 border-t border-brown-200/40 mt-1">
+                  <div className="p-2.5 pt-0 sm:p-4 sm:pt-0 border-t border-brown-200/40 mt-1.5">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -559,10 +552,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                         onAddToBag(product);
                         tactileAudio.playChime();
                       }}
-                      className="w-full py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.16em] font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm hover:shadow-warm active:scale-[0.98] min-h-[34px] sm:min-h-[38px]"
+                      className="w-full py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-[10.5px] sm:text-[11px] uppercase tracking-[0.14em] font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] min-h-[34px] sm:min-h-[38px]"
                     >
                       <ShoppingBag size={12} className="shrink-0" />
-                      <span className="truncate">Add to Bag</span>
+                      <span>Add to Bag</span>
                     </button>
                   </div>
                 </div>
