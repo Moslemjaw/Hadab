@@ -184,7 +184,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   return (
     <div className="min-h-screen bg-cream-200 text-brown-800 pb-28 select-none font-sans">
       {/* Top Editorial Banner */}
-      <section className="relative bg-[#2E221B] text-cream-100 pt-3.5 pb-4 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
+      <section className="relative bg-[#2E221B] text-cream-100 pt-3.5 pb-6 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
         {/* Subtle Watermark */}
         <div className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-10 pointer-events-none">
           <img src={language === 'ar' ? '/arabic.png' : '/PNG-HADAB-CREAM.png'} alt="" className="w-64 sm:w-96 h-auto" />
@@ -241,7 +241,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
           </div>
 
           {/* Enhanced Search Bar inside Header */}
-          <div className="mt-5 sm:mt-8 max-w-2xl relative" ref={searchContainerRef}>
+          <div className="mt-5 sm:mt-8 mb-1.5 sm:mb-0 max-w-2xl relative" ref={searchContainerRef}>
             <div className="relative flex items-center">
               <Search
                 size={17}
@@ -420,7 +420,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       </section>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8">
         {/* NEW ENHANCED ATELIER FILTERS SYSTEM */}
         <CollectionFilters
           products={ALL_PRODUCTS}
