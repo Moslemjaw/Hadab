@@ -147,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt={language === 'ar' ? 'هَدَب' : 'HADAB'}
                 className={`w-auto object-contain transition-transform duration-300 group-hover:scale-105 ${
                   language === 'ar'
-                    ? 'h-5 xs:h-5.5 sm:h-6 md:h-7 max-w-[70px] xs:max-w-[80px] sm:max-w-[95px]'
+                    ? 'h-6 xs:h-7 sm:h-8 md:h-9 max-w-[105px] xs:max-w-[120px] sm:max-w-none'
                     : 'h-6 xs:h-7 sm:h-8 md:h-9 max-w-[105px] xs:max-w-[120px] sm:max-w-none'
                 }`}
               />
