@@ -56,15 +56,30 @@ export const Navbar: React.FC<NavbarProps> = ({
         }`}
       >
         <div className="max-w-[1400px] mx-auto px-3 xs:px-4 sm:px-8 md:px-12 lg:px-16 flex items-center justify-between relative">
-          {/* Mobile Menu Toggle */}
-          <button
-            type="button"
-            className="md:hidden p-2 text-cream-100 hover:text-blush-200 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center -ml-1"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={t.toggleMenuAria}
-          >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          {/* Left: Mobile Menu Trigger + Mobile Language Switcher (Mobile only) */}
+          <div className="flex items-center gap-1.5 md:hidden z-20">
+            <button
+              type="button"
+              className="p-1.5 text-cream-100 hover:text-blush-200 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center -ms-1 rounded-full hover:bg-white/5 active:scale-95"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={t.toggleMenuAria}
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+
+            {/* Mobile Language Switcher */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2.5 py-1 min-h-[32px] rounded-full border border-cream-200/35 hover:border-blush-300 text-cream-100 hover:text-blush-200 transition-all flex items-center gap-1.5 bg-cream-100/10 active:scale-95 shadow-sm"
+              aria-label={t.toggleLangAria}
+            >
+              <Globe size={13} className="text-cream-100 shrink-0" />
+              <span className={language === 'en' ? 'font-arabic text-[12px] font-semibold leading-none' : 'font-sans text-[10.5px] font-semibold tracking-wider leading-none'}>
+                {language === 'en' ? 'عربي' : 'EN'}
+              </span>
+            </button>
+          </div>
 
           {/* Left Navigation Links */}
           <div className="hidden md:flex items-center gap-8 lg:gap-10 text-[11.5px] uppercase tracking-[0.24em] font-semibold text-cream-100">
@@ -120,36 +135,41 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Center Brand Identity: PNG-HADAB Logo */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto z-10">
             <button
               type="button"
               onClick={() => onGoHome && onGoHome()}
               className="group flex items-center"
+              aria-label={language === 'ar' ? 'الصفحة الرئيسية - هَدَب' : 'Home - HADAB'}
             >
               <img
-                src="/PNG-HADAB-CREAM.png"
-                alt="HADAB"
-                className="h-6 xs:h-7 sm:h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                src={language === 'ar' ? '/arabic.png' : '/PNG-HADAB-CREAM.png'}
+                alt={language === 'ar' ? 'هَدَب' : 'HADAB'}
+                className={`w-auto object-contain transition-transform duration-300 group-hover:scale-105 ${
+                  language === 'ar'
+                    ? 'h-6 xs:h-7 sm:h-8 md:h-9 max-w-[85px] xs:max-w-[98px] sm:max-w-none'
+                    : 'h-6 xs:h-7 sm:h-8 md:h-9 max-w-[105px] xs:max-w-[120px] sm:max-w-none'
+                }`}
               />
             </button>
           </div>
 
-          {/* Right Action Controls: Currency, Language Toggle, Search, Bag */}
-          <div className="flex items-center gap-1.5 xs:gap-2.5 sm:gap-5 text-cream-100">
+          {/* Right Action Controls: Currency, Desktop Language Toggle, Search, Bag */}
+          <div className="flex items-center gap-1 xs:gap-2 sm:gap-5 text-cream-100 z-20">
             {/* Currency Selector */}
             <div className="hidden lg:flex items-center text-[11.5px] uppercase tracking-[0.22em] font-semibold text-cream-100">
               <span className="cursor-default">USD ($)</span>
             </div>
 
-            {/* Language Switcher */}
+            {/* Desktop Language Switcher (hidden on mobile, visible md+) */}
             <button
               type="button"
               onClick={toggleLanguage}
-              className="p-1.5 sm:px-2.5 sm:py-1 min-h-[34px] sm:min-h-[36px] rounded-full border border-cream-200/40 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10px] sm:text-[10.5px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-semibold transition-all flex items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/15"
+              className="hidden md:flex px-3 py-1 min-h-[36px] rounded-full border border-cream-200/40 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10.5px] uppercase tracking-[0.18em] font-semibold transition-all items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/15"
               aria-label={t.toggleLangAria}
             >
               <Globe size={14} className="text-cream-100" />
-              <span className="inline">{t.switchLanguageName}</span>
+              <span>{t.switchLanguageName}</span>
             </button>
 
             {/* Search Icon */}
@@ -172,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onOpenCart}
-              className="relative p-1.5 xs:px-3 xs:py-1.5 hover:bg-white/5 rounded-full transition-all flex items-center gap-2 group text-cream-100 min-w-[40px] min-h-[40px] justify-center"
+              className="relative p-1.5 xs:px-3 xs:py-1.5 hover:bg-white/5 rounded-full transition-all flex items-center gap-2 group text-cream-100 min-w-[38px] min-h-[38px] justify-center"
               aria-label={t.bagAria}
             >
               <div className="relative">
@@ -267,26 +287,50 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ))}
 
-          {/* Bottom info: Location + Language */}
+          {/* Mobile Drawer Language Switcher & Studio Location */}
           <div
-            className={`absolute bottom-10 left-0 right-0 flex items-center justify-between px-8 text-[10px] text-cream-300/60 font-light uppercase tracking-[0.2em] transition-all duration-500 ${
+            className={`absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 px-8 transition-all duration-500 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-4'
             }`}
-            style={{ transitionDelay: isMobileMenuOpen ? '450ms' : '0ms' }}
+            style={{ transitionDelay: isMobileMenuOpen ? '420ms' : '0ms' }}
           >
-            <span>{t.tickerLocation}</span>
-            <button
-              type="button"
-              onClick={() => {
-                toggleLanguage();
-                setIsMobileMenuOpen(false);
-              }}
-              className="text-cream-200/80 hover:text-cream-100 font-medium py-1 px-2 rounded-md transition-colors"
-            >
-              {t.switchLanguageName}
-            </button>
+            {/* Dual Language Segment Toggle */}
+            <div className="inline-flex p-1 rounded-full bg-cream-100/10 border border-cream-200/20 backdrop-blur-md shadow-warm-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  if (language !== 'en') toggleLanguage();
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+                  language === 'en'
+                    ? 'bg-cream-100 text-brown-900 shadow-sm'
+                    : 'text-cream-200/80 hover:text-cream-100'
+                }`}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (language !== 'ar') toggleLanguage();
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`px-4 py-1.5 rounded-full font-arabic text-xs font-semibold transition-all duration-200 ${
+                  language === 'ar'
+                    ? 'bg-cream-100 text-brown-900 shadow-sm'
+                    : 'text-cream-200/80 hover:text-cream-100'
+                }`}
+              >
+                العربية
+              </button>
+            </div>
+
+            <span className="text-[10px] text-cream-300/60 font-light uppercase tracking-[0.2em]">
+              {t.tickerLocation}
+            </span>
           </div>
         </div>
       </div>

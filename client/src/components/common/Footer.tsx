@@ -49,9 +49,17 @@ export const Footer: React.FC<FooterProps> = ({
                 alt="HADAB Motif"
                 className="w-7 h-7 object-contain"
               />
-              <span className="font-display text-2xl tracking-tight text-cream-100 font-medium leading-none">
-                {language === 'ar' ? 'هَدَب' : 'hadab'}
-              </span>
+              {language === 'ar' ? (
+                <img
+                  src="/arabic.png"
+                  alt="هَدَب"
+                  className="h-6 w-auto object-contain"
+                />
+              ) : (
+                <span className="font-display text-2xl tracking-tight text-cream-100 font-medium leading-none">
+                  hadab
+                </span>
+              )}
             </div>
 
             <p className="text-cream-300/80 text-xs font-light leading-relaxed max-w-sm">

@@ -187,7 +187,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       <section className="relative bg-[#2E221B] text-cream-100 pt-3.5 pb-4 sm:pt-14 sm:pb-16 px-4 sm:px-8 border-b border-brown-900 overflow-hidden">
         {/* Subtle Watermark */}
         <div className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-10 pointer-events-none">
-          <img src="/PNG-HADAB-CREAM.png" alt="" className="w-64 sm:w-96 h-auto" />
+          <img src={language === 'ar' ? '/arabic.png' : '/PNG-HADAB-CREAM.png'} alt="" className="w-64 sm:w-96 h-auto" />
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">

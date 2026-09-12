@@ -54,11 +54,15 @@ export const Logo: React.FC<LogoProps> = ({
       </svg>
 
       {/* Brand Wordmark - pure Arabic or pure English according to active language */}
-      <div className="flex flex-col leading-none">
+      <div className="flex flex-col leading-none justify-center">
         {language === 'ar' ? (
-          <span className={`font-arabic font-normal tracking-wide ${isLight ? 'text-cream-100' : 'text-brown-800'} ${textSize}`}>
-            هَدَب
-          </span>
+          <img
+            src={isLight ? '/arabic.png' : '/arabic-dark.png'}
+            alt="هَدَب"
+            className={`${
+              size === 'sm' ? 'h-5' : size === 'md' ? 'h-6' : size === 'lg' ? 'h-8' : 'h-10 md:h-12'
+            } w-auto object-contain`}
+          />
         ) : (
           <span className={`font-display font-medium tracking-tight lowercase ${isLight ? 'text-cream-100' : 'text-brown-700'} ${textSize}`}>
             hadab
