@@ -163,10 +163,10 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
               </div>
 
               {/* Brand Title: single language according to active switch */}
-              <div className={`flex items-baseline justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2.5 sm:gap-3 mb-2`}>
+              <div className={`flex items-baseline justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2.5 sm:gap-3 mb-2 mt-2 sm:mt-3`}>
                 {isAr ? (
-                  <h1 className="font-arabic text-4xl xs:text-5xl sm:text-6xl font-medium tracking-wide text-brown-900 leading-tight select-none">
-                    هَدَب
+                  <h1 className="font-arabic text-4xl xs:text-5xl sm:text-6xl font-medium tracking-wide text-brown-900 leading-normal select-none pt-1">
+                    هدب
                   </h1>
                 ) : (
                   <h1 className="font-display text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-brown-900 lowercase leading-none select-none">
