@@ -112,8 +112,8 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-200 text-brown-700 font-sans selection:bg-blush-200 selection:text-brown-900">
-      {/* Sticky Luxury Navbar — hidden for auth & admin full-screen views */}
-      {currentView !== 'auth' && currentView !== 'admin' && (
+      {/* Sticky Luxury Navbar — hidden only for admin (has its own sidebar) */}
+      {currentView !== 'admin' && (
         <Navbar
           cartCount={totalBagCount}
           onOpenCart={() => setIsCartOpen(true)}
@@ -129,6 +129,8 @@ export function App() {
               ? 'collection'
               : currentView === 'categories'
               ? 'categories'
+              : currentView === 'auth'
+              ? 'auth'
               : 'home'
           }
         />
@@ -182,8 +184,8 @@ export function App() {
         )}
       </main>
 
-      {/* Warm Brown Footer — hidden for auth & admin full-screen views */}
-      {currentView !== 'auth' && currentView !== 'admin' && (
+      {/* Warm Brown Footer — hidden only for admin (has its own layout) */}
+      {currentView !== 'admin' && (
         <Footer
           onOpenCollection={handleOpenCollection}
           onOpenCategories={handleOpenCategories}
