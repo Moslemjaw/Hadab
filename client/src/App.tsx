@@ -7,12 +7,13 @@ import { CollectionPage } from './components/shop/CollectionPage';
 import { CategoriesPage } from './components/shop/CategoriesPage';
 import { StoryPage } from './components/story/StoryPage';
 import { AuthPage } from './components/auth/AuthPage';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import { ProductModal } from './components/shop/ProductModal';
 import type { Product } from './types';
 import { FEATURED_PRODUCTS } from './constants/mockData';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin'>('home');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
   const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([
@@ -38,6 +39,8 @@ export function App() {
         setCurrentView('auth');
       } else if (hash === '#account' || hash === '#auth') {
         setCurrentView('auth');
+      } else if (hash === '#admin' || hash === '#dashboard') {
+        setCurrentView('admin');
       } else if (hash === '' || hash === '#' || hash === '#home') {
         setCurrentView('home');
       }
@@ -109,27 +112,27 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-200 text-brown-700 font-sans selection:bg-blush-200 selection:text-brown-900">
-      {/* Sticky Luxury Navbar */}
-      <Navbar
-        cartCount={totalBagCount}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenCollection={handleOpenCollection}
-        onOpenCategories={handleOpenCategories}
-        onGoHome={handleGoHome}
-        onOpenStory={handleOpenStory}
-        onOpenAuth={handleOpenAuth}
-        currentPage={
-          currentView === 'story'
-            ? 'story'
-            : currentView === 'collection'
-            ? 'collection'
-            : currentView === 'categories'
-            ? 'categories'
-            : currentView === 'auth'
-            ? 'auth'
-            : 'home'
-        }
-      />
+      {/* Sticky Luxury Navbar — hidden for auth & admin full-screen views */}
+      {currentView !== 'auth' && currentView !== 'admin' && (
+        <Navbar
+          cartCount={totalBagCount}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenCollection={handleOpenCollection}
+          onOpenCategories={handleOpenCategories}
+          onGoHome={handleGoHome}
+          onOpenStory={handleOpenStory}
+          onOpenAuth={handleOpenAuth}
+          currentPage={
+            currentView === 'story'
+              ? 'story'
+              : currentView === 'collection'
+              ? 'collection'
+              : currentView === 'categories'
+              ? 'categories'
+              : 'home'
+          }
+        />
+      )}
 
       {/* Main Experience */}
       <main className="flex-grow">
@@ -163,6 +166,11 @@ export function App() {
             onExploreCollection={() => handleOpenCollection('all')}
             onOpenCategories={handleOpenCategories}
           />
+        ) : currentView === 'admin' ? (
+          /* Full-Screen Admin Dashboard */
+          <AdminDashboard
+            onBackToStore={handleGoHome}
+          />
         ) : (
           /* Dedicated Sign In / Sign Up Page */
           <AuthPage
@@ -174,13 +182,15 @@ export function App() {
         )}
       </main>
 
-      {/* Warm Brown Footer */}
-      <Footer
-        onOpenCollection={handleOpenCollection}
-        onOpenCategories={handleOpenCategories}
-        onOpenStory={handleOpenStory}
-        onGoHome={handleGoHome}
-      />
+      {/* Warm Brown Footer — hidden for auth & admin full-screen views */}
+      {currentView !== 'auth' && currentView !== 'admin' && (
+        <Footer
+          onOpenCollection={handleOpenCollection}
+          onOpenCategories={handleOpenCategories}
+          onOpenStory={handleOpenStory}
+          onGoHome={handleGoHome}
+        />
+      )}
 
       {/* Interactive Bag Drawer */}
       <CartDrawer
