@@ -109,30 +109,30 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-200 text-brown-700 font-sans selection:bg-blush-200 selection:text-brown-900">
-      {/* Sticky Luxury Navbar */}
-      <Navbar
-        cartCount={totalBagCount}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenCollection={handleOpenCollection}
-        onOpenCategories={handleOpenCategories}
-        onGoHome={handleGoHome}
-        onOpenStory={handleOpenStory}
-        onOpenAuth={handleOpenAuth}
-        currentPage={
-          currentView === 'story'
-            ? 'story'
-            : currentView === 'collection'
-            ? 'collection'
-            : currentView === 'categories'
-            ? 'categories'
-            : currentView === 'auth'
-            ? 'auth'
-            : 'home'
-        }
-      />
+      {/* Sticky Luxury Navbar (hidden on dedicated auth full-bleed screen) */}
+      {currentView !== 'auth' && (
+        <Navbar
+          cartCount={totalBagCount}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenCollection={handleOpenCollection}
+          onOpenCategories={handleOpenCategories}
+          onGoHome={handleGoHome}
+          onOpenStory={handleOpenStory}
+          onOpenAuth={handleOpenAuth}
+          currentPage={
+            currentView === 'story'
+              ? 'story'
+              : currentView === 'collection'
+              ? 'collection'
+              : currentView === 'categories'
+              ? 'categories'
+              : 'home'
+          }
+        />
+      )}
 
       {/* Main Experience */}
-      <main className="flex-grow">
+      <main className="flex-grow flex flex-col">
         {currentView === 'home' ? (
           /* Cinematic 36-Frame Scroll Stage: Hero -> Brand Line -> Featured Products -> Categories */
           <ScrollExperience
@@ -174,13 +174,15 @@ export function App() {
         )}
       </main>
 
-      {/* Warm Brown Footer */}
-      <Footer
-        onOpenCollection={handleOpenCollection}
-        onOpenCategories={handleOpenCategories}
-        onOpenStory={handleOpenStory}
-        onGoHome={handleGoHome}
-      />
+      {/* Warm Brown Footer (hidden on dedicated auth screen) */}
+      {currentView !== 'auth' && (
+        <Footer
+          onOpenCollection={handleOpenCollection}
+          onOpenCategories={handleOpenCategories}
+          onOpenStory={handleOpenStory}
+          onGoHome={handleGoHome}
+        />
+      )}
 
       {/* Interactive Bag Drawer */}
       <CartDrawer
