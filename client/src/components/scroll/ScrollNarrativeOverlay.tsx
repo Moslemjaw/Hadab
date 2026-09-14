@@ -157,7 +157,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
             {/* Editorial Statement: Positioned directly below logo on mobile with minimal gap, Left on desktop */}
             <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto max-w-sm sm:max-w-sm mt-[43vh] xs:mt-[44vh] md:mt-0 md:-translate-y-6 lg:-translate-y-14`}>
               {/* Provenance eyebrow */}
-              <div className={`flex items-center justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2 mb-2 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] sm:tracking-[0.28em] font-semibold text-burgundy-600`}>
+              <div className={`flex items-center justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2 mb-3 sm:mb-4 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] sm:tracking-[0.28em] font-semibold text-burgundy-600`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-burgundy-500" />
                 <span>{t.heroEyebrow}</span>
               </div>
@@ -165,7 +165,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
               {/* Brand Title: single language according to active switch */}
               <div className={`flex items-baseline justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2.5 sm:gap-3 mb-2`}>
                 {isAr ? (
-                  <h1 className="font-arabic text-4xl xs:text-5xl sm:text-6xl font-medium tracking-wide text-brown-900 leading-none select-none">
+                  <h1 className="font-arabic text-4xl xs:text-5xl sm:text-6xl font-medium tracking-wide text-brown-900 leading-tight select-none">
                     هَدَب
                   </h1>
                 ) : (
