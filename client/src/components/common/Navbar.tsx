@@ -154,10 +154,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Right Action Controls: Currency, Desktop Language Toggle, Search, Bag */}
-          <div className="flex items-center gap-1 xs:gap-2 sm:gap-5 text-cream-100 z-20">
+          {/* Right Action Controls: Currency, Desktop Language Toggle, Search, Bag, Profile */}
+          <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-4 text-cream-100 z-20">
             {/* Currency Selector */}
-            <div className="hidden lg:flex items-center text-[11.5px] uppercase tracking-[0.22em] font-semibold text-cream-100">
+            <div className="hidden lg:flex items-center text-[11.5px] uppercase tracking-[0.22em] font-semibold text-cream-100/90 hover:text-cream-100 transition-colors">
               <span className="cursor-default">USD ($)</span>
             </div>
 
@@ -165,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={toggleLanguage}
-              className="hidden md:flex px-3 py-1 min-h-[36px] rounded-full border border-cream-200/40 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10.5px] uppercase tracking-[0.18em] font-semibold transition-all items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/15"
+              className="hidden md:flex px-3 py-1 min-h-[34px] rounded-full border border-cream-200/35 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10.5px] uppercase tracking-[0.18em] font-semibold transition-all items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/15 active:scale-95"
               aria-label={t.toggleLangAria}
             >
               <Globe size={14} className="text-cream-100" />
@@ -182,29 +182,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onOpenCategories('all');
                 }
               }}
-              className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+              className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center active:scale-95"
               aria-label={t.searchAria}
             >
               <Search size={17} strokeWidth={2} />
-            </button>
-
-            {/* Profile / Account Icon */}
-            <button
-              type="button"
-              className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-              aria-label={t.accountAria}
-            >
-              <User size={17} strokeWidth={2} />
             </button>
 
             {/* Shopping Bag Button */}
             <button
               type="button"
               onClick={onOpenCart}
-              className="relative p-1.5 xs:px-3 xs:py-1.5 hover:bg-white/5 rounded-full transition-all flex items-center gap-2 group text-cream-100 min-w-[38px] min-h-[38px] justify-center"
+              className="relative p-1.5 xs:px-2.5 sm:px-3 xs:py-1.5 hover:bg-white/5 rounded-full transition-all flex items-center gap-1.5 sm:gap-2 group text-cream-100 min-w-[36px] sm:min-w-[38px] min-h-[36px] sm:min-h-[38px] justify-center active:scale-95"
               aria-label={t.bagAria}
             >
-              <div className="relative">
+              <div className="relative flex items-center justify-center">
                 <ShoppingBag size={18} strokeWidth={2} className="group-hover:text-blush-200 transition-colors" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-burgundy-500 text-cream-100 text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm ring-1 ring-brown-900">
@@ -215,6 +206,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-[11.5px] uppercase tracking-[0.2em] font-semibold hidden sm:inline text-cream-100 group-hover:text-blush-200 transition-colors">
                 {language === 'ar' ? 'الحقيبة' : 'Bag'}
               </span>
+            </button>
+
+            {/* Profile / Account Icon - At the far outer corner */}
+            <button
+              type="button"
+              className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center active:scale-95"
+              aria-label={t.accountAria}
+            >
+              <User size={18} strokeWidth={2} />
             </button>
           </div>
         </div>
