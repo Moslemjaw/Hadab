@@ -153,9 +153,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             </div>
 
             {/* Member Benefits List */}
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-cream-100/70 border border-brown-200/60 shadow-warm-sm">
-                <div className="p-2 rounded-xl bg-burgundy-500/10 text-burgundy-600 shrink-0 mt-0.5">
+            <div className="space-y-3 pt-1">
+              <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-[#FAF6F0] border border-brown-200/50 shadow-sm">
+                <div className="p-2 rounded-xl bg-[#EDE4D8]/80 text-brown-800 shrink-0 mt-0.5">
                   <Package size={16} />
                 </div>
                 <div>
@@ -170,8 +170,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-cream-100/70 border border-brown-200/60 shadow-warm-sm">
-                <div className="p-2 rounded-xl bg-burgundy-500/10 text-burgundy-600 shrink-0 mt-0.5">
+              <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-[#FAF6F0] border border-brown-200/50 shadow-sm">
+                <div className="p-2 rounded-xl bg-[#EDE4D8]/80 text-brown-800 shrink-0 mt-0.5">
                   <Heart size={16} />
                 </div>
                 <div>
@@ -186,8 +186,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-cream-100/70 border border-brown-200/60 shadow-warm-sm">
-                <div className="p-2 rounded-xl bg-burgundy-500/10 text-burgundy-600 shrink-0 mt-0.5">
+              <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-[#FAF6F0] border border-brown-200/50 shadow-sm">
+                <div className="p-2 rounded-xl bg-[#EDE4D8]/80 text-brown-800 shrink-0 mt-0.5">
                   <Layers size={16} />
                 </div>
                 <div>
@@ -219,18 +219,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           </div>
 
           {/* Right / Interactive Form Card (7 cols on Desktop) */}
-          <div className="lg:col-span-7 order-1 lg:order-2">
-            <div className="bg-cream-100 rounded-3xl border border-brown-200/90 shadow-warm-lg p-6 sm:p-10 max-w-xl mx-auto">
+          <div className="lg:col-span-7 order-1 lg:order-2 flex justify-center">
+            <div className="bg-[#FAF6F0] rounded-[32px] sm:rounded-[36px] border border-brown-200/60 shadow-[0_12px_40px_rgba(61,45,37,0.06)] p-7 sm:p-12 w-full max-w-[500px]">
               
-              {/* Segmented Mode Selector (Sign In vs Sign Up) */}
-              <div className="flex rounded-full bg-cream-200/80 p-1.5 border border-brown-200/70 mb-7">
+              {/* Segmented Mode Selector (Sign In vs Sign Up Pill like screenshot) */}
+              <div className="flex rounded-full bg-[#EDE4D8]/80 p-1 border border-brown-200/50 mb-8">
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('signin')}
-                  className={`flex-1 py-2.5 rounded-full text-xs uppercase tracking-[0.16em] font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`flex-1 py-2.5 rounded-full text-xs uppercase tracking-[0.18em] font-semibold transition-all duration-300 flex items-center justify-center cursor-pointer ${
                     mode === 'signin'
-                      ? 'bg-brown-900 text-cream-100 shadow-warm-sm'
-                      : 'text-brown-600 hover:text-brown-900'
+                      ? 'bg-[#2E221B] text-cream-100 shadow-sm'
+                      : 'text-brown-700/80 hover:text-brown-900'
                   }`}
                 >
                   <span>{t.signInTab}</span>
@@ -238,10 +238,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('signup')}
-                  className={`flex-1 py-2.5 rounded-full text-xs uppercase tracking-[0.16em] font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`flex-1 py-2.5 rounded-full text-xs uppercase tracking-[0.18em] font-semibold transition-all duration-300 flex items-center justify-center cursor-pointer ${
                     mode === 'signup'
-                      ? 'bg-brown-900 text-cream-100 shadow-warm-sm'
-                      : 'text-brown-600 hover:text-brown-900'
+                      ? 'bg-[#2E221B] text-cream-100 shadow-sm'
+                      : 'text-brown-700/80 hover:text-brown-900'
                   }`}
                 >
                   <span>{t.signUpTab}</span>
@@ -278,7 +278,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 {/* Full Name field (Sign Up Only) */}
                 {mode === 'signup' && (
                   <div>
-                    <label className="block text-[11px] uppercase tracking-[0.18em] font-semibold text-brown-700 mb-1.5">
+                    <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800 mb-1.5">
                       {t.fullNameLabel} <span className="text-burgundy-500">*</span>
                     </label>
                     <div className="relative flex items-center">
@@ -292,7 +292,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder={t.fullNamePlaceholder}
-                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 rounded-2xl bg-cream-50 border border-brown-200/80 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300 focus:bg-white transition-all`}
+                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 rounded-2xl bg-[#F4EFEA] border border-brown-200/50 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300/70 focus:bg-white transition-all`}
                       />
                     </div>
                   </div>
@@ -300,7 +300,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
                 {/* Email Address */}
                 <div>
-                  <label className="block text-[11px] uppercase tracking-[0.18em] font-semibold text-brown-700 mb-1.5">
+                  <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800 mb-1.5">
                     {t.emailLabel} <span className="text-burgundy-500">*</span>
                   </label>
                   <div className="relative flex items-center">
@@ -313,8 +313,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t.emailPlaceholder}
-                      className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 rounded-2xl bg-cream-50 border border-brown-200/80 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300 focus:bg-white transition-all`}
+                      placeholder="you@example.com"
+                      className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 rounded-2xl bg-[#F4EFEA] border border-brown-200/50 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300/70 focus:bg-white transition-all`}
                     />
                   </div>
                 </div>
@@ -322,7 +322,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 {/* Phone Number (Sign Up Optional) */}
                 {mode === 'signup' && (
                   <div>
-                    <label className="block text-[11px] uppercase tracking-[0.18em] font-semibold text-brown-700 mb-1.5">
+                    <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800 mb-1.5">
                       {t.phoneLabel}
                     </label>
                     <div className="relative flex items-center">
@@ -335,7 +335,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder={t.phonePlaceholder}
-                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 rounded-2xl bg-cream-50 border border-brown-200/80 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300 focus:bg-white transition-all`}
+                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 rounded-2xl bg-[#F4EFEA] border border-brown-200/50 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300/70 focus:bg-white transition-all`}
                       />
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 {/* Password */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-[11px] uppercase tracking-[0.18em] font-semibold text-brown-700">
+                    <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800">
                       {t.passwordLabel} <span className="text-burgundy-500">*</span>
                     </label>
                     {mode === 'signin' && (
@@ -370,8 +370,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t.passwordPlaceholder}
-                      className={`w-full ${isAr ? 'pr-11 pl-11' : 'pl-11 pr-11'} py-3 rounded-2xl bg-cream-50 border border-brown-200/80 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300 focus:bg-white transition-all`}
+                      placeholder="••••••••"
+                      className={`w-full ${isAr ? 'pr-11 pl-11' : 'pl-11 pr-11'} py-3.5 rounded-2xl bg-[#F4EFEA] border border-brown-200/50 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300/70 focus:bg-white transition-all`}
                     />
                     <button
                       type="button"
@@ -387,7 +387,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 {/* Confirm Password (Sign Up Only) */}
                 {mode === 'signup' && (
                   <div>
-                    <label className="block text-[11px] uppercase tracking-[0.18em] font-semibold text-brown-700 mb-1.5">
+                    <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800 mb-1.5">
                       {t.confirmPasswordLabel} <span className="text-burgundy-500">*</span>
                     </label>
                     <div className="relative flex items-center">
@@ -400,8 +400,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder={t.confirmPasswordPlaceholder}
-                        className={`w-full ${isAr ? 'pr-11 pl-11' : 'pl-11 pr-11'} py-3 rounded-2xl bg-cream-50 border border-brown-200/80 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300 focus:bg-white transition-all`}
+                        placeholder="••••••••"
+                        className={`w-full ${isAr ? 'pr-11 pl-11' : 'pl-11 pr-11'} py-3.5 rounded-2xl bg-[#F4EFEA] border border-brown-200/50 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300/70 focus:bg-white transition-all`}
                       />
                       <button
                         type="button"
@@ -423,7 +423,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       id="rememberMe"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-brown-300 text-burgundy-600 focus:ring-burgundy-500 accent-burgundy-600 cursor-pointer"
+                      className="w-4 h-4 rounded border-brown-300 text-[#2E221B] focus:ring-[#2E221B] accent-[#2E221B] cursor-pointer"
                     />
                     <label
                       htmlFor="rememberMe"
@@ -449,12 +449,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </p>
                 )}
 
-                {/* Submit Button */}
-                <div className="pt-3">
+                {/* Submit Button (Deep Atelier Brown Pill Button) */}
+                <div className="pt-2">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 px-6 rounded-full bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-xs sm:text-sm uppercase tracking-[0.2em] font-semibold transition-all duration-300 shadow-warm flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 cursor-pointer"
+                    className="w-full py-3.5 px-6 rounded-2xl sm:rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs sm:text-sm uppercase tracking-[0.2em] font-semibold transition-all duration-300 shadow-warm flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <div className="w-5 h-5 border-2 border-cream-100 border-t-transparent rounded-full animate-spin" />
@@ -466,19 +466,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               </form>
 
               {/* Social Login Options */}
-              <div className="mt-7 pt-6 border-t border-brown-200/70">
-                <div className="text-center text-[10.5px] uppercase tracking-[0.2em] text-brown-400 font-light mb-4">
+              <div className="mt-8 pt-6 border-t border-brown-200/50">
+                <div className="text-center text-[10px] uppercase tracking-[0.24em] text-brown-400 font-medium mb-4">
                   {t.orContinueWith}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3.5">
                   <button
                     type="button"
                     onClick={() => {
                       tactileAudio.playScrubTick(360);
                       alert(isAr ? 'تسجيل الدخول باستخدام Google' : 'Continue with Google');
                     }}
-                    className="py-2.5 px-4 rounded-2xl border border-brown-200 bg-cream-50 hover:bg-cream-100 hover:border-brown-300 text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                    className="py-3 px-4 rounded-full border border-brown-200/70 bg-white hover:bg-[#FDFBF7] text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer shadow-sm"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path
@@ -507,7 +507,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       tactileAudio.playScrubTick(360);
                       alert(isAr ? 'تسجيل الدخول باستخدام Apple' : 'Continue with Apple');
                     }}
-                    className="py-2.5 px-4 rounded-2xl border border-brown-200 bg-cream-50 hover:bg-cream-100 hover:border-brown-300 text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                    className="py-3 px-4 rounded-full border border-brown-200/70 bg-white hover:bg-[#FDFBF7] text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer shadow-sm"
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.02.62-2.66 1.37-.57.65-1.06 1.73-.93 2.76 1.03.08 2.07-.51 2.67-1.26z" />
