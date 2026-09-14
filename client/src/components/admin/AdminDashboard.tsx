@@ -15,6 +15,12 @@ import {
   Sparkles,
   Scissors,
   ArrowLeft,
+  Users,
+  Tag,
+  Mail,
+  Phone,
+  MapPin,
+  Star,
 } from 'lucide-react';
 import { FEATURED_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
@@ -104,16 +110,71 @@ interface AdminDashboardProps {
   onBackToStore: () => void;
 }
 
+interface CustomerRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate: string;
+  status: 'active' | 'vip' | 'new';
+  rating: number;
+}
+
+const MOCK_CUSTOMERS: CustomerRecord[] = [
+  { id: 'c1', name: 'Layla Al-Sabah', email: 'layla.s@example.kw', phone: '+965 9912 3456', country: 'Kuwait', totalOrders: 4, totalSpent: 580, lastOrderDate: 'Today', status: 'vip', rating: 5 },
+  { id: 'c2', name: 'Tariq Al-Majali', email: 'tariq.m@example.jo', phone: '+962 7 9876 5432', country: 'Jordan', totalOrders: 2, totalSpent: 310, lastOrderDate: 'Yesterday', status: 'active', rating: 5 },
+  { id: 'c3', name: 'Mona Al-Ghanim', email: 'mona.g@example.kw', phone: '+965 5543 2109', country: 'Kuwait', totalOrders: 1, totalSpent: 68, lastOrderDate: 'Sep 13', status: 'new', rating: 4 },
+  { id: 'c4', name: 'Zeinab Farhan', email: 'zeinab.f@example.ae', phone: '+971 50 123 4567', country: 'UAE', totalOrders: 3, totalSpent: 490, lastOrderDate: 'Sep 11', status: 'vip', rating: 5 },
+  { id: 'c5', name: 'Sara Al-Rashidi', email: 'sara.r@example.kw', phone: '+965 6612 9981', country: 'Kuwait', totalOrders: 1, totalSpent: 135, lastOrderDate: 'Sep 9', status: 'new', rating: 5 },
+  { id: 'c6', name: 'Hana Al-Zoubi', email: 'hana.z@example.jo', phone: '+962 7 1234 5678', country: 'Jordan', totalOrders: 2, totalSpent: 240, lastOrderDate: 'Sep 7', status: 'active', rating: 4 },
+];
+
+interface CategoryRecord {
+  id: string;
+  name: string;
+  nameAr: string;
+  slug: string;
+  pieceCount: number;
+  description: string;
+  descriptionAr: string;
+  color: string;
+}
+
+const MOCK_CATEGORIES: CategoryRecord[] = [
+  { id: 'cat-1', name: 'Bags & Totes', nameAr: 'الحقائب والشنط', slug: 'bags', pieceCount: 0, description: 'Hand-hooked totes, shoulder bags, and market baskets from 100% natural cotton cord.', descriptionAr: 'حقائب محبوكة يدوياً من خيوط القطن الطبيعي', color: '#D9B99B' },
+  { id: 'cat-2', name: 'Wearables', nameAr: 'الملابس', slug: 'clothing', pieceCount: 0, description: 'Crochet vests, tops and wraps made to order in Amman & Kuwait ateliers.', descriptionAr: 'سترات وملابس كروشيه مصنوعة بالطلب', color: '#A3B99B' },
+  { id: 'cat-3', name: 'Hats & Headwear', nameAr: 'القبعات والأغطية', slug: 'headwear', pieceCount: 0, description: 'Sun hats, bucket styles, and brimmed silhouettes woven from natural yarn.', descriptionAr: 'قبعات يدوية من الخيوط الطبيعية', color: '#C9B99B' },
+  { id: 'cat-4', name: 'Accessories', nameAr: 'الإكسسوارات', slug: 'pouches', pieceCount: 0, description: 'Pouches, coin purses, keychains and micro-accessories.', descriptionAr: 'حقائب صغيرة، محافظ ومفاتيح حرفية', color: '#B9C9CB' },
+];
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { language, toggleLanguage } = useLanguage();
   const isAr = language === 'ar';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
   const [productsList, setProductsList] = useState<Product[]>(FEATURED_PRODUCTS);
   const [ordersList, setOrdersList] = useState<OrderItem[]>(INITIAL_ORDERS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerFilter, setCustomerFilter] = useState<'all' | 'vip' | 'active' | 'new'>('all');
+  const [categoryList, setCategoryList] = useState<CategoryRecord[]>(() =>
+    MOCK_CATEGORIES.map((cat) => ({
+      ...cat,
+      pieceCount: FEATURED_PRODUCTS.filter((p) => p.category === cat.slug).length,
+    }))
+  );
+  const [editingCategory, setEditingCategory] = useState<CategoryRecord | null>(null);
+  const [isCatModalOpen, setIsCatModalOpen] = useState(false);
+  const [catNameEn, setCatNameEn] = useState('');
+  const [catNameAr, setCatNameAr] = useState('');
+  const [catDescEn, setCatDescEn] = useState('');
+  const [catDescAr, setCatDescAr] = useState('');
+
 
   // Modal State for adding/editing product
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -267,6 +328,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               { id: 'overview', label: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview', icon: LayoutDashboard },
               { id: 'products', label: isAr ? 'كتالوج المنتجات' : 'Pieces Catalog', icon: Package, count: productsList.length },
               { id: 'orders', label: isAr ? 'طلبات الحياكة' : 'Bespoke Orders', icon: ShoppingBag, count: activeOrdersCount },
+              { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag, count: categoryList.length },
+              { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: MOCK_CUSTOMERS.length },
               { id: 'artisans', label: isAr ? 'المشاغل والحرفيون' : 'Atelier Workshops', icon: Scissors },
               { id: 'settings', label: isAr ? 'إعدادات المتجر' : 'Store Settings', icon: Settings },
             ].map((item) => {
@@ -342,6 +405,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               {activeTab === 'orders' && (isAr ? 'متابعة الطلبات المخصصة' : 'Custom Orders & Stitch Progress')}
               {activeTab === 'artisans' && (isAr ? 'شبكة المشاغل (عمّان والكويت)' : 'Artisans & Workshops Network')}
               {activeTab === 'settings' && (isAr ? 'إعدادات المتجر' : 'Store & Atelier Preferences')}
+              {activeTab === 'categories' && (isAr ? 'إدارة التصنيفات' : 'Product Categories')}
+              {activeTab === 'customers' && (isAr ? 'قاعدة العملاء' : 'Customer Directory')}
             </h1>
             <p className="text-xs text-brown-500 font-light mt-0.5">
               {isAr ? 'متابعة حية للإنتاج البطيء، المبيعات والشحن المباشر' : 'Live tracking for deliberate slow-craft batches and delivery'}
@@ -357,6 +422,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               >
                 <Plus size={14} />
                 <span>{isAr ? 'إضافة قطعة جديدة' : 'New Piece'}</span>
+              </button>
+            )}
+            {activeTab === 'categories' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingCategory(null);
+                  setCatNameEn(''); setCatNameAr(''); setCatDescEn(''); setCatDescAr('');
+                  setIsCatModalOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] flex items-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
+              >
+                <Plus size={14} />
+                <span>{isAr ? 'إضافة تصنيف' : 'New Category'}</span>
               </button>
             )}
 
@@ -808,6 +887,209 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             </div>
           )}
 
+          {/* =====================================================================
+              TAB 6: CATEGORIES MANAGEMENT
+          ====================================================================== */}
+          {activeTab === 'categories' && (
+            <div className="space-y-6">
+              {/* Category Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {categoryList.map((cat) => (
+                  <div key={cat.id} className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-5 flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: cat.color + '40' }}>
+                          <Tag size={18} style={{ color: cat.color }} />
+                        </div>
+                        <div>
+                          <h3 className="font-serif text-base text-brown-950 font-medium leading-snug">
+                            {isAr ? cat.nameAr : cat.name}
+                          </h3>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-brown-400">/{cat.slug}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCategory(cat);
+                            setCatNameEn(cat.name);
+                            setCatNameAr(cat.nameAr);
+                            setCatDescEn(cat.description);
+                            setCatDescAr(cat.descriptionAr);
+                            setIsCatModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-xl hover:bg-cream-200 text-brown-600 hover:text-brown-950 transition-colors cursor-pointer"
+                          title="Edit Category"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(isAr ? 'هل تريد حذف هذا التصنيف؟' : 'Remove this category?')) {
+                              tactileAudio.playScrubTick(300);
+                              setCategoryList((prev) => prev.filter((c) => c.id !== cat.id));
+                            }
+                          }}
+                          className="p-1.5 rounded-xl hover:bg-burgundy-50 text-brown-300 hover:text-burgundy-600 transition-colors cursor-pointer"
+                          title="Delete Category"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-[11.5px] text-brown-500 font-light leading-relaxed">
+                      {isAr ? cat.descriptionAr : cat.description}
+                    </p>
+
+                    <div className="pt-3 border-t border-brown-200/50 flex items-center justify-between">
+                      <span className="text-xs text-brown-500 font-light">
+                        {isAr ? 'عدد القطع:' : 'Pieces:'}{' '}
+                        <strong className="text-brown-900 font-semibold">{cat.pieceCount}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedCategory(cat.slug); setActiveTab('products'); }}
+                        className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-burgundy-600 hover:text-burgundy-700 flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <span>{isAr ? 'عرض القطع' : 'View Pieces'}</span>
+                        <ArrowUpRight size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* =====================================================================
+              TAB 7: CUSTOMER DIRECTORY
+          ====================================================================== */}
+          {activeTab === 'customers' && (
+            <div className="space-y-6">
+              {/* KPI Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label: isAr ? 'إجمالي العملاء' : 'Total Customers', value: MOCK_CUSTOMERS.length, color: 'bg-cream-200 text-brown-700' },
+                  { label: isAr ? 'عملاء VIP' : 'VIP Members', value: MOCK_CUSTOMERS.filter(c => c.status === 'vip').length, color: 'bg-blush-100 text-burgundy-700' },
+                  { label: isAr ? 'عملاء جدد' : 'New Customers', value: MOCK_CUSTOMERS.filter(c => c.status === 'new').length, color: 'bg-sage-100 text-sage-800' },
+                  { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `$${Math.round(MOCK_CUSTOMERS.reduce((s, c) => s + c.totalSpent, 0) / MOCK_CUSTOMERS.length)}`, color: 'bg-amber-100 text-amber-800' },
+                ].map((kpi, i) => (
+                  <div key={i} className={`${kpi.color} rounded-3xl p-4 border border-brown-200/40`}>
+                    <div className="text-[10.5px] uppercase tracking-[0.16em] font-semibold opacity-70 mb-1">{kpi.label}</div>
+                    <div className="font-serif text-2xl font-medium">{kpi.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Search + Filter Bar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#FAF6F0] p-4 rounded-3xl border border-brown-200/60 shadow-sm">
+                <div className="relative flex-1 max-w-sm flex items-center">
+                  <Search size={15} className={`absolute ${isAr ? 'right-3.5' : 'left-3.5'} text-brown-400`} />
+                  <input
+                    type="text"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder={isAr ? 'ابحث عن عميل...' : 'Search by name or email...'}
+                    className={`w-full ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 rounded-2xl bg-cream-50 border border-brown-200 text-xs focus:outline-none focus:ring-2 focus:ring-blush-300`}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  {(['all', 'vip', 'active', 'new'] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setCustomerFilter(f)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                        customerFilter === f
+                          ? 'bg-[#2E221B] text-cream-100 shadow-sm'
+                          : 'bg-cream-100 text-brown-600 hover:bg-cream-200'
+                      }`}
+                    >
+                      {f === 'all' ? (isAr ? 'الكل' : 'All') : f === 'vip' ? 'VIP' : f === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Customers Table */}
+              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-brown-200/60 bg-cream-100/50 text-brown-500 text-[10.5px] uppercase tracking-[0.14em]">
+                        <th className="px-5 py-3.5 text-start font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
+                        <th className="px-5 py-3.5 text-start font-semibold hidden md:table-cell">{isAr ? 'التواصل' : 'Contact'}</th>
+                        <th className="px-5 py-3.5 text-start font-semibold hidden sm:table-cell">{isAr ? 'الدولة' : 'Country'}</th>
+                        <th className="px-5 py-3.5 text-center font-semibold">{isAr ? 'الطلبات' : 'Orders'}</th>
+                        <th className="px-5 py-3.5 text-end font-semibold">{isAr ? 'الإنفاق الكلي' : 'Total Spent'}</th>
+                        <th className="px-5 py-3.5 text-center font-semibold">{isAr ? 'التقييم' : 'Rating'}</th>
+                        <th className="px-5 py-3.5 text-center font-semibold">{isAr ? 'الحالة' : 'Status'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brown-200/40">
+                      {MOCK_CUSTOMERS
+                        .filter(c => {
+                          const matchSearch = c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.email.toLowerCase().includes(customerSearch.toLowerCase());
+                          const matchFilter = customerFilter === 'all' || c.status === customerFilter;
+                          return matchSearch && matchFilter;
+                        })
+                        .map((customer) => (
+                          <tr key={customer.id} className="hover:bg-cream-100/60 transition-colors">
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-[#EDE4D8] flex items-center justify-center font-serif text-xs font-bold text-brown-700 shrink-0">
+                                  {customer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-brown-900">{customer.name}</div>
+                                  <div className="text-[10px] text-brown-400 font-light">{customer.lastOrderDate}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 hidden md:table-cell">
+                              <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1.5 text-brown-600"><Mail size={11} />{customer.email}</div>
+                                <div className="flex items-center gap-1.5 text-brown-400"><Phone size={11} />{customer.phone}</div>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 hidden sm:table-cell">
+                              <div className="flex items-center gap-1.5 text-brown-600"><MapPin size={11} />{customer.country}</div>
+                            </td>
+                            <td className="px-5 py-4 text-center">
+                              <span className="font-semibold text-brown-900">{customer.totalOrders}</span>
+                            </td>
+                            <td className="px-5 py-4 text-end font-serif font-semibold text-brown-900 text-sm">${customer.totalSpent}</td>
+                            <td className="px-5 py-4 text-center">
+                              <div className="flex items-center justify-center gap-0.5">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star key={i} size={11} className={i < customer.rating ? 'text-amber-400 fill-amber-400' : 'text-brown-200'} />
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 text-center">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                                customer.status === 'vip'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : customer.status === 'active'
+                                  ? 'bg-sage-100 text-sage-800'
+                                  : 'bg-blue-50 text-blue-700'
+                              }`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                {customer.status === 'vip' ? 'VIP' : customer.status === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
 
@@ -899,6 +1181,67 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   className="px-5 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] shadow-sm cursor-pointer"
                 >
                   {editingProduct ? 'Update Piece' : 'Add to Collection'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {isCatModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm">
+          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-md w-full">
+            <h3 className="font-serif text-xl text-brown-950 font-normal mb-1">
+              {editingCategory ? (isAr ? 'تعديل التصنيف' : 'Edit Category') : (isAr ? 'إضافة تصنيف جديد' : 'Add New Category')}
+            </h3>
+            <p className="text-xs text-brown-500 font-light mb-6">
+              {isAr ? 'ادخل اسم التصنيف والوصف' : 'Enter the category name and description'}
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                tactileAudio.playChime();
+                if (editingCategory) {
+                  setCategoryList((prev) =>
+                    prev.map((c) =>
+                      c.id === editingCategory.id
+                        ? { ...c, name: catNameEn, nameAr: catNameAr, description: catDescEn, descriptionAr: catDescAr }
+                        : c
+                    )
+                  );
+                } else {
+                  const slug = catNameEn.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                  setCategoryList((prev) => [
+                    ...prev,
+                    { id: `cat-${Date.now()}`, name: catNameEn, nameAr: catNameAr, slug, pieceCount: 0, description: catDescEn, descriptionAr: catDescAr, color: '#C9B99B' },
+                  ]);
+                }
+                setIsCatModalOpen(false);
+                setEditingCategory(null);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Name (English) *</label>
+                <input type="text" required value={catNameEn} onChange={(e) => setCatNameEn(e.target.value)} placeholder="e.g. Bags & Totes" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900" />
+              </div>
+              <div>
+                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">الاسم (بالعربية)</label>
+                <input type="text" value={catNameAr} onChange={(e) => setCatNameAr(e.target.value)} placeholder="مثال: الحقائب والشنط" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900" />
+              </div>
+              <div>
+                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Description (English)</label>
+                <textarea rows={2} value={catDescEn} onChange={(e) => setCatDescEn(e.target.value)} placeholder="Short description…" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900 resize-none" />
+              </div>
+              <div>
+                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">الوصف (بالعربية)</label>
+                <textarea rows={2} value={catDescAr} onChange={(e) => setCatDescAr(e.target.value)} placeholder="وصف مختصر…" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900 resize-none" />
+              </div>
+              <div className="pt-3 flex items-center justify-end gap-3">
+                <button type="button" onClick={() => setIsCatModalOpen(false)} className="px-4 py-2.5 rounded-full text-xs text-brown-600 hover:text-brown-900 cursor-pointer">
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button type="submit" className="px-5 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] shadow-sm cursor-pointer">
+                  {editingCategory ? (isAr ? 'حفظ التعديلات' : 'Update Category') : (isAr ? 'إضافة التصنيف' : 'Add Category')}
                 </button>
               </div>
             </form>
