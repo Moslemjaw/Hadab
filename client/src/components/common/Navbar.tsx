@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Search, Menu, X, Globe } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Globe, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface NavbarProps {
@@ -188,6 +188,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Search size={17} strokeWidth={2} />
             </button>
 
+            {/* Profile / Account Icon */}
+            <button
+              type="button"
+              className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label={t.accountAria}
+            >
+              <User size={17} strokeWidth={2} />
+            </button>
+
             {/* Shopping Bag Button */}
             <button
               type="button"
@@ -266,6 +275,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }, 100);
                 }
+              },
+            },
+            {
+              label: language === 'ar' ? 'حسابي' : 'My Account',
+              action: () => {
+                // Will navigate to account/login page
               },
             },
           ].map((item, i) => (

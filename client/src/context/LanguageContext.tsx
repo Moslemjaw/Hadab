@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 export type Language = 'en' | 'ar';
 
@@ -15,6 +15,7 @@ export interface Translations {
   bagAria: string;
   toggleLangAria: string;
   toggleMenuAria: string;
+  accountAria: string;
   closeMenuAria: string;
   switchLanguageName: string;
 
@@ -161,6 +162,7 @@ const translations: Record<Language, Translations> = {
     bagAria: 'Open Bag',
     toggleLangAria: 'Toggle Language',
     toggleMenuAria: 'Open Navigation Menu',
+    accountAria: 'My Account',
     closeMenuAria: 'Close Navigation Menu',
     switchLanguageName: 'العربية',
 
@@ -298,6 +300,7 @@ const translations: Record<Language, Translations> = {
     bagAria: 'سلة المشتريات',
     toggleLangAria: 'تبديل اللغة',
     toggleMenuAria: 'فتح قائمة التنقل',
+    accountAria: 'حسابي',
     closeMenuAria: 'إغلاق قائمة التنقل',
     switchLanguageName: 'English',
 
