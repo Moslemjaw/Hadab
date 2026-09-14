@@ -6,12 +6,14 @@ import { ScrollExperience } from './components/scroll/ScrollExperience';
 import { CollectionPage } from './components/shop/CollectionPage';
 import { CategoriesPage } from './components/shop/CategoriesPage';
 import { StoryPage } from './components/story/StoryPage';
+import { AuthPage } from './components/auth/AuthPage';
 import { ProductModal } from './components/shop/ProductModal';
 import type { Product } from './types';
 import { FEATURED_PRODUCTS } from './constants/mockData';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth'>('home');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
   const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([
     { product: FEATURED_PRODUCTS[0], quantity: 1 },
@@ -28,6 +30,14 @@ export function App() {
         setCurrentView('categories');
       } else if (hash === '#collection' || hash === '#shop') {
         setCurrentView('collection');
+      } else if (hash === '#signin' || hash === '#login') {
+        setAuthMode('signin');
+        setCurrentView('auth');
+      } else if (hash === '#signup' || hash === '#register') {
+        setAuthMode('signup');
+        setCurrentView('auth');
+      } else if (hash === '#account' || hash === '#auth') {
+        setCurrentView('auth');
       } else if (hash === '' || hash === '#' || hash === '#home') {
         setCurrentView('home');
       }
@@ -84,6 +94,13 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthMode(mode);
+    setCurrentView('auth');
+    window.location.hash = mode === 'signup' ? 'signup' : 'signin';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const scrollToCatalog = () => {
     handleOpenCollection('all');
   };
@@ -100,6 +117,7 @@ export function App() {
         onOpenCategories={handleOpenCategories}
         onGoHome={handleGoHome}
         onOpenStory={handleOpenStory}
+        onOpenAuth={handleOpenAuth}
         currentPage={
           currentView === 'story'
             ? 'story'
@@ -107,6 +125,8 @@ export function App() {
             ? 'collection'
             : currentView === 'categories'
             ? 'categories'
+            : currentView === 'auth'
+            ? 'auth'
             : 'home'
         }
       />
@@ -136,12 +156,20 @@ export function App() {
             onBackToHome={handleGoHome}
             onSelectCategory={(catId) => handleOpenCollection(catId)}
           />
-        ) : (
+        ) : currentView === 'story' ? (
           /* Dedicated Our Story Page */
           <StoryPage
             onBackToHome={handleGoHome}
             onExploreCollection={() => handleOpenCollection('all')}
             onOpenCategories={handleOpenCategories}
+          />
+        ) : (
+          /* Dedicated Sign In / Sign Up Page */
+          <AuthPage
+            initialMode={authMode}
+            onBackToHome={handleGoHome}
+            onSuccess={handleGoHome}
+            onExploreCollection={() => handleOpenCollection('all')}
           />
         )}
       </main>

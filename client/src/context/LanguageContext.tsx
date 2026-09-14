@@ -147,6 +147,43 @@ export interface Translations {
   footerCareHandwash: string;
   footerCareDrying: string;
   footerCareStorage: string;
+
+  // Auth Pages
+  authBadge: string;
+  signInTitle: string;
+  signInSubtitle: string;
+  signUpTitle: string;
+  signUpSubtitle: string;
+  signInTab: string;
+  signUpTab: string;
+  fullNameLabel: string;
+  fullNamePlaceholder: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  passwordLabel: string;
+  passwordPlaceholder: string;
+  confirmPasswordLabel: string;
+  confirmPasswordPlaceholder: string;
+  phoneLabel: string;
+  phonePlaceholder: string;
+  rememberMe: string;
+  forgotPassword: string;
+  signInButton: string;
+  signUpButton: string;
+  dontHaveAccount: string;
+  alreadyHaveAccount: string;
+  switchToSignUp: string;
+  switchToSignIn: string;
+  termsNotice: string;
+  termsLink: string;
+  privacyLink: string;
+  loginSuccess: string;
+  registerSuccess: string;
+  atelierMemberBadge: string;
+  memberBenefit1: string;
+  memberBenefit2: string;
+  memberBenefit3: string;
+  orContinueWith: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -287,6 +324,43 @@ const translations: Record<Language, Translations> = {
     footerCareHandwash: 'Hand wash gently in cool water',
     footerCareDrying: 'Reshape and dry flat in shade',
     footerCareStorage: 'Fold neatly, avoid sharp hangers',
+
+    // Auth Pages
+    authBadge: 'Atelier Circle • Member Portal',
+    signInTitle: 'Welcome Back',
+    signInSubtitle: 'Enter your credentials to access your saved pieces, curated orders, and archive access.',
+    signUpTitle: 'Create an Account',
+    signUpSubtitle: 'Join our slow-craft community to follow exclusive drops, track artisan pieces, and enjoy studio perks.',
+    signInTab: 'Sign In',
+    signUpTab: 'Sign Up',
+    fullNameLabel: 'Full Name',
+    fullNamePlaceholder: 'e.g. Layla Al-Sabah',
+    emailLabel: 'Email Address',
+    emailPlaceholder: 'you@example.com',
+    passwordLabel: 'Password',
+    passwordPlaceholder: '••••••••',
+    confirmPasswordLabel: 'Confirm Password',
+    confirmPasswordPlaceholder: '••••••••',
+    phoneLabel: 'Phone Number (Optional)',
+    phonePlaceholder: '+965 9999 8888 / +962 7 9999 8888',
+    rememberMe: 'Remember this device',
+    forgotPassword: 'Forgot password?',
+    signInButton: 'Sign in to Atelier',
+    signUpButton: 'Create Atelier Account',
+    dontHaveAccount: "Don't have an account yet?",
+    alreadyHaveAccount: 'Already an atelier member?',
+    switchToSignUp: 'Join Atelier',
+    switchToSignIn: 'Sign In',
+    termsNotice: 'By creating an account, you agree to our',
+    termsLink: 'Terms of Craft',
+    privacyLink: 'Privacy Circle',
+    loginSuccess: 'Welcome back to HADAB Atelier',
+    registerSuccess: 'Your account has been crafted successfully',
+    atelierMemberBadge: 'Craft Circle Privileges',
+    memberBenefit1: 'Early access to numbered drop collections',
+    memberBenefit2: 'Seamless cross-device bag and wishlist syncing',
+    memberBenefit3: 'Bespoke order tracking from stitch to doorstep',
+    orContinueWith: 'Or continue with',
   },
   ar: {
     tickerLocation: 'الأردن • الكويت',
@@ -425,6 +499,43 @@ const translations: Record<Language, Translations> = {
     footerCareHandwash: 'غسيل يدوي لطيف بماء بارد',
     footerCareDrying: 'فرد القطعة وتجفيفها أفقياً في الظل',
     footerCareStorage: 'طيّ أنيق وتجنب التعليق على أطراف حادة',
+
+    // Auth Pages
+    authBadge: 'دائرة الأتيليه • بوابة الأعضاء',
+    signInTitle: 'أهلاً بعودتك',
+    signInSubtitle: 'سجّلي دخولك للوصول إلى حقيبتك المحفوظة، وتتبّع قطعك المنسوجة، والأرشيف الحصري.',
+    signUpTitle: 'إنشاء حساب جديد',
+    signUpSubtitle: 'انضمي إلى دائرة مشغلنا للاطلاع المبكر على القطع المحدودة، وحفظ تفضيلاتك الحرفية.',
+    signInTab: 'تسجيل الدخول',
+    signUpTab: 'إنشاء حساب',
+    fullNameLabel: 'الاسم الكامل',
+    fullNamePlaceholder: 'مثال: ليلى الصباح',
+    emailLabel: 'البريد الإلكتروني',
+    emailPlaceholder: 'you@example.com',
+    passwordLabel: 'كلمة المرور',
+    passwordPlaceholder: '••••••••',
+    confirmPasswordLabel: 'تأكيد كلمة المرور',
+    confirmPasswordPlaceholder: '••••••••',
+    phoneLabel: 'رقم الهاتف (اختياري)',
+    phonePlaceholder: '+965 9999 8888 / +962 7 9999 8888',
+    rememberMe: 'تذكّر هذا الجهاز',
+    forgotPassword: 'نسيت كلمة المرور؟',
+    signInButton: 'دخول إلى المشغل',
+    signUpButton: 'إنشاء حساب في هَدَب',
+    dontHaveAccount: 'ليس لديكِ حساب بعد؟',
+    alreadyHaveAccount: 'لديكِ حساب في المشغل بالفعل؟',
+    switchToSignUp: 'انضمي الآن',
+    switchToSignIn: 'تسجيل الدخول',
+    termsNotice: 'بإنشاء الحساب، أنتِ توافقين على',
+    termsLink: 'شروط المشغل الحرفية',
+    privacyLink: 'سياسة الخصوصية',
+    loginSuccess: 'أهلاً بعودتكِ إلى مشغل هَدَب',
+    registerSuccess: 'تم إنشاء حسابكِ الحرفي بنجاح',
+    atelierMemberBadge: 'مزايا دائرة المشغل',
+    memberBenefit1: 'أسبقية الحجز في مجموعات الدفعات المحدودة والمرقمة',
+    memberBenefit2: 'مزامنة الحقيبة وقائمة المفضلات عبر جميع أجهزتكِ',
+    memberBenefit3: 'تتبّع دقيق لكل مرحلة حياكة حتى وصول الصندوق لبابكِ',
+    orContinueWith: 'أو المتابعة باستخدام',
   },
 };
 

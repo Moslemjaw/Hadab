@@ -9,7 +9,8 @@ interface NavbarProps {
   onOpenCollection?: (catId?: string) => void;
   onGoHome?: () => void;
   onOpenStory?: () => void;
-  currentPage?: 'home' | 'story' | 'collection' | 'categories';
+  onOpenAuth?: (initialMode?: 'signin' | 'signup') => void;
+  currentPage?: 'home' | 'story' | 'collection' | 'categories' | 'auth';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCollection,
   onGoHome,
   onOpenStory,
+  onOpenAuth,
   currentPage = 'home',
 }) => {
   const { language, toggleLanguage, t } = useLanguage();
@@ -211,7 +213,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Profile / Account Icon - At the far outer corner */}
             <button
               type="button"
-              className="p-1.5 xs:p-2 text-cream-100 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center active:scale-95"
+              onClick={() => onOpenAuth && onOpenAuth('signin')}
+              className={`p-1.5 xs:p-2 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center active:scale-95 ${
+                currentPage === 'auth' ? 'text-blush-200 bg-white/10' : 'text-cream-100'
+              }`}
               aria-label={t.accountAria}
             >
               <User size={18} strokeWidth={2} />
@@ -280,7 +285,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {
               label: language === 'ar' ? 'حسابي' : 'My Account',
               action: () => {
-                // Will navigate to account/login page
+                if (onOpenAuth) onOpenAuth('signin');
               },
             },
           ].map((item, i) => (
