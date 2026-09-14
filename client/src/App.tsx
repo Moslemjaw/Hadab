@@ -104,6 +104,12 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenAdmin = () => {
+    setCurrentView('admin');
+    window.location.hash = 'admin';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const scrollToCatalog = () => {
     handleOpenCollection('all');
   };
@@ -122,6 +128,7 @@ export function App() {
           onGoHome={handleGoHome}
           onOpenStory={handleOpenStory}
           onOpenAuth={handleOpenAuth}
+          onOpenAdmin={handleOpenAdmin}
           currentPage={
             currentView === 'story'
               ? 'story'

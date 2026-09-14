@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Search, Menu, X, Globe, User } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Globe, User, LayoutDashboard } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface NavbarProps {
@@ -10,6 +10,7 @@ interface NavbarProps {
   onGoHome?: () => void;
   onOpenStory?: () => void;
   onOpenAuth?: (initialMode?: 'signin' | 'signup') => void;
+  onOpenAdmin?: () => void;
   currentPage?: 'home' | 'story' | 'collection' | 'categories' | 'auth';
 }
 
@@ -21,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoHome,
   onOpenStory,
   onOpenAuth,
+  onOpenAdmin,
   currentPage = 'home',
 }) => {
   const { language, toggleLanguage, t } = useLanguage();
@@ -210,7 +212,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </button>
 
-            {/* Profile / Account Icon - At the far outer corner */}
+            {/* Profile / Account Icon */}
             <button
               type="button"
               onClick={() => onOpenAuth && onOpenAuth('signin')}
@@ -220,6 +222,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-label={t.accountAria}
             >
               <User size={18} strokeWidth={2} />
+            </button>
+
+            {/* Admin Dashboard Button */}
+            <button
+              type="button"
+              onClick={() => onOpenAdmin && onOpenAdmin()}
+              className="p-1.5 xs:p-2 hover:text-blush-200 hover:bg-white/5 rounded-full transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center active:scale-95 text-cream-100 border border-cream-100/20 hover:border-blush-200/40"
+              aria-label="Admin Dashboard"
+              title="Admin Dashboard"
+            >
+              <LayoutDashboard size={16} strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -286,6 +299,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               label: language === 'ar' ? 'حسابي' : 'My Account',
               action: () => {
                 if (onOpenAuth) onOpenAuth('signin');
+              },
+            },
+            {
+              label: language === 'ar' ? 'لوحة الإدارة' : 'Admin Dashboard',
+              action: () => {
+                if (onOpenAdmin) onOpenAdmin();
               },
             },
           ].map((item, i) => (
