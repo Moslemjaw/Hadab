@@ -21,6 +21,22 @@ import {
   Phone,
   MapPin,
   Star,
+  Menu,
+  X,
+  Bell,
+  ChevronRight,
+  GripVertical,
+  Download,
+  List as ListIcon,
+  Grid as GridIcon,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Clock,
+  Truck,
+  AlertCircle,
+  Home,
+  Check
 } from 'lucide-react';
 import { FEATURED_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
@@ -150,24 +166,52 @@ const MOCK_CATEGORIES: CategoryRecord[] = [
   { id: 'cat-4', name: 'Accessories', nameAr: 'الإكسسوارات', slug: 'pouches', pieceCount: 0, description: 'Pouches, coin purses, keychains and micro-accessories.', descriptionAr: 'حقائب صغيرة، محافظ ومفاتيح حرفية', color: '#B9C9CB' },
 ];
 
+const MOCK_REVENUE_DATA = [
+  { month: 'Jan', value: 30, label: '$3k' },
+  { month: 'Feb', value: 45, label: '$4.5k' },
+  { month: 'Mar', value: 25, label: '$2.5k' },
+  { month: 'Apr', value: 60, label: '$6k' },
+  { month: 'May', value: 80, label: '$8k' },
+  { month: 'Jun', value: 65, label: '$6.5k' },
+];
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { language, toggleLanguage } = useLanguage();
   const isAr = language === 'ar';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const [productsList, setProductsList] = useState<Product[]>(FEATURED_PRODUCTS);
   const [ordersList, setOrdersList] = useState<OrderItem[]>(INITIAL_ORDERS);
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [globalSearch, setGlobalSearch] = useState('');
+  
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [customerSearch, setCustomerSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState<'all' | 'vip' | 'active' | 'new'>('all');
+  
   const [categoryList, setCategoryList] = useState<CategoryRecord[]>(() =>
     MOCK_CATEGORIES.map((cat) => ({
       ...cat,
       pieceCount: FEATURED_PRODUCTS.filter((p) => p.category === cat.slug).length,
     }))
   );
+  
+  // UI States
+  const [productView, setProductView] = useState<'grid' | 'list'>('grid');
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
+
+  const [settingsState, setSettingsState] = useState({
+    notifications: true,
+    maintenance: false,
+    autoArchive: true,
+    darkMode: false,
+  });
+
+  // Modal States
   const [editingCategory, setEditingCategory] = useState<CategoryRecord | null>(null);
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [catNameEn, setCatNameEn] = useState('');
@@ -175,8 +219,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [catDescEn, setCatDescEn] = useState('');
   const [catDescAr, setCatDescAr] = useState('');
 
-
-  // Modal State for adding/editing product
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState('');
@@ -185,34 +227,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [newProductCategory, setNewProductCategory] = useState<'bags' | 'clothing' | 'accessories' | 'headwear' | 'pouches'>('bags');
   const [newProductTag, setNewProductTag] = useState('New Drop');
 
-  // Filtered Products
+  // Filtered Data
   const filteredProducts = useMemo(() => {
     return productsList.filter((p) => {
       const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.nameArabic && p.nameArabic.includes(searchQuery));
+        p.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        (p.nameArabic && p.nameArabic.includes(globalSearch));
       const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [productsList, searchQuery, selectedCategory]);
+  }, [productsList, globalSearch, selectedCategory]);
 
-  // Filtered Orders
   const filteredOrders = useMemo(() => {
     return ordersList.filter((o) => {
       const matchesSearch =
-        o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.customerEmail.toLowerCase().includes(searchQuery.toLowerCase());
+        o.orderNumber.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        o.customerName.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        o.customerEmail.toLowerCase().includes(globalSearch.toLowerCase());
       const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [ordersList, searchQuery, statusFilter]);
+  }, [ordersList, globalSearch, statusFilter]);
+  
+  const filteredCustomers = useMemo(() => {
+    return MOCK_CUSTOMERS.filter((c) => {
+      const matchesSearch = c.name.toLowerCase().includes(globalSearch.toLowerCase()) || c.email.toLowerCase().includes(globalSearch.toLowerCase());
+      const matchesFilter = customerFilter === 'all' || c.status === customerFilter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [globalSearch, customerFilter]);
 
   // KPIs
   const totalRevenue = ordersList.reduce((sum, o) => sum + o.total, 0);
   const activeOrdersCount = ordersList.filter((o) => o.status !== 'delivered').length;
   const inCraftCount = ordersList.filter((o) => o.status === 'hooking' || o.status === 'finishing').length;
 
+  // Handlers
   const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderItem['status']) => {
     tactileAudio.playScrubTick(340);
     setOrdersList((prev) =>
@@ -236,6 +286,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     if (window.confirm(isAr ? 'هل أنتِ متأكدة من حذف هذه القطعة من المتجر؟' : 'Are you sure you want to remove this piece?')) {
       tactileAudio.playScrubTick(300);
       setProductsList((prev) => prev.filter((p) => p.id !== id));
+      setSelectedProductIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleBulkDeleteProducts = () => {
+    if (selectedProductIds.size === 0) return;
+    if (window.confirm(isAr ? 'هل أنتِ متأكدة من حذف القطع المحددة؟' : 'Are you sure you want to delete selected pieces?')) {
+      tactileAudio.playScrubTick(300);
+      setProductsList(prev => prev.filter(p => !selectedProductIds.has(p.id)));
+      setSelectedProductIds(new Set());
+    }
+  };
+
+  const toggleProductSelection = (id: string) => {
+    setSelectedProductIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllProducts = () => {
+    if (selectedProductIds.size === filteredProducts.length) {
+      setSelectedProductIds(new Set());
+    } else {
+      setSelectedProductIds(new Set(filteredProducts.map(p => p.id)));
     }
   };
 
@@ -301,25 +382,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setNewProductTag(product.tag || 'Classic');
     setIsProductModalOpen(true);
   };
+  
+  const getBreadcrumbLabel = () => {
+    const map: Record<string, string> = {
+      overview: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview',
+      products: isAr ? 'كتالوج المنتجات' : 'Pieces Catalog',
+      orders: isAr ? 'طلبات الحياكة' : 'Bespoke Orders',
+      categories: isAr ? 'التصنيفات' : 'Categories',
+      customers: isAr ? 'العملاء' : 'Customers',
+      artisans: isAr ? 'المشاغل والحرفيون' : 'Atelier Workshops',
+      settings: isAr ? 'إعدادات المتجر' : 'Store Settings',
+    };
+    return map[activeTab] || '';
+  };
 
   return (
-    <div className="min-h-screen bg-[#F7F2EB] text-[#2E221B] font-sans selection:bg-blush-200 selection:text-brown-900 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F7F2EB] text-[#2E221B] font-sans selection:bg-blush-200 selection:text-brown-900 flex flex-col md:flex-row relative">
+      
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* =========================================================================
           1. SIDEBAR NAVIGATION
       ========================================================================== */}
-      <aside className="w-full md:w-64 lg:w-72 bg-[#261C16] text-[#EFE4D6] p-5 flex flex-col justify-between shrink-0 border-e border-[#3D2D25] shadow-xl z-20">
+      <aside className={`
+        fixed inset-y-0 ${isAr ? 'right-0' : 'left-0'} z-50 md:static w-72 
+        bg-gradient-to-b from-[#261C16] to-[#1A120E] text-[#EFE4D6] p-5 
+        flex flex-col justify-between shrink-0 border-e border-[#3D2D25] shadow-2xl md:shadow-xl
+        transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : (isAr ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0')}
+      `}>
         <div>
           {/* Brand Header */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#3D2D25]/70">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#EFE4D6] p-1.5 flex items-center justify-center shadow-md">
-                <img src="/frames/ezgif-frame-001.jpg" alt="HADAB" className="w-full h-full object-contain mix-blend-multiply" />
+              <div className="w-10 h-10 rounded-2xl bg-[#EFE4D6] p-1.5 flex items-center justify-center shadow-md overflow-hidden relative group cursor-pointer">
+                <img src="/frames/ezgif-frame-001.jpg" alt="HADAB" className="w-full h-full object-cover mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
               </div>
               <div>
                 <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0]">HADAB</span>
-                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">Atelier Studio Admin</span>
+                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">Atelier Admin</span>
               </div>
             </div>
+            <button className="md:hidden p-1.5 text-brown-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+              <X size={18} />
+            </button>
           </div>
 
           {/* Nav Links */}
@@ -327,11 +439,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             {[
               { id: 'overview', label: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview', icon: LayoutDashboard },
               { id: 'products', label: isAr ? 'كتالوج المنتجات' : 'Pieces Catalog', icon: Package, count: productsList.length },
-              { id: 'orders', label: isAr ? 'طلبات الحياكة' : 'Bespoke Orders', icon: ShoppingBag, count: activeOrdersCount },
+              { id: 'orders', label: isAr ? 'طلبات الحياكة' : 'Bespoke Orders', icon: ShoppingBag, count: activeOrdersCount, pulse: activeOrdersCount > 0 },
               { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag, count: categoryList.length },
               { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: MOCK_CUSTOMERS.length },
               { id: 'artisans', label: isAr ? 'المشاغل والحرفيون' : 'Atelier Workshops', icon: Scissors },
-              { id: 'settings', label: isAr ? 'إعدادات المتجر' : 'Store Settings', icon: Settings },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -342,25 +453,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   onClick={() => {
                     tactileAudio.playScrubTick(320);
                     setActiveTab(item.id as any);
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs uppercase tracking-[0.14em] font-medium transition-all duration-200 cursor-pointer ${
+                  className={`w-full group flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs uppercase tracking-[0.14em] font-medium transition-all duration-300 cursor-pointer ${
                     isActive
                       ? 'bg-[#3D2D25] text-white shadow-sm border border-brown-700/60 font-semibold'
-                      : 'text-[#C9B9A9] hover:bg-white/5 hover:text-white'
+                      : 'text-[#C9B9A9] hover:bg-white/5 hover:text-white hover:translate-x-1'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon size={16} className={isActive ? 'text-blush-200' : 'text-[#A08E80]'} />
+                    <Icon size={16} className={`transition-colors ${isActive ? 'text-blush-200' : 'text-[#A08E80] group-hover:text-[#EFE4D6]'}`} />
                     <span>{item.label}</span>
                   </div>
-                  {item.count !== undefined && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${isActive ? 'bg-blush-300/20 text-blush-200' : 'bg-white/10 text-[#C9B9A9]'}`}>
-                      {item.count}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {item.pulse && !isActive && (
+                      <span className="w-2 h-2 rounded-full bg-blush-400 animate-pulse" />
+                    )}
+                    {item.count !== undefined && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ${isActive ? 'bg-blush-300/20 text-blush-200' : 'bg-white/10 text-[#C9B9A9] group-hover:bg-white/20 group-hover:text-white'}`}>
+                        {item.count}
+                      </span>
+                    )}
+                  </div>
                 </button>
               );
             })}
+            
+            <div className="my-4 border-t border-[#3D2D25]/50 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  tactileAudio.playScrubTick(320);
+                  setActiveTab('settings');
+                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                }}
+                className={`w-full group flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs uppercase tracking-[0.14em] font-medium transition-all duration-300 cursor-pointer ${
+                  activeTab === 'settings'
+                    ? 'bg-[#3D2D25] text-white shadow-sm border border-brown-700/60 font-semibold'
+                    : 'text-[#C9B9A9] hover:bg-white/5 hover:text-white hover:translate-x-1'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Settings size={16} className={`transition-colors ${activeTab === 'settings' ? 'text-blush-200' : 'text-[#A08E80] group-hover:text-[#EFE4D6]'}`} />
+                  <span>{isAr ? 'إعدادات المتجر' : 'Store Settings'}</span>
+                </div>
+              </button>
+            </div>
           </nav>
         </div>
 
@@ -394,12 +532,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       {/* =========================================================================
           2. MAIN ADMIN CONTENT WORKSPACE
       ========================================================================== */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto overflow-x-hidden bg-[#F7F2EB]">
         
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-10 bg-[#FAF6F0]/90 backdrop-blur-md border-b border-brown-200/60 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-serif text-2xl text-brown-950 font-normal">
+        <header className="sticky top-0 z-30 bg-[#FAF6F0]/90 backdrop-blur-md border-b border-brown-200/60 px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 flex-1">
+            <button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-cream-100 text-brown-700" onClick={() => setIsSidebarOpen(true)}>
+              <Menu size={20} />
+            </button>
+            
+            {/* Breadcrumb */}
+            <div className="hidden sm:flex items-center gap-2 text-[10.5px] uppercase tracking-wider text-brown-400 font-medium">
+              <Home size={12} />
+              <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
+              <span>Admin</span>
+              <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
+              <span className="text-brown-900 font-semibold">{getBreadcrumbLabel()}</span>
+            </div>
+            
+            {/* Global Search */}
+            <div className="flex-1 max-w-sm ml-auto sm:ml-4 relative">
+              <Search size={14} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-3' : 'left-3'} text-brown-400`} />
+              <input
+                type="text"
+                placeholder={isAr ? 'بحث عام...' : 'Global search...'}
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                className={`w-full bg-cream-50 border border-brown-200 rounded-full py-1.5 ${isAr ? 'pr-8 pl-4' : 'pl-8 pr-4'} text-xs focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 transition-all`}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            <button className="relative p-2 rounded-full hover:bg-cream-100 text-brown-600 transition-colors">
+              <Bell size={18} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-burgundy-500 border border-white" />
+            </button>
+            
+            <div className="h-6 w-px bg-brown-200/60 hidden sm:block"></div>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-right">
+                <div className="text-xs font-semibold text-brown-900 leading-none mb-1">Haya J.</div>
+                <div className="text-[10px] text-brown-500 uppercase tracking-wider leading-none">Master Admin</div>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cream-200 to-blush-100 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900 shadow-sm cursor-pointer hover:ring-2 ring-offset-2 ring-[#F7F2EB] ring-brown-200 transition-all">
+                HJ
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Tab Content Body */}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-8 flex-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          
+          <div className="mb-6">
+             <h1 className="font-serif text-2xl text-brown-950 font-normal">
               {activeTab === 'overview' && (isAr ? 'نظرة عامة على المشغل' : 'Atelier Overview & Performance')}
               {activeTab === 'products' && (isAr ? 'إدارة كتالوج القطع اليدوية' : 'Handcrafted Pieces Catalog')}
               {activeTab === 'orders' && (isAr ? 'متابعة الطلبات المخصصة' : 'Custom Orders & Stitch Progress')}
@@ -408,46 +596,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               {activeTab === 'categories' && (isAr ? 'إدارة التصنيفات' : 'Product Categories')}
               {activeTab === 'customers' && (isAr ? 'قاعدة العملاء' : 'Customer Directory')}
             </h1>
-            <p className="text-xs text-brown-500 font-light mt-0.5">
-              {isAr ? 'متابعة حية للإنتاج البطيء، المبيعات والشحن المباشر' : 'Live tracking for deliberate slow-craft batches and delivery'}
+            <p className="text-xs text-brown-500 font-light mt-1">
+              {activeTab === 'overview' && (isAr ? 'متابعة حية للإنتاج البطيء والمبيعات' : 'Live tracking for deliberate slow-craft batches and delivery')}
+              {activeTab === 'products' && (isAr ? 'إدارة الأرشيف والتصاميم المتاحة للطلب' : 'Manage your archive and available designs for bespoke ordering')}
+              {activeTab === 'orders' && (isAr ? 'تتبع مراحل الحياكة والتسليم' : 'Track the timeline from single crochet to final dispatch')}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 self-end sm:self-center">
-            {activeTab === 'products' && (
-              <button
-                type="button"
-                onClick={openNewProductModal}
-                className="px-4 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] flex items-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
-              >
-                <Plus size={14} />
-                <span>{isAr ? 'إضافة قطعة جديدة' : 'New Piece'}</span>
-              </button>
-            )}
-            {activeTab === 'categories' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingCategory(null);
-                  setCatNameEn(''); setCatNameAr(''); setCatDescEn(''); setCatDescAr('');
-                  setIsCatModalOpen(true);
-                }}
-                className="px-4 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] flex items-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
-              >
-                <Plus size={14} />
-                <span>{isAr ? 'إضافة تصنيف' : 'New Category'}</span>
-              </button>
-            )}
-
-            <div className="w-9 h-9 rounded-full bg-cream-200 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900">
-              HJ
-            </div>
-          </div>
-        </header>
-
-        {/* Tab Content Body */}
-        <div className="p-6 sm:p-8 space-y-8 flex-1">
-          
           {/* =====================================================================
               TAB 1: OVERVIEW DASHBOARD
           ====================================================================== */}
@@ -455,117 +610,187 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             <div className="space-y-8">
               {/* Metric Cards Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-brown-500 mb-3">
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-4">
                     <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'إجمالي المبيعات' : 'Total Revenue'}</span>
-                    <div className="p-2 rounded-xl bg-sage-100 text-sage-600"><DollarSign size={16} /></div>
+                    <div className="p-2 rounded-xl bg-sage-100 text-sage-600 group-hover:scale-110 transition-transform"><DollarSign size={16} /></div>
                   </div>
                   <div className="font-serif text-3xl font-medium text-brown-900">${totalRevenue.toLocaleString()}</div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-sage-600 mt-2 font-medium">
-                    <TrendingUp size={13} />
-                    <span>+18.4% {isAr ? 'مقارنة بالشهر الماضي' : 'vs last month'}</span>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] text-sage-600 font-medium">
+                      <TrendingUp size={13} />
+                      <span>+18.4% {isAr ? 'مقارنة بالشهر الماضي' : 'vs last month'}</span>
+                    </div>
+                    {/* CSS Mini Sparkline/Progress */}
+                    <div className="w-full h-1 bg-brown-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-sage-400 rounded-full" style={{ width: '75%' }}></div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-brown-500 mb-3">
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-4">
                     <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'طلبات قيد الحياكة' : 'Active In-Stitch'}</span>
-                    <div className="p-2 rounded-xl bg-blush-100 text-burgundy-600"><Scissors size={16} /></div>
+                    <div className="p-2 rounded-xl bg-blush-100 text-burgundy-600 group-hover:scale-110 transition-transform"><Scissors size={16} /></div>
                   </div>
                   <div className="font-serif text-3xl font-medium text-brown-900">{inCraftCount}</div>
-                  <div className="text-[11px] text-brown-500 mt-2 font-light">
-                    {isAr ? 'محبوكة حالياً بواسطة الحرفيين' : 'Hand-hooked in Jordan & Kuwait'}
+                  <div className="mt-4 flex flex-col gap-2">
+                    <div className="text-[11px] text-brown-500 font-light">
+                      {isAr ? 'محبوكة حالياً بواسطة الحرفيين' : 'Hand-hooked in Jordan & Kuwait'}
+                    </div>
+                    <div className="w-full h-1 bg-brown-100 rounded-full overflow-hidden flex">
+                       <div className="h-full bg-blush-400" style={{ width: '40%' }}></div>
+                       <div className="h-full bg-amber-300" style={{ width: '30%' }}></div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-brown-500 mb-3">
-                    <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'القطع المتاحة في الأرشيف' : 'Archived Pieces'}</span>
-                    <div className="p-2 rounded-xl bg-cream-200 text-brown-700"><Package size={16} /></div>
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-4">
+                    <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'القطع المتاحة' : 'Archived Pieces'}</span>
+                    <div className="p-2 rounded-xl bg-cream-200 text-brown-700 group-hover:scale-110 transition-transform"><Package size={16} /></div>
                   </div>
                   <div className="font-serif text-3xl font-medium text-brown-900">{productsList.length}</div>
-                  <div className="text-[11px] text-brown-500 mt-2 font-light">
-                    {isAr ? 'عبر ٤ تصنيفات رئيسية' : 'Across 4 signature families'}
+                  <div className="mt-4 flex flex-col gap-2">
+                    <div className="text-[11px] text-brown-500 font-light">
+                      {isAr ? 'عبر ٤ تصنيفات رئيسية' : 'Across 4 signature families'}
+                    </div>
+                    <div className="w-full h-1 bg-brown-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-brown-400 rounded-full" style={{ width: '60%' }}></div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-brown-500 mb-3">
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-4">
                     <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'معدل رضا المشترين' : 'Artisan Rating'}</span>
-                    <div className="p-2 rounded-xl bg-amber-100 text-amber-700"><Sparkles size={16} /></div>
+                    <div className="p-2 rounded-xl bg-amber-100 text-amber-700 group-hover:scale-110 transition-transform"><Sparkles size={16} /></div>
                   </div>
-                  <div className="font-serif text-3xl font-medium text-brown-900">4.98 / 5.0</div>
-                  <div className="text-[11px] text-brown-500 mt-2 font-light">
-                    {isAr ? 'بناءً على طلبات التسليم المؤكدة' : '100% verified slow craft reviews'}
+                  <div className="font-serif text-3xl font-medium text-brown-900">4.98</div>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <div className="text-[11px] text-brown-500 font-light">
+                      {isAr ? 'بناءً على طلبات التسليم المؤكدة' : '100% verified slow craft reviews'}
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(i => <Star key={i} size={10} className={i === 5 ? 'text-amber-200 fill-amber-200' : 'text-amber-400 fill-amber-400'} />)}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Recent Orders Overview Table */}
-              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <h3 className="font-serif text-lg text-brown-900 font-medium">
-                      {isAr ? 'أحدث طلبات المشغل الحرفية' : 'Recent Bespoke Orders'}
+              {/* Quick Actions Grid */}
+              <div>
+                <h3 className="font-serif text-base text-brown-900 font-medium mb-3">{isAr ? 'إجراءات سريعة' : 'Quick Actions'}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: isAr ? 'إضافة قطعة' : 'Add New Piece', icon: Plus, action: () => { setActiveTab('products'); setTimeout(openNewProductModal, 100); } },
+                    { label: isAr ? 'مراجعة الطلبات' : 'Review Orders', icon: ListIcon, action: () => setActiveTab('orders') },
+                    { label: isAr ? 'إدارة التصنيفات' : 'Manage Categories', icon: Tag, action: () => setActiveTab('categories') },
+                    { label: isAr ? 'مراسلة الحرفيين' : 'Message Artisans', icon: Mail, action: () => setActiveTab('artisans') },
+                  ].map((btn, idx) => (
+                    <button
+                      key={idx}
+                      onClick={btn.action}
+                      className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white border border-brown-200/50 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-brown-300 transition-all text-xs font-semibold text-brown-700 uppercase tracking-wider"
+                    >
+                      <btn.icon size={14} />
+                      <span>{btn.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Charts & Tables Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* CSS Bar Chart */}
+                <div className="lg:col-span-1 bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 flex flex-col">
+                   <h3 className="font-serif text-lg text-brown-900 font-medium mb-1">
+                      {isAr ? 'الأداء الشهري' : 'Revenue by Month'}
                     </h3>
-                    <p className="text-xs text-brown-500 font-light mt-0.5">
-                      {isAr ? 'متابعة حالة النسيج، التغليف الأرشيفي والشحن' : 'Track hooking stage, wrapping, and international dispatch'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('orders')}
-                    className="text-xs font-semibold uppercase tracking-[0.15em] text-burgundy-600 hover:text-burgundy-700 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>{isAr ? 'عرض الكل' : 'View All Orders'}</span>
-                    <ArrowUpRight size={14} />
-                  </button>
+                    <p className="text-[11px] text-brown-500 font-light mb-6">Past 6 months overview</p>
+                    
+                    <div className="flex-1 flex items-end justify-between gap-2 h-48 mt-auto border-b border-brown-200 pb-2">
+                      {MOCK_REVENUE_DATA.map((d, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group w-full">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-brown-700 bg-white px-1.5 py-0.5 rounded shadow-sm">
+                            {d.label}
+                          </div>
+                          <div className="w-full max-w-[2rem] bg-gradient-to-t from-brown-200 to-brown-300 group-hover:from-blush-200 group-hover:to-blush-300 rounded-t-sm transition-all duration-300" style={{ height: `${d.value}%` }}></div>
+                          <div className="text-[10px] text-brown-500 font-medium">{d.month}</div>
+                        </div>
+                      ))}
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-brown-200/60 text-brown-500 text-[10.5px] uppercase tracking-[0.16em]">
-                        <th className="pb-3 font-semibold">{isAr ? 'رقم الطلب' : 'Order #'}</th>
-                        <th className="pb-3 font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
-                        <th className="pb-3 font-semibold">{isAr ? 'الوجهة' : 'Destination'}</th>
-                        <th className="pb-3 font-semibold">{isAr ? 'الحالة' : 'Craft Status'}</th>
-                        <th className="pb-3 font-semibold text-end">{isAr ? 'المجموع' : 'Total'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-brown-200/40">
-                      {ordersList.slice(0, 4).map((order) => (
-                        <tr key={order.id} className="hover:bg-cream-100/50 transition-colors">
-                          <td className="py-3.5 font-mono text-brown-900 font-medium">{order.orderNumber}</td>
-                          <td className="py-3.5">
-                            <span className="font-medium text-brown-900 block">{order.customerName}</span>
-                            <span className="text-[11px] text-brown-500 font-light">{order.customerEmail}</span>
-                          </td>
-                          <td className="py-3.5 text-brown-700">{isAr ? order.destinationArabic : order.destination}</td>
-                          <td className="py-3.5">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-medium ${
-                                order.status === 'hooking'
-                                  ? 'bg-blush-100 text-burgundy-700'
-                                  : order.status === 'finishing'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : order.status === 'shipped'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-sage-100 text-sage-800'
-                              }`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                              <span>{isAr ? order.statusArabic : order.status}</span>
-                            </span>
-                          </td>
-                          <td className="py-3.5 text-end font-medium text-brown-900 font-serif text-sm">
-                            ${order.total}
-                          </td>
+                {/* Recent Orders Overview Table */}
+                <div className="lg:col-span-2 bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="font-serif text-lg text-brown-900 font-medium">
+                        {isAr ? 'أحدث طلبات المشغل الحرفية' : 'Recent Bespoke Orders'}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('orders')}
+                      className="text-xs font-semibold uppercase tracking-[0.15em] text-brown-600 hover:text-brown-900 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{isAr ? 'عرض الكل' : 'View All'}</span>
+                      <ArrowUpRight size={14} />
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-brown-200/60 text-brown-500 text-[10px] uppercase tracking-[0.16em]">
+                          <th className="pb-3 font-semibold">{isAr ? 'رقم الطلب' : 'Order #'}</th>
+                          <th className="pb-3 font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
+                          <th className="pb-3 font-semibold">{isAr ? 'الحالة' : 'Status'}</th>
+                          <th className="pb-3 font-semibold text-end">{isAr ? 'المجموع' : 'Total'}</th>
+                          <th className="pb-3 font-semibold text-center"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-brown-100">
+                        {ordersList.slice(0, 4).map((order) => (
+                          <tr key={order.id} className="group hover:bg-white/50 transition-colors">
+                            <td className="py-4 font-mono text-brown-900 font-medium">{order.orderNumber}</td>
+                            <td className="py-4">
+                              <span className="font-medium text-brown-900 block">{order.customerName}</span>
+                              <span className="text-[10px] text-brown-400 font-light">{order.destination}</span>
+                            </td>
+                            <td className="py-4">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wide ${
+                                  order.status === 'hooking'
+                                    ? 'bg-blush-50 text-burgundy-700 border border-blush-200'
+                                    : order.status === 'finishing'
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    : order.status === 'shipped'
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-sage-50 text-sage-800 border border-sage-200'
+                                }`}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                <span>{isAr ? order.statusArabic : order.status}</span>
+                              </span>
+                            </td>
+                            <td className="py-4 text-end font-medium text-brown-900 font-serif text-sm">
+                              ${order.total}
+                            </td>
+                            <td className="py-4 text-center">
+                              <button onClick={() => {setActiveTab('orders'); setExpandedOrderId(order.id);}} className="p-1.5 rounded-lg text-brown-400 hover:text-brown-900 hover:bg-brown-100 transition-colors opacity-0 group-hover:opacity-100">
+                                <ArrowUpRight size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
               </div>
             </div>
           )}
@@ -575,20 +800,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           ====================================================================== */}
           {activeTab === 'products' && (
             <div className="space-y-6">
-              {/* Controls Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#FAF6F0] p-4 rounded-3xl border border-brown-200/60 shadow-sm">
-                <div className="relative flex-1 max-w-md flex items-center">
-                  <Search size={16} className={`absolute ${isAr ? 'right-3.5' : 'left-3.5'} text-brown-400`} />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={isAr ? 'ابحث عن قطعة أو كود...' : 'Search pieces by title, yarn or stitch...'}
-                    className={`w-full ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 rounded-2xl bg-cream-50 border border-brown-200 text-xs focus:outline-none focus:ring-2 focus:ring-blush-300`}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 overflow-x-auto">
+              
+              {/* Top Controls Bar */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-[#FAF6F0] p-3 sm:p-4 rounded-3xl border border-brown-200/60 shadow-sm">
+                
+                {/* Category Filters */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
                   {['all', 'bags', 'clothing', 'headwear', 'pouches'].map((cat) => (
                     <button
                       key={cat}
@@ -597,104 +814,208 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         tactileAudio.playScrubTick(300);
                         setSelectedCategory(cat);
                       }}
-                      className={`px-3.5 py-1.5 rounded-full text-xs uppercase tracking-wider font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-full text-[10.5px] uppercase tracking-wider font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         selectedCategory === cat
                           ? 'bg-[#2E221B] text-cream-100 shadow-sm'
-                          : 'bg-cream-100 text-brown-600 hover:bg-cream-200'
+                          : 'bg-transparent text-brown-600 hover:bg-brown-200/50'
                       }`}
                     >
-                      {cat === 'all'
-                        ? isAr
-                          ? 'الكل'
-                          : 'All'
-                        : cat === 'bags'
-                        ? isAr
-                          ? 'الحقائب'
-                          : 'Bags'
-                        : cat === 'clothing'
-                        ? isAr
-                          ? 'الملابس'
-                          : 'Wearables'
-                        : cat === 'headwear'
-                        ? isAr
-                          ? 'القبعات'
-                          : 'Hats'
-                        : isAr
-                        ? 'إكسسوارات'
-                        : 'Accessories'}
+                      {cat === 'all' ? (isAr ? 'الكل' : 'All') : cat}
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Product Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((p) => (
-                  <div key={p.id} className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-4 flex flex-col justify-between group hover:shadow-md transition-shadow">
-                    <div>
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-cream-200 mb-3.5 border border-brown-200/40">
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        {p.tag && (
-                          <span className="absolute top-2.5 start-2.5 px-2.5 py-1 rounded-full bg-[#2E221B]/85 text-cream-100 text-[9.5px] uppercase tracking-wider font-semibold backdrop-blur-sm">
-                            {isAr ? p.tagArabic || p.tag : p.tag}
-                          </span>
-                        )}
-                        <span className="absolute bottom-2.5 end-2.5 px-2 py-0.5 rounded-md bg-white/90 text-brown-900 text-[10px] font-mono shadow-sm">
-                          {p.category}
-                        </span>
-                      </div>
-
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h4 className="font-serif text-base text-brown-950 font-normal leading-snug">
-                          {isAr ? p.nameArabic || p.name : p.name}
-                        </h4>
-                        <span className="font-serif text-base font-semibold text-brown-900 whitespace-nowrap">${p.price}</span>
-                      </div>
-
-                      <p className="text-[11px] text-brown-500 font-light line-clamp-2 leading-relaxed mb-3">
-                        {isAr ? p.descriptionArabic || p.description : p.description}
-                      </p>
+                {/* Bulk Actions & View Toggle */}
+                <div className="flex items-center gap-3 ml-auto shrink-0 border-t md:border-t-0 border-brown-200/50 pt-3 md:pt-0">
+                  {selectedProductIds.size > 0 && (
+                    <div className="flex items-center gap-2 mr-2 animate-in fade-in">
+                      <span className="text-xs text-brown-600 font-medium">{selectedProductIds.size} selected</span>
+                      <button onClick={handleBulkDeleteProducts} className="p-1.5 rounded-lg text-burgundy-600 hover:bg-burgundy-50 transition-colors" title="Delete Selected">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
+                  )}
 
-                    <div className="pt-3 border-t border-brown-200/50 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-[11px] text-brown-500">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.colorHex || '#D6C7B2' }} />
-                        <span>{isAr ? p.colorNameArabic || p.colorName : p.colorName}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openEditProductModal(p)}
-                          className="p-1.5 rounded-xl hover:bg-cream-200 text-brown-700 hover:text-brown-950 transition-colors cursor-pointer"
-                          title="Edit Piece"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="p-1.5 rounded-xl hover:bg-burgundy-50 text-brown-400 hover:text-burgundy-600 transition-colors cursor-pointer"
-                          title="Delete Piece"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
+                  <div className="flex items-center bg-cream-50 rounded-xl border border-brown-200 p-0.5">
+                    <button 
+                      onClick={() => setProductView('grid')} 
+                      className={`p-1.5 rounded-lg transition-colors ${productView === 'grid' ? 'bg-white shadow-sm text-brown-900' : 'text-brown-400 hover:text-brown-600'}`}
+                    >
+                      <GridIcon size={14} />
+                    </button>
+                    <button 
+                      onClick={() => setProductView('list')} 
+                      className={`p-1.5 rounded-lg transition-colors ${productView === 'list' ? 'bg-white shadow-sm text-brown-900' : 'text-brown-400 hover:text-brown-600'}`}
+                    >
+                      <ListIcon size={14} />
+                    </button>
                   </div>
-                ))}
+                  
+                  <button
+                    type="button"
+                    onClick={openNewProductModal}
+                    className="px-4 py-2 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    <span className="hidden sm:inline">{isAr ? 'إضافة' : 'Add Piece'}</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Empty State */}
+              {filteredProducts.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-[#FAF6F0] rounded-3xl border border-brown-200/60 border-dashed">
+                  <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center text-brown-400 mb-4">
+                    <Package size={24} />
+                  </div>
+                  <h3 className="font-serif text-lg text-brown-900 mb-1">{isAr ? 'لا توجد قطع مطابقة' : 'No pieces found'}</h3>
+                  <p className="text-xs text-brown-500 max-w-sm">Try adjusting your filters or search terms to find what you're looking for.</p>
+                </div>
+              )}
+
+              {/* Product Grid View */}
+              {productView === 'grid' && filteredProducts.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {filteredProducts.map((p) => {
+                    const isSelected = selectedProductIds.has(p.id);
+                    return (
+                      <div key={p.id} className={`bg-[#FAF6F0] rounded-3xl border shadow-sm p-3.5 flex flex-col justify-between group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${isSelected ? 'border-blush-300 ring-1 ring-blush-300' : 'border-brown-200/60'}`}>
+                        <div>
+                          <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-cream-200 mb-4 border border-brown-200/40 cursor-pointer" onClick={() => toggleProductSelection(p.id)}>
+                            <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            
+                            {/* Checkbox overlay */}
+                            <div className={`absolute top-2.5 right-2.5 w-5 h-5 rounded flex items-center justify-center transition-all ${isSelected ? 'bg-blush-400 text-white' : 'bg-white/80 text-transparent opacity-0 group-hover:opacity-100 hover:bg-white border border-brown-200'}`}>
+                              <Check size={12} />
+                            </div>
+
+                            {p.tag && (
+                              <span className="absolute top-2.5 start-2.5 px-2 py-0.5 rounded-full bg-[#2E221B]/85 text-cream-100 text-[9px] uppercase tracking-wider font-semibold backdrop-blur-sm">
+                                {isAr ? p.tagArabic || p.tag : p.tag}
+                              </span>
+                            )}
+                            
+                            {/* Stock Indicator */}
+                            <span className="absolute bottom-2.5 start-2.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/90 text-brown-900 text-[9px] uppercase tracking-wider font-semibold shadow-sm backdrop-blur-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-sage-400 animate-pulse"></span>
+                              In Stock
+                            </span>
+                          </div>
+
+                          <div className="flex items-start justify-between gap-2 mb-1 px-1">
+                            <h4 className="font-serif text-[15px] text-brown-950 font-normal leading-snug">
+                              {isAr ? p.nameArabic || p.name : p.name}
+                            </h4>
+                            <span className="font-serif text-sm font-semibold text-brown-900 whitespace-nowrap">${p.price}</span>
+                          </div>
+
+                          <p className="text-[11px] text-brown-500 font-light line-clamp-2 leading-relaxed mb-3 px-1">
+                            {isAr ? p.descriptionArabic || p.description : p.description}
+                          </p>
+                        </div>
+
+                        <div className="pt-3 mt-auto border-t border-brown-200/50 flex items-center justify-between px-1">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-medium text-brown-500">
+                            <span className="w-2.5 h-2.5 rounded-full border border-brown-200 shadow-inner" style={{ backgroundColor: p.colorHex || '#D6C7B2' }} />
+                            <span>{p.category}</span>
+                          </div>
+
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); openEditProductModal(p); }}
+                              className="p-1.5 rounded-lg hover:bg-brown-100 text-brown-400 hover:text-brown-900 transition-colors cursor-pointer"
+                              title="Edit Piece"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteProduct(p.id); }}
+                              className="p-1.5 rounded-lg hover:bg-burgundy-50 text-brown-300 hover:text-burgundy-600 transition-colors cursor-pointer"
+                              title="Delete Piece"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Product List View */}
+              {productView === 'list' && filteredProducts.length > 0 && (
+                <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-brown-200 bg-cream-50/50 text-brown-500 text-[10px] uppercase tracking-[0.16em]">
+                        <th className="py-3 px-4 w-10">
+                          <button onClick={selectAllProducts} className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedProductIds.size === filteredProducts.length ? 'bg-blush-400 border-blush-400 text-white' : 'bg-white border-brown-300 text-transparent'}`}>
+                            <Check size={10} />
+                          </button>
+                        </th>
+                        <th className="py-3 px-4 font-semibold">{isAr ? 'القطعة' : 'Piece'}</th>
+                        <th className="py-3 px-4 font-semibold">{isAr ? 'التصنيف' : 'Category'}</th>
+                        <th className="py-3 px-4 font-semibold">{isAr ? 'السعر' : 'Price'}</th>
+                        <th className="py-3 px-4 font-semibold">{isAr ? 'المخزون' : 'Status'}</th>
+                        <th className="py-3 px-4 text-end"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brown-100">
+                      {filteredProducts.map((p) => {
+                        const isSelected = selectedProductIds.has(p.id);
+                        return (
+                          <tr key={p.id} className={`group transition-colors ${isSelected ? 'bg-blush-50/30' : 'hover:bg-white/50'}`}>
+                            <td className="py-3 px-4">
+                               <button onClick={() => toggleProductSelection(p.id)} className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blush-400 border-blush-400 text-white' : 'bg-white border-brown-300 text-transparent'}`}>
+                                <Check size={10} />
+                              </button>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-brown-200/50" />
+                                <div>
+                                  <div className="font-serif text-sm text-brown-900">{p.name}</div>
+                                  <div className="text-[10px] text-brown-500">{p.colorName}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-1 rounded bg-cream-100 text-[10px] uppercase tracking-wider text-brown-700">{p.category}</span>
+                            </td>
+                            <td className="py-3 px-4 font-serif font-medium text-brown-900">${p.price}</td>
+                            <td className="py-3 px-4">
+                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-medium text-sage-700 bg-sage-50 border border-sage-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-sage-400"></span> In Stock
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-end">
+                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => openEditProductModal(p)} className="p-1.5 rounded-lg text-brown-400 hover:text-brown-900 hover:bg-brown-100"><Edit2 size={14} /></button>
+                                <button onClick={() => handleDeleteProduct(p.id)} className="p-1.5 rounded-lg text-brown-300 hover:text-burgundy-600 hover:bg-burgundy-50"><Trash2 size={14} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
           {/* =====================================================================
-              TAB 3: ORDERS TRACKING & ARTISAN PROGRESS
+              TAB 3: ORDERS TRACKING
           ====================================================================== */}
           {activeTab === 'orders' && (
             <div className="space-y-6">
+              
               {/* Order Status Filters */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                {['all', 'hooking', 'finishing', 'shipped', 'delivered'].map((st) => (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                {['all', 'pending', 'hooking', 'finishing', 'shipped', 'delivered'].map((st) => (
                   <button
                     key={st}
                     type="button"
@@ -702,90 +1023,180 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       tactileAudio.playScrubTick(300);
                       setStatusFilter(st);
                     }}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-[0.14em] transition-all cursor-pointer ${
+                    className={`px-4 py-2 rounded-full text-[10.5px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                       statusFilter === st
                         ? 'bg-[#2E221B] text-cream-100 shadow-sm'
                         : 'bg-[#FAF6F0] text-brown-600 border border-brown-200/60 hover:bg-cream-200'
                     }`}
                   >
-                    {st === 'all'
-                      ? isAr
-                        ? 'جميع الطلبات'
-                        : 'All Orders'
-                      : st === 'hooking'
-                      ? isAr
-                        ? 'قيد الحياكة'
-                        : 'Hooking'
-                      : st === 'finishing'
-                      ? isAr
-                        ? 'التشطيب والأرشيف'
-                        : 'Finishing'
-                      : st === 'shipped'
-                      ? isAr
-                        ? 'تم الشحن'
-                        : 'Dispatched'
-                      : isAr
-                      ? 'تم التسليم'
-                      : 'Delivered'}
+                    {st === 'all' ? (isAr ? 'جميع الطلبات' : 'All Orders') : st}
                   </button>
                 ))}
               </div>
 
-              {/* Orders List Cards */}
+              {/* Empty State */}
+              {filteredOrders.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-[#FAF6F0] rounded-3xl border border-brown-200/60 border-dashed">
+                  <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center text-brown-400 mb-4">
+                    <ShoppingBag size={24} />
+                  </div>
+                  <h3 className="font-serif text-lg text-brown-900 mb-1">No orders found</h3>
+                  <p className="text-xs text-brown-500 max-w-sm">No bespoke orders match the current status filter.</p>
+                </div>
+              )}
+
+              {/* Orders List */}
               <div className="space-y-4">
-                {filteredOrders.map((order) => (
-                  <div key={order.id} className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-brown-200/60">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm font-bold text-brown-900">{order.orderNumber}</span>
-                          <span className="text-[10px] text-brown-400 font-light">{order.createdAt}</span>
-                        </div>
-                        <div className="text-xs text-brown-600 font-light mt-1">
-                          <span className="font-semibold text-brown-900">{order.customerName}</span> • {order.customerEmail} • {order.customerPhone}
-                        </div>
-                      </div>
+                {filteredOrders.map((order) => {
+                  const isExpanded = expandedOrderId === order.id;
+                  
+                  // Timeline logic
+                  const stages = ['pending', 'hooking', 'finishing', 'shipped', 'delivered'];
+                  const currentIndex = stages.indexOf(order.status);
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-brown-500 font-light">
-                          {isAr ? 'المشغل المكلف:' : 'Assigned Atelier:'} <strong className="font-medium text-brown-900">{order.artisan}</strong>
-                        </span>
-                        <div className="font-serif text-lg font-semibold text-brown-900 ms-3">${order.total}</div>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Items */}
-                      <div className="flex items-center gap-3 overflow-x-auto">
-                        {order.items.map((it, idx) => (
-                          <div key={idx} className="flex items-center gap-2 bg-cream-100/70 px-3 py-1.5 rounded-2xl border border-brown-200/50">
-                            <img src={it.product.image} alt={it.product.name} className="w-8 h-8 rounded-lg object-cover" />
-                            <div className="text-xs">
-                              <span className="font-medium text-brown-900 block truncate max-w-[150px]">{isAr ? it.product.nameArabic || it.product.name : it.product.name}</span>
-                              <span className="text-[10px] text-brown-500">Qty: {it.quantity}</span>
+                  return (
+                    <div key={order.id} className={`bg-[#FAF6F0] rounded-3xl border transition-all duration-300 ${isExpanded ? 'border-brown-300 shadow-md' : 'border-brown-200/60 shadow-sm hover:border-brown-300'}`}>
+                      
+                      {/* Compact Header (Always visible) */}
+                      <div 
+                        className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+                        onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                      >
+                        <div className="flex items-start sm:items-center gap-4">
+                          <div className={`p-2.5 rounded-2xl flex items-center justify-center ${
+                            order.status === 'delivered' ? 'bg-sage-100 text-sage-700' :
+                            order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                            'bg-cream-200 text-brown-600'
+                          }`}>
+                            {order.status === 'delivered' ? <CheckCircle2 size={18} /> : 
+                             order.status === 'shipped' ? <Truck size={18} /> : 
+                             <Clock size={18} />}
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-mono text-sm font-bold text-brown-900">{order.orderNumber}</span>
+                              <span className="text-[10px] text-brown-400 font-light">{order.createdAt}</span>
+                            </div>
+                            <div className="text-xs text-brown-600 font-medium">
+                              {order.customerName} <span className="font-light mx-1">•</span> {order.destination}
                             </div>
                           </div>
-                        ))}
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full border-t sm:border-t-0 border-brown-200/50 pt-3 sm:pt-0">
+                           <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                order.status === 'hooking' ? 'bg-blush-100 text-burgundy-700' : 
+                                order.status === 'finishing' ? 'bg-amber-100 text-amber-800' : 
+                                order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
+                                order.status === 'delivered' ? 'bg-sage-100 text-sage-800' :
+                                'bg-cream-100 text-brown-600'
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                            
+                            <div className="flex items-center gap-4">
+                              <div className="font-serif text-lg font-bold text-brown-900">${order.total}</div>
+                              <button className="text-brown-400 hover:text-brown-900 p-1">
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </button>
+                            </div>
+                        </div>
                       </div>
 
-                      {/* Status changer buttons */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-brown-500 font-light me-1">{isAr ? 'تحديث المرحلة:' : 'Advance Stage:'}</span>
-                        <select
-                          value={order.status}
-                          onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
-                          className="px-3 py-1.5 rounded-xl bg-cream-50 border border-brown-300 text-xs font-medium text-brown-900 focus:outline-none focus:ring-2 focus:ring-blush-300 cursor-pointer"
-                        >
-                          <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
-                          <option value="hooking">{isAr ? 'قيد الحياكة' : 'Hooking'}</option>
-                          <option value="finishing">{isAr ? 'التشطيب والتغليف' : 'Finishing & Wrapping'}</option>
-                          <option value="shipped">{isAr ? 'تم الشحن' : 'Dispatched'}</option>
-                          <option value="delivered">{isAr ? 'تم التسليم' : 'Delivered'}</option>
-                        </select>
-                      </div>
+                      {/* Expanded Content */}
+                      {isExpanded && (
+                        <div className="px-5 pb-5 pt-2 border-t border-brown-200/50 animate-in slide-in-from-top-2 fade-in duration-300">
+                          
+                          {/* Visual Timeline */}
+                          <div className="py-6 px-4 mb-6 bg-white/50 rounded-2xl border border-brown-100">
+                            <div className="relative flex items-center justify-between">
+                              <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-brown-100 z-0"></div>
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-blush-300 z-0 transition-all duration-700" style={{ width: `${(currentIndex / (stages.length - 1)) * 100}%` }}></div>
+                              
+                              {stages.map((stage, idx) => {
+                                const isCompleted = idx <= currentIndex;
+                                const isCurrent = idx === currentIndex;
+                                return (
+                                  <div key={stage} className="relative z-10 flex flex-col items-center gap-2">
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors duration-500 ${
+                                      isCompleted ? 'bg-blush-400 border-blush-400 text-white' : 'bg-white border-brown-200 text-transparent'
+                                    } ${isCurrent ? 'ring-4 ring-blush-100' : ''}`}>
+                                      {isCompleted && <Check size={10} strokeWidth={3} />}
+                                    </div>
+                                    <span className={`absolute top-8 text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${isCompleted ? 'text-brown-900' : 'text-brown-400'}`}>
+                                      {stage}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Order Details */}
+                            <div>
+                              <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">Order Details</h4>
+                              <div className="space-y-3">
+                                {order.items.map((it, idx) => (
+                                  <div key={idx} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-brown-100 shadow-sm">
+                                    <img src={it.product.image} alt={it.product.name} className="w-12 h-12 rounded-lg object-cover" />
+                                    <div className="flex-1 text-xs">
+                                      <div className="font-semibold text-brown-900">{it.product.name}</div>
+                                      <div className="text-[10px] text-brown-500 mt-0.5">Category: {it.product.category}</div>
+                                    </div>
+                                    <div className="text-xs font-medium text-brown-900 bg-cream-50 px-2 py-1 rounded">Qty: {it.quantity}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Customer & Management */}
+                            <div className="space-y-6">
+                              <div>
+                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">Customer Information</h4>
+                                <div className="bg-white p-4 rounded-xl border border-brown-100 shadow-sm text-xs space-y-2">
+                                  <div className="flex items-center gap-2"><Users size={12} className="text-brown-400"/> <span className="font-medium text-brown-900">{order.customerName}</span></div>
+                                  <div className="flex items-center gap-2"><Mail size={12} className="text-brown-400"/> <a href={`mailto:${order.customerEmail}`} className="text-brown-600 hover:underline">{order.customerEmail}</a></div>
+                                  <div className="flex items-center gap-2"><Phone size={12} className="text-brown-400"/> <span>{order.customerPhone}</span></div>
+                                  <div className="flex items-center gap-2"><MapPin size={12} className="text-brown-400"/> <span>{order.destination}</span></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">Atelier Management</h4>
+                                <div className="flex flex-col gap-3 bg-cream-50/50 p-4 rounded-xl border border-brown-100">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-brown-500">Assigned Artisan:</span>
+                                    <span className="font-semibold text-brown-900">{order.artisan}</span>
+                                  </div>
+                                  <div className="h-px bg-brown-200/50"></div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs text-brown-500">Update Status:</span>
+                                    <select
+                                      value={order.status}
+                                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
+                                      className="flex-1 max-w-[140px] px-2 py-1.5 rounded-lg bg-white border border-brown-300 text-xs font-semibold text-brown-900 focus:outline-none focus:border-blush-400 cursor-pointer shadow-sm"
+                                    >
+                                      <option value="pending">Pending</option>
+                                      <option value="hooking">Hooking</option>
+                                      <option value="finishing">Finishing</option>
+                                      <option value="shipped">Shipped</option>
+                                      <option value="delivered">Delivered</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -794,112 +1205,130 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               TAB 4: ARTISANS & WORKSHOPS
           ====================================================================== */}
           {activeTab === 'artisans' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blush-100 flex items-center justify-center font-serif text-lg font-bold text-burgundy-700">JO</div>
-                    <div>
-                      <h3 className="font-serif text-lg text-brown-900 font-medium">{isAr ? 'مشغل عمّان الحرفي' : 'Amman Atelier Hub'}</h3>
-                      <p className="text-xs text-brown-500 font-light">Amman, Jordan • 6 Master Hookers</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-sage-100 text-sage-800 text-[10px] font-semibold uppercase tracking-wider">Active</span>
-                </div>
-                <p className="text-xs text-brown-600 font-light leading-relaxed">
-                  {isAr
-                    ? 'متخصص في حياكة حبال القطن الصافي غير المعالج، صباغة الخيوط النباتية، وحياكة حقائب الكتف الصلبة.'
-                    : 'Specialized in raw unbleached braided cotton cords, plant-dying vats, and signature tote structures.'}
-                </p>
-                <div className="pt-2 border-t border-brown-200/50 flex items-center justify-between text-xs text-brown-500">
-                  <span>Current Queue: <strong>7 pieces</strong></span>
-                  <span>Lead Time: <strong>4-6 days</strong></span>
-                </div>
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 bg-sage-100 text-sage-800 text-[10px] font-bold uppercase tracking-wider rounded-full">2 Active Workshops</span>
+                <span className="px-3 py-1 bg-brown-100 text-brown-600 text-[10px] font-bold uppercase tracking-wider rounded-full">10 Master Artisans</span>
               </div>
 
-              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-sage-100 flex items-center justify-center font-serif text-lg font-bold text-sage-800">KW</div>
-                    <div>
-                      <h3 className="font-serif text-lg text-brown-900 font-medium">{isAr ? 'أتيليه الكويت للتصميم' : 'Kuwait Design Studio'}</h3>
-                      <p className="text-xs text-brown-500 font-light">Kuwait City, Kuwait • 4 Master Artisans</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Amman Atelier */}
+                <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 space-y-6 flex flex-col hover:border-brown-300 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-blush-100 flex items-center justify-center font-serif text-xl font-bold text-burgundy-700 shadow-inner border border-blush-200/50">JO</div>
+                      <div>
+                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">Amman Atelier Hub</h3>
+                        <p className="text-xs text-brown-500 font-light flex items-center gap-1"><MapPin size={10}/> Amman, Jordan</p>
+                      </div>
+                    </div>
+                    <button className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors"><Edit2 size={14}/></button>
+                  </div>
+                  
+                  <p className="text-[13px] text-brown-600 font-light leading-relaxed">
+                    Specialized in raw unbleached braided cotton cords, plant-dying vats, and signature tote structures. Primary production facility for heavy-gauge hooking.
+                  </p>
+
+                  {/* Capacity Progress */}
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-brown-500 mb-2">
+                      <span>Queue Capacity</span>
+                      <span className="text-amber-600">85% Full</span>
+                    </div>
+                    <div className="w-full h-2 bg-brown-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full" style={{ width: '85%' }}></div>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-sage-100 text-sage-800 text-[10px] font-semibold uppercase tracking-wider">Active</span>
+
+                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-brown-200/50">
+                    <div className="bg-white p-3 rounded-xl border border-brown-100">
+                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Active Pieces</div>
+                      <div className="font-serif text-xl text-brown-900">7</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-brown-100">
+                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Avg Lead Time</div>
+                      <div className="font-serif text-xl text-brown-900">4-6 Days</div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-brown-600 font-light leading-relaxed">
-                  {isAr
-                    ? 'مركز التصميم والهياكل المعاصرة، وإكسسوارات الكروشيه المحدودة، والتغليف الأرشيفي الفاخر.'
-                    : 'Center for contemporary silhouette prototyping, micro-accessories, and bespoke VIP archival boxing.'}
-                </p>
-                <div className="pt-2 border-t border-brown-200/50 flex items-center justify-between text-xs text-brown-500">
-                  <span>Current Queue: <strong>5 pieces</strong></span>
-                  <span>Lead Time: <strong>3-5 days</strong></span>
+
+                {/* Kuwait Studio */}
+                <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 space-y-6 flex flex-col hover:border-brown-300 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-sage-100 flex items-center justify-center font-serif text-xl font-bold text-sage-800 shadow-inner border border-sage-200/50">KW</div>
+                      <div>
+                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">Kuwait Design Studio</h3>
+                        <p className="text-xs text-brown-500 font-light flex items-center gap-1"><MapPin size={10}/> Kuwait City, Kuwait</p>
+                      </div>
+                    </div>
+                    <button className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors"><Edit2 size={14}/></button>
+                  </div>
+                  
+                  <p className="text-[13px] text-brown-600 font-light leading-relaxed">
+                    Center for contemporary silhouette prototyping, micro-accessories, detailed finishing work, and bespoke VIP archival boxing and dispatch.
+                  </p>
+
+                  {/* Capacity Progress */}
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-brown-500 mb-2">
+                      <span>Queue Capacity</span>
+                      <span className="text-sage-600">40% Full</span>
+                    </div>
+                    <div className="w-full h-2 bg-brown-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-sage-400 rounded-full" style={{ width: '40%' }}></div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-brown-200/50">
+                    <div className="bg-white p-3 rounded-xl border border-brown-100">
+                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Active Pieces</div>
+                      <div className="font-serif text-xl text-brown-900">3</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-brown-100">
+                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Avg Lead Time</div>
+                      <div className="font-serif text-xl text-brown-900">2-3 Days</div>
+                    </div>
+                  </div>
                 </div>
+
               </div>
             </div>
           )}
 
           {/* =====================================================================
-              TAB 5: STORE SETTINGS
-          ====================================================================== */}
-          {activeTab === 'settings' && (
-            <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 max-w-2xl space-y-6">
-              <div>
-                <h3 className="font-serif text-lg text-brown-900 font-medium">{isAr ? 'إعدادات المشغل والمتجر' : 'Atelier Configuration'}</h3>
-                <p className="text-xs text-brown-500 font-light mt-0.5">Control pricing currency, shipping rules, and studio archive drop alerts.</p>
-              </div>
-
-              <div className="space-y-4 text-xs">
-                <div>
-                  <label className="block text-brown-700 font-semibold mb-1 uppercase tracking-wider text-[10.5px]">Default Currency</label>
-                  <select className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900">
-                    <option value="USD">USD ($) - International</option>
-                    <option value="KWD">KWD (د.ك) - Kuwait Dinar</option>
-                    <option value="JOD">JOD (د.أ) - Jordan Dinar</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-brown-700 font-semibold mb-1 uppercase tracking-wider text-[10.5px]">Complimentary Shipping Threshold ($)</label>
-                  <input type="number" defaultValue={200} className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900" />
-                </div>
-
-                <div>
-                  <label className="block text-brown-700 font-semibold mb-1 uppercase tracking-wider text-[10.5px]">Atelier Inquiries Email</label>
-                  <input type="email" defaultValue="atelier@hadab.craft" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900" />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      tactileAudio.playChime();
-                      alert(isAr ? 'تم حفظ إعدادات المشغل بنجاح' : 'Settings saved successfully');
-                    }}
-                    className="px-6 py-2.5 rounded-full bg-[#2E221B] text-cream-100 text-xs font-semibold uppercase tracking-[0.15em] shadow-sm hover:bg-[#3D2D25] cursor-pointer"
-                  >
-                    {isAr ? 'حفظ التغييرات' : 'Save Preferences'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* =====================================================================
-              TAB 6: CATEGORIES MANAGEMENT
+              TAB 5: CATEGORIES MANAGEMENT
           ====================================================================== */}
           {activeTab === 'categories' && (
             <div className="space-y-6">
+              
+              <div className="flex justify-end mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingCategory(null);
+                    setCatNameEn(''); setCatNameAr(''); setCatDescEn(''); setCatDescAr('');
+                    setIsCatModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                >
+                  <Plus size={14} />
+                  <span>{isAr ? 'إضافة تصنيف' : 'New Category'}</span>
+                </button>
+              </div>
+
               {/* Category Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {categoryList.map((cat) => (
-                  <div key={cat.id} className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-5 flex flex-col gap-4">
+                  <div key={cat.id} className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-5 flex flex-col gap-4 group hover:border-brown-300 hover:shadow-md transition-all">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: cat.color + '40' }}>
-                          <Tag size={18} style={{ color: cat.color }} />
+                        <div className="cursor-grab active:cursor-grabbing text-brown-300 hover:text-brown-500 hidden sm:block">
+                          <GripVertical size={16} />
+                        </div>
+                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner" style={{ backgroundColor: cat.color + '30', border: `1px solid ${cat.color}50` }}>
+                          <Tag size={20} style={{ color: cat.color }} />
                         </div>
                         <div>
                           <h3 className="font-serif text-base text-brown-950 font-medium leading-snug">
@@ -908,21 +1337,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           <span className="text-[10px] font-mono uppercase tracking-wider text-brown-400">/{cat.slug}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      
+                      <div className="flex flex-col items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           type="button"
                           onClick={() => {
                             setEditingCategory(cat);
-                            setCatNameEn(cat.name);
-                            setCatNameAr(cat.nameAr);
-                            setCatDescEn(cat.description);
-                            setCatDescAr(cat.descriptionAr);
+                            setCatNameEn(cat.name); setCatNameAr(cat.nameAr);
+                            setCatDescEn(cat.description); setCatDescAr(cat.descriptionAr);
                             setIsCatModalOpen(true);
                           }}
-                          className="p-1.5 rounded-xl hover:bg-cream-200 text-brown-600 hover:text-brown-950 transition-colors cursor-pointer"
-                          title="Edit Category"
+                          className="p-1.5 rounded-lg hover:bg-white text-brown-400 hover:text-brown-900 transition-colors shadow-sm border border-transparent hover:border-brown-100"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={12} />
                         </button>
                         <button
                           type="button"
@@ -932,30 +1359,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               setCategoryList((prev) => prev.filter((c) => c.id !== cat.id));
                             }
                           }}
-                          className="p-1.5 rounded-xl hover:bg-burgundy-50 text-brown-300 hover:text-burgundy-600 transition-colors cursor-pointer"
-                          title="Delete Category"
+                          className="p-1.5 rounded-lg hover:bg-burgundy-50 text-brown-300 hover:text-burgundy-600 transition-colors shadow-sm border border-transparent hover:border-burgundy-100"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
 
-                    <p className="text-[11.5px] text-brown-500 font-light leading-relaxed">
-                      {isAr ? cat.descriptionAr : cat.description}
-                    </p>
+                    <div className="flex-1 bg-cream-50/50 rounded-xl p-3 border border-brown-100/50">
+                      <p className="text-[11.5px] text-brown-600 font-light leading-relaxed line-clamp-3">
+                        {isAr ? cat.descriptionAr : cat.description}
+                      </p>
+                    </div>
 
-                    <div className="pt-3 border-t border-brown-200/50 flex items-center justify-between">
-                      <span className="text-xs text-brown-500 font-light">
-                        {isAr ? 'عدد القطع:' : 'Pieces:'}{' '}
-                        <strong className="text-brown-900 font-semibold">{cat.pieceCount}</strong>
+                    <div className="pt-2 flex items-center justify-between">
+                      <span className="text-[11px] text-brown-500 font-medium uppercase tracking-wider">
+                        <strong className="text-brown-900 text-sm font-serif mr-1">{cat.pieceCount}</strong>
+                        Pieces
                       </span>
                       <button
                         type="button"
                         onClick={() => { setSelectedCategory(cat.slug); setActiveTab('products'); }}
-                        className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-burgundy-600 hover:text-burgundy-700 flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-[10px] font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 bg-white px-3 py-1.5 rounded-full border border-brown-200 shadow-sm flex items-center gap-1 transition-all hover:shadow"
                       >
-                        <span>{isAr ? 'عرض القطع' : 'View Pieces'}</span>
-                        <ArrowUpRight size={13} />
+                        <span>Manage</span>
+                        <ArrowUpRight size={12} />
                       </button>
                     </div>
                   </div>
@@ -965,7 +1393,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           )}
 
           {/* =====================================================================
-              TAB 7: CUSTOMER DIRECTORY
+              TAB 6: CUSTOMER DIRECTORY
           ====================================================================== */}
           {activeTab === 'customers' && (
             <div className="space-y-6">
@@ -977,116 +1405,251 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   { label: isAr ? 'عملاء جدد' : 'New Customers', value: MOCK_CUSTOMERS.filter(c => c.status === 'new').length, color: 'bg-sage-100 text-sage-800' },
                   { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `$${Math.round(MOCK_CUSTOMERS.reduce((s, c) => s + c.totalSpent, 0) / MOCK_CUSTOMERS.length)}`, color: 'bg-amber-100 text-amber-800' },
                 ].map((kpi, i) => (
-                  <div key={i} className={`${kpi.color} rounded-3xl p-4 border border-brown-200/40`}>
-                    <div className="text-[10.5px] uppercase tracking-[0.16em] font-semibold opacity-70 mb-1">{kpi.label}</div>
+                  <div key={i} className={`${kpi.color} rounded-2xl p-4 border border-brown-200/40 shadow-sm flex flex-col justify-center items-center text-center`}>
+                    <div className="text-[9px] uppercase tracking-[0.16em] font-bold opacity-70 mb-1">{kpi.label}</div>
                     <div className="font-serif text-2xl font-medium">{kpi.value}</div>
                   </div>
                 ))}
               </div>
 
               {/* Search + Filter Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#FAF6F0] p-4 rounded-3xl border border-brown-200/60 shadow-sm">
-                <div className="relative flex-1 max-w-sm flex items-center">
-                  <Search size={15} className={`absolute ${isAr ? 'right-3.5' : 'left-3.5'} text-brown-400`} />
-                  <input
-                    type="text"
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder={isAr ? 'ابحث عن عميل...' : 'Search by name or email...'}
-                    className={`w-full ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 rounded-2xl bg-cream-50 border border-brown-200 text-xs focus:outline-none focus:ring-2 focus:ring-blush-300`}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#FAF6F0] p-3 rounded-3xl border border-brown-200/60 shadow-sm">
+                
+                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
                   {(['all', 'vip', 'active', 'new'] as const).map((f) => (
                     <button
                       key={f}
                       type="button"
                       onClick={() => setCustomerFilter(f)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-full text-[10.5px] font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                         customerFilter === f
                           ? 'bg-[#2E221B] text-cream-100 shadow-sm'
-                          : 'bg-cream-100 text-brown-600 hover:bg-cream-200'
+                          : 'bg-transparent text-brown-600 hover:bg-brown-200/50'
                       }`}
                     >
                       {f === 'all' ? (isAr ? 'الكل' : 'All') : f === 'vip' ? 'VIP' : f === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
                     </button>
                   ))}
                 </div>
+
+                <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-white border border-brown-200 rounded-full text-[10px] font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 shadow-sm transition-colors">
+                  <Download size={14} />
+                  <span>Export CSV</span>
+                </button>
               </div>
 
-              {/* Customers Table */}
+              {/* Customers List/Table */}
               <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs text-left">
                     <thead>
-                      <tr className="border-b border-brown-200/60 bg-cream-100/50 text-brown-500 text-[10.5px] uppercase tracking-[0.14em]">
-                        <th className="px-5 py-3.5 text-start font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
-                        <th className="px-5 py-3.5 text-start font-semibold hidden md:table-cell">{isAr ? 'التواصل' : 'Contact'}</th>
-                        <th className="px-5 py-3.5 text-start font-semibold hidden sm:table-cell">{isAr ? 'الدولة' : 'Country'}</th>
-                        <th className="px-5 py-3.5 text-center font-semibold">{isAr ? 'الطلبات' : 'Orders'}</th>
-                        <th className="px-5 py-3.5 text-end font-semibold">{isAr ? 'الإنفاق الكلي' : 'Total Spent'}</th>
-                        <th className="px-5 py-3.5 text-center font-semibold">{isAr ? 'التقييم' : 'Rating'}</th>
-                        <th className="px-5 py-3.5 text-center font-semibold">{isAr ? 'الحالة' : 'Status'}</th>
+                      <tr className="border-b border-brown-200/80 bg-cream-50/50 text-brown-500 text-[10px] uppercase tracking-[0.14em]">
+                        <th className="px-5 py-4 font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
+                        <th className="px-5 py-4 font-semibold hidden md:table-cell">{isAr ? 'التواصل' : 'Contact'}</th>
+                        <th className="px-5 py-4 text-center font-semibold">{isAr ? 'الطلبات' : 'Orders'}</th>
+                        <th className="px-5 py-4 text-end font-semibold">{isAr ? 'الإنفاق الكلي' : 'Total Spent'}</th>
+                        <th className="px-5 py-4 text-center font-semibold">{isAr ? 'الحالة' : 'Status'}</th>
+                        <th className="px-5 py-4 text-center"></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-brown-200/40">
-                      {MOCK_CUSTOMERS
-                        .filter(c => {
-                          const matchSearch = c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.email.toLowerCase().includes(customerSearch.toLowerCase());
-                          const matchFilter = customerFilter === 'all' || c.status === customerFilter;
-                          return matchSearch && matchFilter;
-                        })
-                        .map((customer) => (
-                          <tr key={customer.id} className="hover:bg-cream-100/60 transition-colors">
-                            <td className="px-5 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[#EDE4D8] flex items-center justify-center font-serif text-xs font-bold text-brown-700 shrink-0">
-                                  {customer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    <tbody className="divide-y divide-brown-100">
+                      {filteredCustomers.map((customer, idx) => {
+                        const isExpanded = expandedCustomerId === customer.id;
+                        // Pseudo-random colors based on index for avatars
+                        const colors = ['bg-blush-100 text-burgundy-700', 'bg-sage-100 text-sage-800', 'bg-amber-100 text-amber-800', 'bg-blue-100 text-blue-800', 'bg-cream-200 text-brown-800'];
+                        const colorClass = colors[idx % colors.length];
+
+                        return (
+                          <React.Fragment key={customer.id}>
+                            <tr className={`hover:bg-white/50 transition-colors cursor-pointer ${isExpanded ? 'bg-white/50' : ''}`} onClick={() => setExpandedCustomerId(isExpanded ? null : customer.id)}>
+                              <td className="px-5 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-serif text-xs font-bold shrink-0 ${colorClass}`}>
+                                    {customer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-brown-900 text-sm">{customer.name}</div>
+                                    <div className="text-[10px] text-brown-400 font-light flex items-center gap-1 mt-0.5">
+                                      <MapPin size={10} /> {customer.country}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div className="font-medium text-brown-900">{customer.name}</div>
-                                  <div className="text-[10px] text-brown-400 font-light">{customer.lastOrderDate}</div>
+                              </td>
+                              <td className="px-5 py-4 hidden md:table-cell">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1.5 text-brown-600"><Mail size={12} />{customer.email}</div>
+                                  <div className="flex items-center gap-1.5 text-brown-400"><Phone size={12} />{customer.phone}</div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-5 py-4 hidden md:table-cell">
-                              <div className="flex flex-col gap-0.5">
-                                <div className="flex items-center gap-1.5 text-brown-600"><Mail size={11} />{customer.email}</div>
-                                <div className="flex items-center gap-1.5 text-brown-400"><Phone size={11} />{customer.phone}</div>
-                              </div>
-                            </td>
-                            <td className="px-5 py-4 hidden sm:table-cell">
-                              <div className="flex items-center gap-1.5 text-brown-600"><MapPin size={11} />{customer.country}</div>
-                            </td>
-                            <td className="px-5 py-4 text-center">
-                              <span className="font-semibold text-brown-900">{customer.totalOrders}</span>
-                            </td>
-                            <td className="px-5 py-4 text-end font-serif font-semibold text-brown-900 text-sm">${customer.totalSpent}</td>
-                            <td className="px-5 py-4 text-center">
-                              <div className="flex items-center justify-center gap-0.5">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star key={i} size={11} className={i < customer.rating ? 'text-amber-400 fill-amber-400' : 'text-brown-200'} />
-                                ))}
-                              </div>
-                            </td>
-                            <td className="px-5 py-4 text-center">
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                                customer.status === 'vip'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : customer.status === 'active'
-                                  ? 'bg-sage-100 text-sage-800'
-                                  : 'bg-blue-50 text-blue-700'
-                              }`}>
-                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                                {customer.status === 'vip' ? 'VIP' : customer.status === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+                              <td className="px-5 py-4 text-center">
+                                <span className="font-semibold text-brown-900 bg-cream-50 px-2 py-1 rounded">{customer.totalOrders}</span>
+                              </td>
+                              <td className="px-5 py-4 text-end font-serif font-semibold text-brown-900 text-base">${customer.totalSpent}</td>
+                              <td className="px-5 py-4 text-center">
+                                <span className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                  customer.status === 'vip' ? 'bg-amber-100 text-amber-800' :
+                                  customer.status === 'active' ? 'bg-sage-100 text-sage-800' :
+                                  'bg-blue-50 text-blue-700'
+                                }`}>
+                                  {customer.status === 'vip' ? 'VIP' : customer.status === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4 text-center text-brown-400">
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </td>
+                            </tr>
+                            
+                            {/* Expandable row detail */}
+                            {isExpanded && (
+                              <tr className="bg-white/80 border-b-2 border-brown-200">
+                                <td colSpan={6} className="px-5 py-6">
+                                  <div className="flex flex-col md:flex-row gap-8 max-w-4xl mx-auto">
+                                    <div className="flex-1 space-y-4">
+                                      <h4 className="text-[10px] uppercase font-bold text-brown-400 tracking-wider">Customer Insights</h4>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-[#FAF6F0] p-3 rounded-xl border border-brown-100">
+                                          <div className="text-[10px] text-brown-500 mb-1">Last Order Date</div>
+                                          <div className="font-medium text-brown-900">{customer.lastOrderDate}</div>
+                                        </div>
+                                        <div className="bg-[#FAF6F0] p-3 rounded-xl border border-brown-100">
+                                          <div className="text-[10px] text-brown-500 mb-1">Satisfaction Rating</div>
+                                          <div className="flex items-center gap-0.5">
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                              <Star key={i} size={12} className={i < customer.rating ? 'text-amber-400 fill-amber-400' : 'text-brown-200'} />
+                                            ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex-1 space-y-4">
+                                      <h4 className="text-[10px] uppercase font-bold text-brown-400 tracking-wider">Quick Actions</h4>
+                                      <div className="flex flex-col gap-2">
+                                        <button className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between">
+                                          <span>View Order History</span>
+                                          <ArrowUpRight size={14} className="text-brown-400" />
+                                        </button>
+                                        <button className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between">
+                                          <span>Send Personalized Offer Email</span>
+                                          <Mail size={14} className="text-brown-400" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* =====================================================================
+              TAB 7: STORE SETTINGS
+          ====================================================================== */}
+          {activeTab === 'settings' && (
+            <div className="max-w-3xl mx-auto space-y-6 pb-12">
+              
+              {/* General Preferences */}
+              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-brown-200/50 bg-white/50">
+                  <h3 className="font-serif text-lg text-brown-900 font-medium">General Preferences</h3>
+                  <p className="text-xs text-brown-500 font-light mt-0.5">Control pricing currency, shipping rules, and contact info.</p>
+                </div>
+                
+                <div className="p-6 space-y-5 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">Default Currency</label>
+                      <select className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300">
+                        <option value="USD">USD ($) - International</option>
+                        <option value="KWD">KWD (د.ك) - Kuwait Dinar</option>
+                        <option value="JOD">JOD (د.أ) - Jordan Dinar</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">Complimentary Shipping Threshold</label>
+                      <div className="relative">
+                        <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-400" />
+                        <input type="number" defaultValue={200} className="w-full py-2.5 pl-8 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">Atelier Inquiries Email</label>
+                    <input type="email" defaultValue="atelier@hadab.craft" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
+                  </div>
+                </div>
+              </div>
+
+              {/* System Toggles */}
+              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-brown-200/50 bg-white/50">
+                  <h3 className="font-serif text-lg text-brown-900 font-medium">System Configuration</h3>
+                  <p className="text-xs text-brown-500 font-light mt-0.5">Toggle automation and notification features.</p>
+                </div>
+                
+                <div className="divide-y divide-brown-100">
+                  {[
+                    { id: 'notifications', label: 'Push Notifications', desc: 'Receive alerts for new custom orders and artisan updates.' },
+                    { id: 'autoArchive', label: 'Auto-Archive Shipped', desc: 'Automatically move orders to archive 30 days after delivery.' },
+                    { id: 'maintenance', label: 'Maintenance Mode', desc: 'Hide storefront from public while updating collections.' }
+                  ].map((setting) => (
+                    <div key={setting.id} className="p-5 flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-sm font-medium text-brown-900 mb-0.5">{setting.label}</div>
+                        <div className="text-[11px] text-brown-500">{setting.desc}</div>
+                      </div>
+                      
+                      {/* Toggle Switch */}
+                      <button 
+                        onClick={() => setSettingsState(prev => ({ ...prev, [setting.id]: !prev[setting.id as keyof typeof settingsState] }))}
+                        className={`relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none ${settingsState[setting.id as keyof typeof settingsState] ? 'bg-blush-400' : 'bg-brown-200'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 shadow-sm ${settingsState[setting.id as keyof typeof settingsState] ? 'left-6' : 'left-1'}`}></div>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="bg-burgundy-50/50 rounded-3xl border border-burgundy-200 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-burgundy-200/50 bg-white/30">
+                  <h3 className="font-serif text-lg text-burgundy-900 font-medium flex items-center gap-2">
+                    <AlertCircle size={18} className="text-burgundy-600"/>
+                    Danger Zone
+                  </h3>
+                </div>
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-burgundy-900 mb-1">Delete Store Data</div>
+                    <div className="text-xs text-burgundy-700/70 max-w-md">Permanently remove all products, orders, and customer data. This action cannot be undone.</div>
+                  </div>
+                  <button className="px-4 py-2 bg-white border border-burgundy-300 text-burgundy-700 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-burgundy-600 hover:text-white transition-colors shadow-sm whitespace-nowrap">
+                    Erase Data
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    tactileAudio.playChime();
+                    alert(isAr ? 'تم حفظ إعدادات المشغل بنجاح' : 'Settings saved successfully');
+                  }}
+                  className="px-8 py-3 rounded-full bg-[#2E221B] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:bg-[#3D2D25] hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {isAr ? 'حفظ التغييرات' : 'Save Preferences'}
+                </button>
+              </div>
+
             </div>
           )}
 
@@ -1097,8 +1660,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           PRODUCT ADD / EDIT MODAL
       ========================================================================== */}
       {isProductModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-lg w-full">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-lg w-full transform transition-all">
             <h3 className="font-serif text-xl text-brown-950 font-normal mb-1">
               {editingProduct ? (isAr ? 'تعديل بيانات القطعة' : 'Edit Atelier Piece') : (isAr ? 'إضافة قطعة يدوية جديدة' : 'Add New Handcrafted Piece')}
             </h3>
@@ -1108,46 +1671,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
             <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Title (English) *</label>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Title (English) *</label>
                 <input
                   type="text"
                   required
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
                   placeholder="e.g. The Corded Tassel Pouch"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">الاسم (بالعربية)</label>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">الاسم (بالعربية)</label>
                 <input
                   type="text"
                   value={newProductNameAr}
                   onChange={(e) => setNewProductNameAr(e.target.value)}
                   placeholder="مثال: حقيبة الشرّابات المنسوجة"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Price ($ USD) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={newProductPrice}
-                    onChange={(e) => setNewProductPrice(Number(e.target.value))}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900"
-                  />
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Price ($ USD) *</label>
+                  <div className="relative">
+                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-400" />
+                    <input
+                      type="number"
+                      required
+                      value={newProductPrice}
+                      onChange={(e) => setNewProductPrice(Number(e.target.value))}
+                      className="w-full py-2.5 pl-8 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Category *</label>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Category *</label>
                   <select
                     value={newProductCategory}
                     onChange={(e) => setNewProductCategory(e.target.value as any)}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900 cursor-pointer"
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 cursor-pointer focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
                   >
                     <option value="bags">Bags & Totes</option>
                     <option value="clothing">Wearables</option>
@@ -1158,27 +1724,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
 
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Archive Badge Tag</label>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Archive Badge Tag</label>
                 <input
                   type="text"
                   value={newProductTag}
                   onChange={(e) => setNewProductTag(e.target.value)}
                   placeholder="e.g. Signature Piece / New Drop"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
                 />
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-3">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-brown-200/60 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsProductModalOpen(false)}
-                  className="px-4 py-2.5 rounded-full text-xs text-brown-600 hover:text-brown-900 cursor-pointer"
+                  className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 hover:bg-brown-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] shadow-sm cursor-pointer"
+                  className="px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
                 >
                   {editingProduct ? 'Update Piece' : 'Add to Collection'}
                 </button>
@@ -1187,9 +1753,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           </div>
         </div>
       )}
+
+      {/* CATEGORY ADD / EDIT MODAL */}
       {isCatModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm">
-          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-md w-full">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-md w-full transform transition-all">
             <h3 className="font-serif text-xl text-brown-950 font-normal mb-1">
               {editingCategory ? (isAr ? 'تعديل التصنيف' : 'Edit Category') : (isAr ? 'إضافة تصنيف جديد' : 'Add New Category')}
             </h3>
@@ -1221,26 +1789,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               className="space-y-4 text-xs"
             >
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Name (English) *</label>
-                <input type="text" required value={catNameEn} onChange={(e) => setCatNameEn(e.target.value)} placeholder="e.g. Bags & Totes" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900" />
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Name (English) *</label>
+                <input type="text" required value={catNameEn} onChange={(e) => setCatNameEn(e.target.value)} placeholder="e.g. Bags & Totes" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">الاسم (بالعربية)</label>
-                <input type="text" value={catNameAr} onChange={(e) => setCatNameAr(e.target.value)} placeholder="مثال: الحقائب والشنط" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900" />
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">الاسم (بالعربية)</label>
+                <input type="text" value={catNameAr} onChange={(e) => setCatNameAr(e.target.value)} placeholder="مثال: الحقائب والشنط" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">Description (English)</label>
-                <textarea rows={2} value={catDescEn} onChange={(e) => setCatDescEn(e.target.value)} placeholder="Short description…" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900 resize-none" />
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Description (English)</label>
+                <textarea rows={3} value={catDescEn} onChange={(e) => setCatDescEn(e.target.value)} placeholder="Short description…" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 resize-none focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider font-semibold text-brown-700 mb-1">الوصف (بالعربية)</label>
-                <textarea rows={2} value={catDescAr} onChange={(e) => setCatDescAr(e.target.value)} placeholder="وصف مختصر…" className="w-full py-2.5 px-3.5 rounded-xl bg-cream-50 border border-brown-200 text-brown-900 resize-none" />
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">الوصف (بالعربية)</label>
+                <textarea rows={3} value={catDescAr} onChange={(e) => setCatDescAr(e.target.value)} placeholder="وصف مختصر…" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 resize-none focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
-              <div className="pt-3 flex items-center justify-end gap-3">
-                <button type="button" onClick={() => setIsCatModalOpen(false)} className="px-4 py-2.5 rounded-full text-xs text-brown-600 hover:text-brown-900 cursor-pointer">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-brown-200/60 mt-6">
+                <button type="button" onClick={() => setIsCatModalOpen(false)} className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 hover:bg-brown-100 transition-colors cursor-pointer">
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
-                <button type="submit" className="px-5 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-semibold uppercase tracking-[0.14em] shadow-sm cursor-pointer">
+                <button type="submit" className="px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
                   {editingCategory ? (isAr ? 'حفظ التعديلات' : 'Update Category') : (isAr ? 'إضافة التصنيف' : 'Add Category')}
                 </button>
               </div>
