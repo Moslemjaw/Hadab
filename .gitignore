@@ -4,3 +4,10 @@ dist/
 client/dist/
 .DS_Store
 *.log
+
+server/node_modules/
+server/dist/
+.env
+*.env
+*.env.txt
+
