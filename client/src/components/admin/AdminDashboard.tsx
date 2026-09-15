@@ -37,9 +37,9 @@ import {
   AlertCircle,
   Home,
   Check,
-  Upload
+  Upload,
+  LogOut
 } from 'lucide-react';
-import { FEATURED_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -62,69 +62,6 @@ interface OrderItem {
   createdAt: string;
 }
 
-const INITIAL_ORDERS: OrderItem[] = [
-  {
-    id: 'ord-101',
-    orderNumber: 'HDB-2026-089',
-    customerName: 'Layla Al-Sabah',
-    customerEmail: 'layla.s@example.kw',
-    customerPhone: '+965 9912 3456',
-    destination: 'Kuwait',
-    destinationArabic: 'الكويت',
-    items: [{ product: FEATURED_PRODUCTS[0], quantity: 1 }],
-    total: 135,
-    status: 'hooking',
-    statusArabic: 'قيد الحياكة اليدوية',
-    artisan: 'Noor (Amman)',
-    createdAt: 'Today, 11:20 AM',
-  },
-  {
-    id: 'ord-102',
-    orderNumber: 'HDB-2026-088',
-    customerName: 'Tariq Al-Majali',
-    customerEmail: 'tariq.m@example.jo',
-    customerPhone: '+962 7 9876 5432',
-    destination: 'Jordan',
-    destinationArabic: 'الأردن',
-    items: [{ product: FEATURED_PRODUCTS[1], quantity: 1 }, { product: FEATURED_PRODUCTS[3], quantity: 1 }],
-    total: 310,
-    status: 'finishing',
-    statusArabic: 'تشطيب الأطراف والأرشيف',
-    artisan: 'Rania (Kuwait)',
-    createdAt: 'Yesterday, 4:15 PM',
-  },
-  {
-    id: 'ord-103',
-    orderNumber: 'HDB-2026-087',
-    customerName: 'Mona Al-Ghanim',
-    customerEmail: 'mona.g@example.kw',
-    customerPhone: '+965 5543 2109',
-    destination: 'Kuwait',
-    destinationArabic: 'الكويت',
-    items: [{ product: FEATURED_PRODUCTS[2], quantity: 1 }],
-    total: 68,
-    status: 'shipped',
-    statusArabic: 'تم الشحن مع الشحن السريع',
-    artisan: 'Noor (Amman)',
-    createdAt: 'Sep 13, 2026',
-  },
-  {
-    id: 'ord-104',
-    orderNumber: 'HDB-2026-086',
-    customerName: 'Zeinab Farhan',
-    customerEmail: 'zeinab.f@example.ae',
-    customerPhone: '+971 50 123 4567',
-    destination: 'UAE',
-    destinationArabic: 'الإمارات',
-    items: [{ product: FEATURED_PRODUCTS[0], quantity: 2 }],
-    total: 270,
-    status: 'delivered',
-    statusArabic: 'تم التسليم بنجاح',
-    artisan: 'Hala (Amman)',
-    createdAt: 'Sep 11, 2026',
-  },
-];
-
 interface AdminDashboardProps {
   onBackToStore: () => void;
 }
@@ -142,15 +79,6 @@ interface CustomerRecord {
   rating: number;
 }
 
-const MOCK_CUSTOMERS: CustomerRecord[] = [
-  { id: 'c1', name: 'Layla Al-Sabah', email: 'layla.s@example.kw', phone: '+965 9912 3456', country: 'Kuwait', totalOrders: 4, totalSpent: 580, lastOrderDate: 'Today', status: 'vip', rating: 5 },
-  { id: 'c2', name: 'Tariq Al-Majali', email: 'tariq.m@example.jo', phone: '+962 7 9876 5432', country: 'Jordan', totalOrders: 2, totalSpent: 310, lastOrderDate: 'Yesterday', status: 'active', rating: 5 },
-  { id: 'c3', name: 'Mona Al-Ghanim', email: 'mona.g@example.kw', phone: '+965 5543 2109', country: 'Kuwait', totalOrders: 1, totalSpent: 68, lastOrderDate: 'Sep 13', status: 'new', rating: 4 },
-  { id: 'c4', name: 'Zeinab Farhan', email: 'zeinab.f@example.ae', phone: '+971 50 123 4567', country: 'UAE', totalOrders: 3, totalSpent: 490, lastOrderDate: 'Sep 11', status: 'vip', rating: 5 },
-  { id: 'c5', name: 'Sara Al-Rashidi', email: 'sara.r@example.kw', phone: '+965 6612 9981', country: 'Kuwait', totalOrders: 1, totalSpent: 135, lastOrderDate: 'Sep 9', status: 'new', rating: 5 },
-  { id: 'c6', name: 'Hana Al-Zoubi', email: 'hana.z@example.jo', phone: '+962 7 1234 5678', country: 'Jordan', totalOrders: 2, totalSpent: 240, lastOrderDate: 'Sep 7', status: 'active', rating: 4 },
-];
-
 interface CategoryRecord {
   id: string;
   name: string;
@@ -162,115 +90,109 @@ interface CategoryRecord {
   color: string;
 }
 
-const MOCK_CATEGORIES: CategoryRecord[] = [
-  { id: 'cat-1', name: 'Bags & Totes', nameAr: 'الحقائب والشنط', slug: 'bags', pieceCount: 0, description: 'Hand-hooked totes, shoulder bags, and market baskets from 100% natural cotton cord.', descriptionAr: 'حقائب محبوكة يدوياً من خيوط القطن الطبيعي', color: '#D9B99B' },
-  { id: 'cat-2', name: 'Wearables', nameAr: 'الملابس', slug: 'clothing', pieceCount: 0, description: 'Crochet vests, tops and wraps made to order in Amman & Kuwait.', descriptionAr: 'سترات وملابس كروشيه مصنوعة بالطلب', color: '#A3B99B' },
-  { id: 'cat-3', name: 'Hats & Headwear', nameAr: 'القبعات والأغطية', slug: 'headwear', pieceCount: 0, description: 'Sun hats, bucket styles, and brimmed silhouettes woven from natural yarn.', descriptionAr: 'قبعات يدوية من الخيوط الطبيعية', color: '#C9B99B' },
-  { id: 'cat-4', name: 'Accessories', nameAr: 'الإكسسوارات', slug: 'pouches', pieceCount: 0, description: 'Pouches, coin purses, keychains and micro-accessories.', descriptionAr: 'حقائب صغيرة، محافظ ومفاتيح حرفية', color: '#B9C9CB' },
-];
-
-const MOCK_REVENUE_DATA = [
-  { month: 'Jan', value: 30, label: '3K KD' },
-  { month: 'Feb', value: 45, label: '4.5K KD' },
-  { month: 'Mar', value: 25, label: '2.5K KD' },
-  { month: 'Apr', value: 60, label: '6K KD' },
-  { month: 'May', value: 80, label: '8K KD' },
-  { month: 'Jun', value: 65, label: '6.5K KD' },
-];
-
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { language, toggleLanguage } = useLanguage();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAr = language === 'ar';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
-  const [productsList, setProductsList] = useState<Product[]>(FEATURED_PRODUCTS);
-  const [ordersList, setOrdersList] = useState<OrderItem[]>(INITIAL_ORDERS);
-  const [customersList, setCustomersList] = useState<CustomerRecord[]>(MOCK_CUSTOMERS);
+  const [productsList, setProductsList] = useState<Product[]>([]);
+  const [ordersList, setOrdersList] = useState<OrderItem[]>([]);
+  const [customersList, setCustomersList] = useState<CustomerRecord[]>([]);
+  const [categoryList, setCategoryList] = useState<CategoryRecord[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   
   const [globalSearch, setGlobalSearch] = useState('');
   
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [customerFilter, setCustomerFilter] = useState<'all' | 'vip' | 'active' | 'new'>('all');
-  
-  const [categoryList, setCategoryList] = useState<CategoryRecord[]>(() =>
-    MOCK_CATEGORIES.map((cat) => ({
-      ...cat,
-      pieceCount: FEATURED_PRODUCTS.filter((p) => p.category === cat.slug).length,
-    }))
-  );
 
   // Load live data from MongoDB Atlas
-  useEffect(() => {
-    const fetchLiveData = async () => {
-      try {
-        const [liveProducts, liveOrders, liveCategories, liveCustomers] = await Promise.allSettled([
-          api.getProducts(),
-          api.getOrders(),
-          api.getCategories(),
-          api.getCustomers(),
-        ]);
+  const fetchLiveData = async () => {
+    try {
+      const [liveProducts, liveOrders, liveCategories, liveCustomers] = await Promise.allSettled([
+        api.getProducts(),
+        api.getOrders(),
+        api.getCategories(),
+        api.getCustomers(),
+      ]);
 
-        if (liveProducts.status === 'fulfilled' && liveProducts.value.length > 0) {
-          setProductsList(liveProducts.value);
-        }
-        if (liveOrders.status === 'fulfilled' && liveOrders.value.length > 0) {
-          setOrdersList(
-            liveOrders.value.map((o: any) => ({
-              id: o.id || o._id,
-              orderNumber: o.orderNumber,
-              customerName: o.customerName,
-              customerEmail: o.customerEmail,
-              customerPhone: o.customerPhone || '',
-              destination: o.destination,
-              destinationArabic: o.destinationArabic || 'الكويت',
-              items: o.items || [],
-              total: o.total,
-              status: o.status,
-              statusArabic: o.statusArabic || '',
-              artisan: o.artisan || 'Noor (Amman)',
-              createdAt: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'Recent',
-            }))
-          );
-        }
-        if (liveCategories.status === 'fulfilled' && liveCategories.value.length > 0) {
-          setCategoryList(
-            liveCategories.value.map((c: any) => ({
-              id: c.id || c._id,
-              name: c.name,
-              nameAr: c.nameAr || c.name,
-              slug: c.slug,
-              pieceCount: c.count || 0,
-              description: c.description || '',
-              descriptionAr: c.descriptionAr || '',
-              color: c.color || '#D9B99B',
-            }))
-          );
-        }
-        if (liveCustomers.status === 'fulfilled' && liveCustomers.value.length > 0) {
-          setCustomersList(
-            liveCustomers.value.map((u: any) => ({
-              id: u.id || u._id,
-              name: u.name,
-              email: u.email,
-              phone: u.phone || '',
-              country: u.country || 'Kuwait',
-              totalOrders: u.totalOrders || 0,
-              totalSpent: u.totalSpent || 0,
-              lastOrderDate: u.lastOrderDate || 'Recent',
-              status: u.status || 'active',
-              rating: u.rating || 5,
-            }))
-          );
-        }
-      } catch {
-        // Fallback to initial mock data if server isn't reachable yet
+      const prods: Product[] =
+        liveProducts.status === 'fulfilled' && Array.isArray(liveProducts.value)
+          ? liveProducts.value
+          : [];
+      setProductsList(prods);
+
+      if (liveOrders.status === 'fulfilled' && Array.isArray(liveOrders.value)) {
+        setOrdersList(
+          liveOrders.value.map((o: any) => ({
+            id: o.id || o._id,
+            orderNumber: o.orderNumber,
+            customerName: o.customerName,
+            customerEmail: o.customerEmail,
+            customerPhone: o.customerPhone || '',
+            destination: o.destination || 'Kuwait',
+            destinationArabic: o.destinationArabic || 'الكويت',
+            items: o.items || [],
+            total: o.total || 0,
+            status: o.status || 'pending',
+            statusArabic: o.statusArabic || '',
+            artisan: o.artisan || 'Hadab Team',
+            createdAt: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'Recent',
+          }))
+        );
+      } else {
+        setOrdersList([]);
       }
-    };
 
+      if (liveCategories.status === 'fulfilled' && Array.isArray(liveCategories.value)) {
+        setCategoryList(
+          liveCategories.value.map((c: any) => ({
+            id: c.id || c._id,
+            name: c.name,
+            nameAr: c.nameAr || c.name,
+            slug: c.slug,
+            pieceCount: prods.filter((p: any) => p.category === c.slug).length,
+            description: c.description || '',
+            descriptionAr: c.descriptionAr || '',
+            color: c.color || '#D9B99B',
+          }))
+        );
+      } else {
+        setCategoryList([]);
+      }
+
+      if (liveCustomers.status === 'fulfilled' && Array.isArray(liveCustomers.value)) {
+        setCustomersList(
+          liveCustomers.value.map((u: any) => ({
+            id: u.id || u._id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '',
+            country: u.country || 'Kuwait',
+            totalOrders: u.totalOrders || 0,
+            totalSpent: u.totalSpent || 0,
+            lastOrderDate: u.lastOrderDate || 'No orders',
+            status: u.status || 'new',
+            rating: u.rating || 5,
+          }))
+        );
+      } else {
+        setCustomersList([]);
+      }
+    } catch (err) {
+      console.error('Error fetching live data from MongoDB:', err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLiveData();
   }, []);
   
@@ -360,6 +282,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const totalRevenue = ordersList.reduce((sum, o) => sum + o.total, 0);
   const activeOrdersCount = ordersList.filter((o) => o.status !== 'delivered').length;
   const inCraftCount = ordersList.filter((o) => o.status === 'hooking' || o.status === 'finishing').length;
+
+  // Dynamic 6-Month Revenue Data from orders
+  const monthlyRevenueData = useMemo(() => {
+    const now = new Date();
+    const months: { monthIndex: number; year: number; month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mName = d.toLocaleString(isAr ? 'ar-EG' : 'en-US', { month: 'short' });
+      months.push({
+        monthIndex: d.getMonth(),
+        year: d.getFullYear(),
+        month: mName,
+        revenue: 0,
+      });
+    }
+
+    ordersList.forEach((order) => {
+      const orderDate = new Date(order.createdAt);
+      if (!isNaN(orderDate.getTime())) {
+        const found = months.find(
+          (m) => m.monthIndex === orderDate.getMonth() && m.year === orderDate.getFullYear()
+        );
+        if (found) {
+          found.revenue += order.total;
+        }
+      }
+    });
+
+    const maxRevenue = Math.max(...months.map((m) => m.revenue), 10);
+    return months.map((m) => ({
+      month: m.month,
+      revenue: m.revenue,
+      label: `${m.revenue} ${isAr ? 'د.ك' : 'KD'}`,
+      value: m.revenue > 0 ? Math.max(Math.round((m.revenue / maxRevenue) * 100), 10) : 4,
+    }));
+  }, [ordersList, isAr]);
 
   // Handlers
   const handleUpdateOrderStatus = async (orderId: string, nextStatus: OrderItem['status']) => {
@@ -679,15 +637,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         <div>
           {/* Brand Header */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#3D2D25]/70">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#EFE4D6] p-1.5 flex items-center justify-center shadow-md overflow-hidden relative group cursor-pointer">
+            <button
+              type="button"
+              onClick={() => {
+                tactileAudio.playScrubTick(300);
+                setActiveTab('overview');
+                if (window.innerWidth < 768) setIsSidebarOpen(false);
+              }}
+              className="flex items-center gap-3 text-left cursor-pointer group"
+              title={isAr ? 'الذهاب للوحة المؤشرات' : 'Go to Dashboard Overview'}
+            >
+              <div className="w-10 h-10 rounded-2xl bg-[#EFE4D6] p-1.5 flex items-center justify-center shadow-md overflow-hidden relative group-hover:ring-2 ring-blush-300 transition-all">
                 <img src="/frames/ezgif-frame-001.jpg" alt="HADAB" className="w-full h-full object-cover mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
               </div>
               <div>
-                <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0]">HADAB</span>
+                <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0] group-hover:text-blush-200 transition-colors">HADAB</span>
                 <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">{isAr ? 'إدارة المتجر' : 'Store Admin'}</span>
               </div>
-            </div>
+            </button>
             <button className="md:hidden p-1.5 text-brown-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
               <X size={18} />
             </button>
@@ -700,7 +667,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               { id: 'products', label: isAr ? 'كتالوج المنتجات' : 'Products Catalog', icon: Package, count: productsList.length },
               { id: 'orders', label: isAr ? 'الطلبات' : 'Orders', icon: ShoppingBag, count: activeOrdersCount, pulse: activeOrdersCount > 0 },
               { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag, count: categoryList.length },
-              { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: MOCK_CUSTOMERS.length },
+              { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: customersList.length },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -841,45 +808,202 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                tactileAudio.playScrubTick(300);
-                setActiveTab('orders');
-              }}
-              title={isAr ? `${activeOrdersCount} طلبات نشطة` : `${activeOrdersCount} active orders`}
-              className="relative p-2 rounded-full hover:bg-cream-100 text-brown-600 transition-colors cursor-pointer"
-            >
-              <Bell size={18} />
-              {activeOrdersCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-burgundy-500 border border-white" />
+            {/* Notification Bell with Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  tactileAudio.playScrubTick(300);
+                  setIsNotificationsOpen(!isNotificationsOpen);
+                  setIsUserMenuOpen(false);
+                }}
+                title={isAr ? `${activeOrdersCount} طلبات نشطة` : `${activeOrdersCount} active orders`}
+                className="relative p-2 rounded-full hover:bg-cream-100 text-brown-600 transition-colors cursor-pointer"
+              >
+                <Bell size={18} />
+                {activeOrdersCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-burgundy-500 border border-white animate-pulse" />
+                )}
+              </button>
+
+              {isNotificationsOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsNotificationsOpen(false)}
+                  />
+                  <div className={`absolute ${isAr ? 'left-0' : 'right-0'} mt-2 w-80 sm:w-96 bg-[#FAF6F0] rounded-2xl shadow-xl border border-brown-200/80 p-4 z-50 animate-in fade-in zoom-in-95 duration-200`}>
+                    <div className="flex items-center justify-between pb-3 border-b border-brown-200/60 mb-3">
+                      <div className="flex items-center gap-2">
+                        <Bell size={15} className="text-burgundy-600" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-brown-900">
+                          {isAr ? 'الإشعارات الحية' : 'Live Notifications'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-burgundy-100 text-burgundy-700 font-semibold">
+                        {activeOrdersCount} {isAr ? 'جديد' : 'Active'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {ordersList.slice(0, 4).map((order) => (
+                        <div
+                          key={order.id}
+                          onClick={() => {
+                            tactileAudio.playScrubTick(320);
+                            setActiveTab('orders');
+                            setIsNotificationsOpen(false);
+                          }}
+                          className="p-2.5 rounded-xl bg-white/70 hover:bg-cream-100 border border-brown-100 transition-all cursor-pointer flex items-start gap-3"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-burgundy-500 mt-1.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between text-xs font-semibold text-brown-900">
+                              <span className="truncate">{order.customerName}</span>
+                              <span className="text-[10px] text-brown-500 font-mono">{order.orderNumber}</span>
+                            </div>
+                            <p className="text-[11px] text-brown-600 truncate mt-0.5">
+                              {order.items.map((i) => i.product.name).join(', ')}
+                            </p>
+                            <div className="flex items-center justify-between text-[10px] text-brown-400 mt-1">
+                              <span>${order.total}</span>
+                              <span>{order.createdAt}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {ordersList.length === 0 && (
+                        <div className="text-center py-6 text-xs text-brown-400">
+                          {isAr ? 'لا توجد إشعارات جديدة' : 'No new notifications'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 mt-3 border-t border-brown-200/60 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          tactileAudio.playScrubTick(320);
+                          setActiveTab('orders');
+                          setIsNotificationsOpen(false);
+                        }}
+                        className="text-xs font-semibold text-burgundy-700 hover:text-burgundy-900 transition-colors uppercase tracking-wider"
+                      >
+                        {isAr ? 'عرض جميع الطلبات ←' : 'View All Orders →'}
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
-            </button>
+            </div>
             
             <div className="h-6 w-px bg-brown-200/60 hidden sm:block"></div>
 
-            <div
-              onClick={() => {
-                tactileAudio.playScrubTick(320);
-                setActiveTab('settings');
-              }}
-              className="flex items-center gap-3 cursor-pointer group"
-              title={isAr ? 'إعدادات المتجر' : 'Store Settings'}
-            >
-              <div className="hidden sm:block text-right">
-                <div className="text-xs font-semibold text-brown-900 leading-none mb-1 group-hover:text-burgundy-700 transition-colors">
-                  {user?.name || 'HADAB Master'}
+            {/* User Profile with Interactive Dropdown */}
+            <div className="relative">
+              <div
+                onClick={() => {
+                  tactileAudio.playScrubTick(320);
+                  setIsUserMenuOpen(!isUserMenuOpen);
+                  setIsNotificationsOpen(false);
+                }}
+                className="flex items-center gap-3 cursor-pointer group"
+                title={isAr ? 'قائمة الحساب' : 'Account Menu'}
+              >
+                <div className="hidden sm:block text-right">
+                  <div className="text-xs font-semibold text-brown-900 leading-none mb-1 group-hover:text-burgundy-700 transition-colors">
+                    {user?.name || 'HADAB Master'}
+                  </div>
+                  <div className="text-[10px] text-brown-500 uppercase tracking-wider leading-none">
+                    {user?.email || 'Byhadab@gmail.com'}
+                  </div>
                 </div>
-                <div className="text-[10px] text-brown-500 uppercase tracking-wider leading-none">
-                  {user?.email || 'Byhadab@gmail.com'}
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cream-200 to-blush-100 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900 shadow-sm group-hover:ring-2 ring-offset-2 ring-[#F7F2EB] ring-brown-200 transition-all">
+                  {user?.email ? user.email.slice(0, 2).toUpperCase() : 'HB'}
                 </div>
               </div>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cream-200 to-blush-100 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900 shadow-sm group-hover:ring-2 ring-offset-2 ring-[#F7F2EB] ring-brown-200 transition-all">
-                {user?.email ? user.email.slice(0, 2).toUpperCase() : 'HB'}
-              </div>
+
+              {isUserMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  />
+                  <div className={`absolute ${isAr ? 'left-0' : 'right-0'} mt-2 w-56 bg-[#FAF6F0] rounded-2xl shadow-xl border border-brown-200/80 p-2 z-50 animate-in fade-in zoom-in-95 duration-200`}>
+                    <div className="px-3 py-2 border-b border-brown-200/60 mb-1">
+                      <div className="text-xs font-bold text-brown-900">{user?.name || 'HADAB Master'}</div>
+                      <div className="text-[10px] text-brown-500 truncate">{user?.email || 'Byhadab@gmail.com'}</div>
+                      <div className="mt-1 inline-block text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-cream-200 text-brown-700 font-semibold">
+                        {isAr ? 'مدير المتجر' : 'Store Admin'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(320);
+                        setActiveTab('settings');
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-brown-700 hover:bg-cream-100 hover:text-brown-900 transition-colors text-left"
+                    >
+                      <Settings size={14} className="text-brown-500" />
+                      <span>{isAr ? 'إعدادات المتجر' : 'Store Settings'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        toggleLanguage();
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-brown-700 hover:bg-cream-100 hover:text-brown-900 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Globe size={14} className="text-brown-500" />
+                        <span>{isAr ? 'اللغة' : 'Language'}</span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-burgundy-600">{isAr ? 'العربية' : 'English'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        setIsUserMenuOpen(false);
+                        onBackToStore();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-brown-700 hover:bg-cream-100 hover:text-brown-900 transition-colors text-left"
+                    >
+                      <Home size={14} className="text-brown-500" />
+                      <span>{isAr ? 'العودة للمتجر الرئيسي' : 'Return to Public Store'}</span>
+                    </button>
+
+                    <div className="my-1 border-t border-brown-200/60" />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        logout();
+                        setIsUserMenuOpen(false);
+                        onBackToStore();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                    >
+                      <LogOut size={14} />
+                      <span>{isAr ? 'تسجيل الخروج' : 'Sign Out'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
+
+        {isLoadingData && (
+          <div className="h-0.5 bg-gradient-to-r from-blush-300 via-burgundy-500 to-sage-400 animate-pulse w-full"></div>
+        )}
 
         {/* Tab Content Body */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-8 flex-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -1008,9 +1132,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <p className="text-[11px] text-brown-500 font-light mb-6">Past 6 months overview</p>
                     
                     <div className="flex-1 flex items-end justify-between gap-2 h-48 mt-auto border-b border-brown-200 pb-2">
-                      {MOCK_REVENUE_DATA.map((d, i) => (
+                      {monthlyRevenueData.map((d, i) => (
                         <div key={i} className="flex flex-col items-center gap-2 group w-full">
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-brown-700 bg-white px-1.5 py-0.5 rounded shadow-sm">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-brown-700 bg-white px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap">
                             {d.label}
                           </div>
                           <div className="w-full max-w-[2rem] bg-gradient-to-t from-brown-200 to-brown-300 group-hover:from-blush-200 group-hover:to-blush-300 rounded-t-sm transition-all duration-300" style={{ height: `${d.value}%` }}></div>
@@ -1038,54 +1162,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </button>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-brown-200/60 text-brown-500 text-[10px] uppercase tracking-[0.16em]">
-                          <th className="pb-3 font-semibold">{isAr ? 'رقم الطلب' : 'Order #'}</th>
-                          <th className="pb-3 font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
-                          <th className="pb-3 font-semibold">{isAr ? 'الحالة' : 'Status'}</th>
-                          <th className="pb-3 font-semibold text-end">{isAr ? 'المجموع' : 'Total'}</th>
-                          <th className="pb-3 font-semibold text-center"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-brown-100">
-                        {ordersList.slice(0, 4).map((order) => (
-                          <tr key={order.id} className="group hover:bg-white/50 transition-colors">
-                            <td className="py-4 font-mono text-brown-900 font-medium">{order.orderNumber}</td>
-                            <td className="py-4">
-                              <span className="font-medium text-brown-900 block">{order.customerName}</span>
-                              <span className="text-[10px] text-brown-400 font-light">{order.destination}</span>
-                            </td>
-                            <td className="py-4">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wide ${
-                                  order.status === 'hooking'
-                                    ? 'bg-blush-50 text-burgundy-700 border border-blush-200'
-                                    : order.status === 'finishing'
-                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                    : order.status === 'shipped'
-                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                    : 'bg-sage-50 text-sage-800 border border-sage-200'
-                                }`}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                                <span>{isAr ? order.statusArabic : order.status}</span>
-                              </span>
-                            </td>
-                            <td className="py-4 text-end font-medium text-brown-900 font-serif text-sm">
-                              {order.total} {isAr ? 'د.ك' : 'KD'}
-                            </td>
-                            <td className="py-4 text-center">
-                              <button onClick={() => {setActiveTab('orders'); setExpandedOrderId(order.id);}} className="p-1.5 rounded-lg text-brown-400 hover:text-brown-900 hover:bg-brown-100 transition-colors opacity-0 group-hover:opacity-100">
-                                <ArrowUpRight size={14} />
-                              </button>
-                            </td>
+                  {ordersList.length === 0 ? (
+                    <div className="py-12 flex flex-col items-center justify-center text-center text-brown-400">
+                      <ShoppingBag size={32} className="mb-2 opacity-40 text-brown-500" />
+                      <p className="text-sm font-medium text-brown-700">{isAr ? 'لا توجد طلبات جديدة حالياً' : 'No recent orders yet'}</p>
+                      <p className="text-xs text-brown-400 mt-0.5">{isAr ? 'ستظهر الطلبات الجديدة هنا فور إتمام العملاء للشراء' : 'New customer orders will appear here in real time'}</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-brown-200/60 text-brown-500 text-[10px] uppercase tracking-[0.16em]">
+                            <th className="pb-3 font-semibold">{isAr ? 'رقم الطلب' : 'Order #'}</th>
+                            <th className="pb-3 font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
+                            <th className="pb-3 font-semibold">{isAr ? 'الحالة' : 'Status'}</th>
+                            <th className="pb-3 font-semibold text-end">{isAr ? 'المجموع' : 'Total'}</th>
+                            <th className="pb-3 font-semibold text-center"></th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-brown-100">
+                          {ordersList.slice(0, 4).map((order) => (
+                            <tr key={order.id} className="group hover:bg-white/50 transition-colors">
+                              <td className="py-4 font-mono text-brown-900 font-medium">{order.orderNumber}</td>
+                              <td className="py-4">
+                                <span className="font-medium text-brown-900 block">{order.customerName}</span>
+                                <span className="text-[10px] text-brown-400 font-light">{order.destination}</span>
+                              </td>
+                              <td className="py-4">
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wide ${
+                                    order.status === 'hooking'
+                                      ? 'bg-blush-50 text-burgundy-700 border border-blush-200'
+                                      : order.status === 'finishing'
+                                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                      : order.status === 'shipped'
+                                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                      : 'bg-sage-50 text-sage-800 border border-sage-200'
+                                  }`}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                  <span>{isAr ? order.statusArabic : order.status}</span>
+                                </span>
+                              </td>
+                              <td className="py-4 text-end font-medium text-brown-900 font-serif text-sm">
+                                {order.total} {isAr ? 'د.ك' : 'KD'}
+                              </td>
+                              <td className="py-4 text-center">
+                                <button onClick={() => {setActiveTab('orders'); setExpandedOrderId(order.id);}} className="p-1.5 rounded-lg text-brown-400 hover:text-brown-900 hover:bg-brown-100 transition-colors opacity-0 group-hover:opacity-100">
+                                  <ArrowUpRight size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -1103,23 +1235,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 
                 {/* Category Filters */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-                  {['all', 'bags', 'clothing', 'headwear', 'pouches'].map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => {
-                        tactileAudio.playScrubTick(300);
-                        setSelectedCategory(cat);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-full text-[10.5px] uppercase tracking-wider font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                        selectedCategory === cat
-                          ? 'bg-[#2E221B] text-cream-100 shadow-sm'
-                          : 'bg-transparent text-brown-600 hover:bg-brown-200/50'
-                      }`}
-                    >
-                      {cat === 'all' ? (isAr ? 'الكل' : 'All') : cat}
-                    </button>
-                  ))}
+                  {['all', ...categoryList.map((c) => c.slug)].map((cat) => {
+                    const matchedCat = categoryList.find(c => c.slug === cat);
+                    const label = cat === 'all' ? (isAr ? 'الكل' : 'All') : (isAr && matchedCat ? matchedCat.nameAr : matchedCat ? matchedCat.name : cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          tactileAudio.playScrubTick(300);
+                          setSelectedCategory(cat);
+                        }}
+                        className={`px-3.5 py-1.5 rounded-full text-[10.5px] uppercase tracking-wider font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                          selectedCategory === cat
+                            ? 'bg-[#2E221B] text-cream-100 shadow-sm'
+                            : 'bg-transparent text-brown-600 hover:bg-brown-200/50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Bulk Actions & View Toggle */}
@@ -1154,7 +1290,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     className="px-4 py-2 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
                   >
                     <Plus size={14} />
-                    <span className="hidden sm:inline">{isAr ? 'إضافة' : 'Add Piece'}</span>
+                    <span className="hidden sm:inline">{isAr ? 'إضافة قطعة' : 'Add Piece'}</span>
                   </button>
                 </div>
               </div>
@@ -1165,8 +1301,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center text-brown-400 mb-4">
                     <Package size={24} />
                   </div>
-                  <h3 className="font-serif text-lg text-brown-900 mb-1">{isAr ? 'لا توجد قطع مطابقة' : 'No pieces found'}</h3>
-                  <p className="text-xs text-brown-500 max-w-sm">Try adjusting your filters or search terms to find what you're looking for.</p>
+                  <h3 className="font-serif text-lg text-brown-900 mb-1">
+                    {productsList.length === 0 ? (isAr ? 'كتالوج المنتجات فارغ حالياً' : 'No handcrafted pieces yet') : (isAr ? 'لا توجد قطع مطابقة' : 'No matching pieces found')}
+                  </h3>
+                  <p className="text-xs text-brown-500 max-w-sm mb-5 font-light">
+                    {productsList.length === 0
+                      ? (isAr ? 'ابدأ بإضافة أول قطعة كروشيه يدوية إلى المتجر مع صور كلاوديناري والأسعار بالدينار الكويتي.' : 'Add your first handcrafted crochet piece with Cloudinary photos, KWD pricing, and category.')
+                      : (isAr ? 'جرّب تغيير التصنيف أو مصطلح البحث للعثور على المنتجات المطلوبة.' : 'Try adjusting your filters or search query to find what you need.')}
+                  </p>
+                  {productsList.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={openNewProductModal}
+                      className="px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-bold uppercase tracking-wider shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <Plus size={14} />
+                      <span>{isAr ? 'إضافة أول قطعة' : 'Add First Piece'}</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -1597,12 +1749,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             <div className="space-y-6">
               {/* KPI Row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                  { label: isAr ? 'إجمالي العملاء' : 'Total Customers', value: MOCK_CUSTOMERS.length, color: 'bg-cream-200 text-brown-700' },
-                  { label: isAr ? 'عملاء VIP' : 'VIP Members', value: MOCK_CUSTOMERS.filter(c => c.status === 'vip').length, color: 'bg-blush-100 text-burgundy-700' },
-                  { label: isAr ? 'عملاء جدد' : 'New Customers', value: MOCK_CUSTOMERS.filter(c => c.status === 'new').length, color: 'bg-sage-100 text-sage-800' },
-                  { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `${Math.round(MOCK_CUSTOMERS.reduce((s, c) => s + c.totalSpent, 0) / MOCK_CUSTOMERS.length)} ${isAr ? 'د.ك' : 'KD'}`, color: 'bg-amber-100 text-amber-800' },
-                ].map((kpi, i) => (
+                {(() => {
+                  const totalSpentAll = customersList.reduce((s, c) => s + (c.totalSpent || 0), 0);
+                  const avgSpend = customersList.length > 0 ? Math.round(totalSpentAll / customersList.length) : 0;
+                  return [
+                    { label: isAr ? 'إجمالي العملاء' : 'Total Customers', value: customersList.length, color: 'bg-cream-200 text-brown-700' },
+                    { label: isAr ? 'عملاء VIP' : 'VIP Members', value: customersList.filter(c => c.status === 'vip').length, color: 'bg-blush-100 text-burgundy-700' },
+                    { label: isAr ? 'عملاء جدد' : 'New Customers', value: customersList.filter(c => c.status === 'new').length, color: 'bg-sage-100 text-sage-800' },
+                    { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `${avgSpend} ${isAr ? 'د.ك' : 'KD'}`, color: 'bg-amber-100 text-amber-800' },
+                  ];
+                })().map((kpi, i) => (
                   <div key={i} className={`${kpi.color} rounded-2xl p-4 border border-brown-200/40 shadow-sm flex flex-col justify-center items-center text-center`}>
                     <div className="text-[9px] uppercase tracking-[0.16em] font-bold opacity-70 mb-1">{kpi.label}</div>
                     <div className="font-serif text-2xl font-medium">{kpi.value}</div>
@@ -1641,9 +1797,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
 
               {/* Customers List/Table */}
-              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
+              {filteredCustomers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-[#FAF6F0] rounded-3xl border border-brown-200/60 border-dashed">
+                  <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center text-brown-400 mb-4">
+                    <Users size={24} />
+                  </div>
+                  <h3 className="font-serif text-lg text-brown-900 mb-1">
+                    {customersList.length === 0 ? (isAr ? 'لا يوجد عملاء مسجلين حالياً' : 'No registered customers yet') : (isAr ? 'لا توجد نتائج مطابقة' : 'No matching customers')}
+                  </h3>
+                  <p className="text-xs text-brown-500 max-w-sm font-light">
+                    {customersList.length === 0
+                      ? (isAr ? 'سيظهر العملاء وحساباتهم وسجل طلباتهم هنا بمجرد تسجيل المشترين للطلبات.' : 'Customer accounts, contact info, and purchase history will appear here once orders are placed.')
+                      : (isAr ? 'جرّب تعديل خيارات الفلترة أو البحث للعثور على العميل المطلوب.' : 'Try adjusting your filters or search terms.')}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
                     <thead>
                       <tr className="border-b border-brown-200/80 bg-cream-50/50 text-brown-500 text-[10px] uppercase tracking-[0.14em]">
                         <th className="px-5 py-4 font-semibold">{isAr ? 'العميل' : 'Customer'}</th>
@@ -1767,6 +1938,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   </table>
                 </div>
               </div>
+              )}
             </div>
           )}
 
