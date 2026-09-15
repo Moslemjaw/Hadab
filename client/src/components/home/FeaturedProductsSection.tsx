@@ -95,7 +95,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                       {language === 'ar' ? (product.nameArabic || product.name) : product.name}
                     </h3>
                     <span className="text-base font-semibold text-brown-800">
-                      ${product.price}
+                      {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
                     </span>
                   </div>
 
@@ -127,7 +127,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   {isAdded ? (
                     <>
                       <Check size={14} />
-                      <span>{language === 'ar' ? 'تمت الإضافة للحقيبة' : 'Stitched into Bag'}</span>
+                      <span>{language === 'ar' ? 'تمت الإضافة للحقيبة' : 'Added to Bag'}</span>
                     </>
                   ) : (
                     <>

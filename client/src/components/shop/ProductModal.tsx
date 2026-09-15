@@ -166,7 +166,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               ) : (
                 <>
                   <ShoppingBag size={16} />
-                  <span>{t.addToBag} • ${product.price}</span>
+                  <span>{t.addToBag} • {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}</span>
                 </>
               )}
             </button>

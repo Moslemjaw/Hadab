@@ -331,7 +331,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                                     {pName}
                                   </span>
                                   <span className="font-serif text-xs font-semibold text-brown-900 shrink-0">
-                                    ${p.price}
+                                    {p.price} {language === 'ar' ? 'د.ك' : 'KWD'}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-[10px] text-brown-500">

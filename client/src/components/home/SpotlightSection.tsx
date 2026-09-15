@@ -56,11 +56,11 @@ export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag }
                   <div className="flex items-center gap-2">
                     {item.originalPrice && (
                       <span className="text-xs text-brown-400 line-through">
-                        ${item.originalPrice}
+                        {item.originalPrice} {language === 'ar' ? 'د.ك' : 'KWD'}
                       </span>
                     )}
                     <span className="text-sm font-semibold text-burgundy-500">
-                      ${item.price}
+                      {item.price} {language === 'ar' ? 'د.ك' : 'KWD'}
                     </span>
                   </div>
                 </div>

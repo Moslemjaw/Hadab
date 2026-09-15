@@ -170,12 +170,12 @@ const MOCK_CATEGORIES: CategoryRecord[] = [
 ];
 
 const MOCK_REVENUE_DATA = [
-  { month: 'Jan', value: 30, label: '$3k' },
-  { month: 'Feb', value: 45, label: '$4.5k' },
-  { month: 'Mar', value: 25, label: '$2.5k' },
-  { month: 'Apr', value: 60, label: '$6k' },
-  { month: 'May', value: 80, label: '$8k' },
-  { month: 'Jun', value: 65, label: '$6.5k' },
+  { month: 'Jan', value: 30, label: '3K KD' },
+  { month: 'Feb', value: 45, label: '4.5K KD' },
+  { month: 'Mar', value: 25, label: '2.5K KD' },
+  { month: 'Apr', value: 60, label: '6K KD' },
+  { month: 'May', value: 80, label: '8K KD' },
+  { month: 'Jun', value: 65, label: '6.5K KD' },
 ];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
@@ -1539,7 +1539,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   { label: isAr ? 'إجمالي العملاء' : 'Total Customers', value: MOCK_CUSTOMERS.length, color: 'bg-cream-200 text-brown-700' },
                   { label: isAr ? 'عملاء VIP' : 'VIP Members', value: MOCK_CUSTOMERS.filter(c => c.status === 'vip').length, color: 'bg-blush-100 text-burgundy-700' },
                   { label: isAr ? 'عملاء جدد' : 'New Customers', value: MOCK_CUSTOMERS.filter(c => c.status === 'new').length, color: 'bg-sage-100 text-sage-800' },
-                  { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `$${Math.round(MOCK_CUSTOMERS.reduce((s, c) => s + c.totalSpent, 0) / MOCK_CUSTOMERS.length)}`, color: 'bg-amber-100 text-amber-800' },
+                  { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `${Math.round(MOCK_CUSTOMERS.reduce((s, c) => s + c.totalSpent, 0) / MOCK_CUSTOMERS.length)} ${isAr ? 'د.ك' : 'KD'}`, color: 'bg-amber-100 text-amber-800' },
                 ].map((kpi, i) => (
                   <div key={i} className={`${kpi.color} rounded-2xl p-4 border border-brown-200/40 shadow-sm flex flex-col justify-center items-center text-center`}>
                     <div className="text-[9px] uppercase tracking-[0.16em] font-bold opacity-70 mb-1">{kpi.label}</div>
@@ -1620,7 +1620,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               <td className="px-5 py-4 text-center">
                                 <span className="font-semibold text-brown-900 bg-cream-50 px-2 py-1 rounded">{customer.totalOrders}</span>
                               </td>
-                              <td className="px-5 py-4 text-end font-serif font-semibold text-brown-900 text-base">${customer.totalSpent}</td>
+                              <td className="px-5 py-4 text-end font-serif font-semibold text-brown-900 text-base">{customer.totalSpent} {isAr ? 'د.ك' : 'KD'}</td>
                               <td className="px-5 py-4 text-center">
                                 <span className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${
                                   customer.status === 'vip' ? 'bg-amber-100 text-amber-800' :
@@ -1700,25 +1700,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 <div className="p-6 space-y-5 text-xs">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">Default Currency</label>
-                      <select className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300">
+                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'العملة الأساسية' : 'Default Currency'}</label>
+                      <select defaultValue="KWD" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300">
+                        <option value="KWD">KWD (د.ك) - Kuwait Dinar (Primary)</option>
+                        <option value="JOD">JOD (د.أ) - Jordan Dinar (Origin)</option>
                         <option value="USD">USD ($) - International</option>
-                        <option value="KWD">KWD (د.ك) - Kuwait Dinar</option>
-                        <option value="JOD">JOD (د.أ) - Jordan Dinar</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">Complimentary Shipping Threshold</label>
+                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'حد الشحن المجاني للكويت' : 'Free Shipping Threshold to Kuwait'}</label>
                       <div className="relative">
-                        <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-400" />
-                        <input type="number" defaultValue={200} className="w-full py-2.5 pl-8 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-500 font-bold text-xs">KD</span>
+                        <input type="number" defaultValue={25} className="w-full py-2.5 pl-9 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">Atelier Inquiries Email</label>
-                    <input type="email" defaultValue="atelier@hadab.craft" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
+                    <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'بريد استفسارات المتجر' : 'Store Inquiries Email'}</label>
+                    <input type="email" defaultValue="Byhadab@gmail.com" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
                   </div>
                 </div>
               </div>
@@ -1778,7 +1778,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   type="button"
                   onClick={() => {
                     tactileAudio.playChime();
-                    alert(isAr ? 'تم حفظ إعدادات المشغل بنجاح' : 'Settings saved successfully');
+                    alert(isAr ? 'تم حفظ إعدادات المتجر بنجاح' : 'Settings saved successfully');
                   }}
                   className="px-8 py-3 rounded-full bg-[#2E221B] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:bg-[#3D2D25] hover:-translate-y-0.5 transition-all cursor-pointer"
                 >
@@ -1799,7 +1799,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-lg w-full transform transition-all">
             <h3 className="font-serif text-xl text-brown-950 font-normal mb-1">
-              {editingProduct ? (isAr ? 'تعديل بيانات القطعة' : 'Edit Atelier Piece') : (isAr ? 'إضافة قطعة يدوية جديدة' : 'Add New Handcrafted Piece')}
+              {editingProduct ? (isAr ? 'تعديل بيانات القطعة' : 'Edit Handmade Piece') : (isAr ? 'إضافة قطعة يدوية جديدة' : 'Add New Handcrafted Piece')}
             </h3>
             <p className="text-xs text-brown-500 font-light mb-6">
               {isAr ? 'أدخلي تفاصيل القطعة الحرفية، السعر والتصنيف لإضافتها في المتجر' : 'Enter craft details, price, and category to update the storefront'}

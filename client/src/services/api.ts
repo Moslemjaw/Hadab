@@ -138,6 +138,27 @@ export const api = {
     return data.map((o: any) => ({ ...o, id: o._id || o.id }));
   },
 
+  async createOrder(orderData: {
+    customerName: string;
+    customerEmail?: string;
+    customerPhone: string;
+    destination: string;
+    destinationArabic?: string;
+    address?: string;
+    items: { name: string; nameArabic?: string; price: number; quantity: number; image?: string }[];
+    total: number;
+    notes?: string;
+  }) {
+    const res = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to place order');
+    return { ...data, id: data._id || data.id };
+  },
+
   async updateOrderStatus(id: string, payload: { status: string; statusArabic?: string; artisan?: string }) {
     const res = await fetch(`${API_BASE}/orders/${id}/status`, {
       method: 'PATCH',

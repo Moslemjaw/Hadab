@@ -127,11 +127,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     <div className="flex items-center gap-1.5">
                       {product.originalPrice && (
                         <span className="text-xs text-brown-400 line-through">
-                          ${product.originalPrice}
+                          {product.originalPrice} {language === 'ar' ? 'د.ك' : 'KWD'}
                         </span>
                       )}
                       <span className="text-base font-semibold text-brown-800">
-                        ${product.price}
+                        {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
                       </span>
                     </div>
                   </div>

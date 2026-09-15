@@ -207,6 +207,7 @@ export function App() {
         onClose={() => setIsCartOpen(false)}
         items={bagItems}
         onRemoveItem={handleRemoveFromBag}
+        onClearBag={() => setBagItems([])}
       />
 
       {/* High-Resolution Product Inspector Modal */}

@@ -412,7 +412,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>
                 {language === 'ar' ? 'السعر: ' : 'Price: '}
-                {filters.priceBracket === 'under-75' ? (language === 'ar' ? 'أقل من ٧٥$' : '< $75') : filters.priceBracket === '75-120' ? '$75–$120' : '$120+'}
+                {filters.priceBracket === 'under-75' ? (language === 'ar' ? 'أقل من ٧٥ د.ك' : '< 75 KD') : filters.priceBracket === '75-120' ? (language === 'ar' ? '٧٥–١٢٠ د.ك' : '75–120 KD') : (language === 'ar' ? 'أكثر من ١٢٠ د.ك' : '120+ KD')}
               </span>
               <button
                 type="button"
@@ -431,7 +431,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
 
           {filters.maxPrice < maxDatasetPrice && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
-              <span>{language === 'ar' ? `الحد الأقصى: $${filters.maxPrice}` : `Max: $${filters.maxPrice}`}</span>
+              <span>{language === 'ar' ? `الحد الأقصى: ${filters.maxPrice} د.ك` : `Max: ${filters.maxPrice} KD`}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -601,7 +601,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     className="w-4 h-4 rounded accent-burgundy-600"
                   />
                   <span className="text-xs text-brown-900 font-medium">
-                    {language === 'ar' ? `تخفيضات وإصدارات الأرشيف (${saleCount})` : `Archive Drops & Seasonal Sale (${saleCount})`}
+                    {language === 'ar' ? `تخفيضات وعروض خاصة (${saleCount})` : `Special Offers & Sale (${saleCount})`}
                   </span>
                 </label>
               </div>
@@ -612,7 +612,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                   <h4 className="text-xs uppercase tracking-wider text-brown-400 font-semibold">
                     {t.priceCeiling}
                   </h4>
-                  <span className="text-xs font-bold text-brown-900">${filters.maxPrice}</span>
+                  <span className="text-xs font-bold text-brown-900">{filters.maxPrice} {language === 'ar' ? 'د.ك' : 'KD'}</span>
                 </div>
                 <input
                   type="range"
@@ -626,9 +626,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                 <div className="grid grid-cols-2 gap-1.5 mt-3">
                   {[
                     { id: 'all', label: 'All Prices', labelArabic: 'جميع الأسعار' },
-                    { id: 'under-75', label: '< $75', labelArabic: 'أقل من ٧٥$' },
-                    { id: '75-120', label: '$75–$120', labelArabic: '٧٥$–١٢٠$' },
-                    { id: 'over-120', label: '$120+', labelArabic: 'أكثر من ١٢٠$' },
+                    { id: 'under-75', label: '< 75 KD', labelArabic: 'أقل من ٧٥ د.ك' },
+                    { id: '75-120', label: '75–120 KD', labelArabic: '٧٥–١٢٠ د.ك' },
+                    { id: 'over-120', label: '120+ KD', labelArabic: 'أكثر من ١٢٠ د.ك' },
                   ].map((b) => (
                     <button
                       key={b.id}
