@@ -4,7 +4,7 @@ export interface Product {
   nameArabic?: string;
   price: number;
   originalPrice?: number;
-  category: 'bags' | 'clothing' | 'accessories' | 'headwear' | 'pouches';
+  category: string;
   image: string;
   textureImage: string;
   tag?: string;

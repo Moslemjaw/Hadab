@@ -88,6 +88,7 @@ interface CategoryRecord {
   description: string;
   descriptionAr: string;
   color: string;
+  image?: string;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
@@ -161,6 +162,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             description: c.description || '',
             descriptionAr: c.descriptionAr || '',
             color: c.color || '#D9B99B',
+            image: c.image || '/products/hadab-bag.jpg',
           }))
         );
       } else {
@@ -234,13 +236,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [catNameAr, setCatNameAr] = useState('');
   const [catDescEn, setCatDescEn] = useState('');
   const [catDescAr, setCatDescAr] = useState('');
+  const [catImage, setCatImage] = useState('/products/hadab-bag.jpg');
+  const [isUploadingCatImage, setIsUploadingCatImage] = useState(false);
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState('');
   const [newProductNameAr, setNewProductNameAr] = useState('');
   const [newProductPrice, setNewProductPrice] = useState<number>(15);
-  const [newProductCategory, setNewProductCategory] = useState<'bags' | 'clothing' | 'accessories' | 'headwear' | 'pouches'>('bags');
+  const [newProductCategory, setNewProductCategory] = useState<string>('bags');
   const [newProductTag, setNewProductTag] = useState('New Drop');
   const [newProductImage, setNewProductImage] = useState<string>('/products/hadab-bag.jpg');
   const [newProductColors, setNewProductColors] = useState<string>('');
@@ -1664,6 +1668,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   onClick={() => {
                     setEditingCategory(null);
                     setCatNameEn(''); setCatNameAr(''); setCatDescEn(''); setCatDescAr('');
+                    setCatImage('/products/hadab-bag.jpg');
                     setIsCatModalOpen(true);
                   }}
                   className="px-4 py-2 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
@@ -1700,6 +1705,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             setEditingCategory(cat);
                             setCatNameEn(cat.name); setCatNameAr(cat.nameAr);
                             setCatDescEn(cat.description); setCatDescAr(cat.descriptionAr);
+                            setCatImage(cat.image || '/products/hadab-bag.jpg');
                             setIsCatModalOpen(true);
                           }}
                           className="p-1.5 rounded-lg hover:bg-white text-brown-400 hover:text-brown-900 transition-colors shadow-sm border border-transparent hover:border-brown-100"
@@ -2133,13 +2139,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Category *</label>
                   <select
                     value={newProductCategory}
-                    onChange={(e) => setNewProductCategory(e.target.value as any)}
+                    onChange={(e) => setNewProductCategory(e.target.value)}
                     className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 cursor-pointer focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
                   >
-                    <option value="bags">Bags & Totes</option>
-                    <option value="clothing">Wearables</option>
-                    <option value="headwear">Hats & Headwear</option>
-                    <option value="pouches">Accessories</option>
+                    {categoryList.map((cat) => (
+                      <option key={cat.id} value={cat.slug}>
+                        {isAr ? cat.nameAr : cat.name} ({cat.slug})
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -2273,6 +2280,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   descriptionAr: catDescAr || catDescEn,
                   slug: editingCategory ? editingCategory.slug : slug,
                   color: editingCategory ? editingCategory.color : '#C9B99B',
+                  image: catImage || '/products/hadab-bag.jpg',
                 };
 
                 if (editingCategory) {
@@ -2285,8 +2293,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   );
                   try {
                     await api.updateCategory(editingCategory.id, catPayload);
-                  } catch (err) {
+                    alert(isAr ? 'تم تحديث التصنيف بنجاح ✓' : 'Category updated successfully ✓');
+                  } catch (err: any) {
                     console.error('Failed to update category in DB:', err);
+                    alert(isAr ? `تعذر تحديث التصنيف في السيرفر: ${err.message}` : `Failed to update category: ${err.message}`);
                   }
                 } else {
                   try {
@@ -2302,10 +2312,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         description: created.description,
                         descriptionAr: created.descriptionAr,
                         color: created.color || '#C9B99B',
+                        image: created.image || catImage || '/products/hadab-bag.jpg',
                       },
                     ]);
-                  } catch (err) {
+                    alert(isAr ? 'تمت إضافة التصنيف بنجاح ✓' : 'Category created successfully ✓');
+                  } catch (err: any) {
                     console.error('Failed to create category in DB, saving locally:', err);
+                    alert(isAr ? `تنبيه: تعذر الحفظ في قاعدة البيانات (${err.message})، تم الحفظ محلياً` : `Warning: Failed to save to database (${err.message}). Saved locally.`);
                     setCategoryList((prev) => [
                       ...prev,
                       { id: `cat-${Date.now()}`, ...catPayload, pieceCount: 0 },
@@ -2325,13 +2338,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">الاسم (بالعربية)</label>
                 <input type="text" value={catNameAr} onChange={(e) => setCatNameAr(e.target.value)} placeholder="مثال: الحقائب والشنط" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Category Photo (Cloudinary)</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-dashed border-brown-300 hover:border-burgundy-500 bg-white/60 cursor-pointer transition-colors">
+                    <Upload size={14} className="text-brown-500" />
+                    <span className="text-xs text-brown-700 font-medium">
+                      {isUploadingCatImage ? (isAr ? 'جاري الرفع...' : 'Uploading...') : (isAr ? 'اختيار صورة للتصنيف' : 'Upload category image')}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingCatImage}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setIsUploadingCatImage(true);
+                        try {
+                          const res = await api.uploadImage(file);
+                          setCatImage(res.url);
+                          tactileAudio.playChime();
+                        } catch (err: any) {
+                          alert(err.message || 'Image upload failed');
+                        } finally {
+                          setIsUploadingCatImage(false);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  {catImage && (
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-brown-300 shrink-0 bg-cream-100">
+                      <img src={catImage} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Description (English)</label>
-                <textarea rows={3} value={catDescEn} onChange={(e) => setCatDescEn(e.target.value)} placeholder="Short description…" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 resize-none focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
+                <textarea rows={2} value={catDescEn} onChange={(e) => setCatDescEn(e.target.value)} placeholder="Short description…" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 resize-none focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">الوصف (بالعربية)</label>
-                <textarea rows={3} value={catDescAr} onChange={(e) => setCatDescAr(e.target.value)} placeholder="وصف مختصر…" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 resize-none focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
+                <textarea rows={2} value={catDescAr} onChange={(e) => setCatDescAr(e.target.value)} placeholder="وصف مختصر…" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 resize-none focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm" />
               </div>
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-brown-200/60 mt-6">
                 <button type="button" onClick={() => setIsCatModalOpen(false)} className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 hover:bg-brown-100 transition-colors cursor-pointer">

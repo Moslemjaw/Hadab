@@ -21,21 +21,30 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const loadCategories = async () => {
       try {
-        const live = await api.getCategories();
-        if (Array.isArray(live) && live.length > 0) {
+        const [liveCats, liveProds] = await Promise.allSettled([
+          api.getCategories(),
+          api.getProducts(),
+        ]);
+
+        const prods = liveProds.status === 'fulfilled' && Array.isArray(liveProds.value) ? liveProds.value : [];
+        if (liveCats.status === 'fulfilled' && Array.isArray(liveCats.value) && liveCats.value.length > 0) {
           setCategoriesList(
-            live.map((c: any) => ({
-              id: c.slug || c.id || c._id,
-              name: c.name,
-              nameArabic: c.nameAr || c.nameArabic || c.name,
-              description: c.description || '',
-              descriptionArabic: c.descriptionAr || c.descriptionArabic || '',
-              image: c.image || '/products/hadab-bag.jpg',
-              count: c.count || 0,
-              color: c.color || '#D9B99B',
-              accentBg: c.accentBg || 'bg-cream-100',
-              accentBorder: c.accentBorder || 'border-brown-200',
-            }))
+            liveCats.value.map((c: any) => {
+              const slug = c.slug || c.id || c._id;
+              const matchingProds = prods.filter((p: any) => p.category === slug || p.category === c.name || p.category === c.nameAr);
+              return {
+                id: slug,
+                name: c.name,
+                nameArabic: c.nameAr || c.nameArabic || c.name,
+                description: c.description || '',
+                descriptionArabic: c.descriptionAr || c.descriptionArabic || '',
+                image: c.image || '/products/hadab-bag.jpg',
+                count: matchingProds.length > 0 ? matchingProds.length : (c.count || 0),
+                color: c.color || '#D9B99B',
+                accentBg: c.accentBg || 'bg-cream-100',
+                accentBorder: c.accentBorder || 'border-brown-200',
+              };
+            })
           );
         }
       } catch (err) {
