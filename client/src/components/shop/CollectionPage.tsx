@@ -544,11 +544,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       {/* Price */}
                       <div className="flex items-baseline gap-1.5 mt-0.5 sm:mt-1">
                         <span className={`font-serif text-xs sm:text-base font-semibold ${hasDiscount ? 'text-burgundy-600' : 'text-brown-900'}`}>
-                          ${product.price}
+                          {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
                         </span>
                         {hasDiscount && (
                           <span className="font-serif text-[10px] sm:text-xs text-brown-400 line-through">
-                            ${product.originalPrice}
+                            {product.originalPrice} {language === 'ar' ? 'د.ك' : 'KWD'}
                           </span>
                         )}
                       </div>

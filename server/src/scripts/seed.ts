@@ -157,8 +157,8 @@ const INITIAL_PRODUCTS = [
     category: 'clothing',
     image: '/products/hadab-cardigan.jpg',
     textureImage: '/products/hadab-cardigan.jpg',
-    tag: 'Atelier Wearable',
-    tagArabic: 'ملبوسات الأتيليه',
+    tag: 'Handmade Wearable',
+    tagArabic: 'ملبوسات يدوية',
     description: 'Breezy boxy silhouette with dropped shoulders and natural shell-button closure.',
     descriptionArabic: 'قصة فضفاضة مريحة مع أكتاف منسدلة وأزرار صدف طبيعي مصقولة يدوياً.',
     stitchDetail: 'Filagree lace-crochet blocks with scallop edges',
@@ -201,8 +201,8 @@ const INITIAL_PRODUCTS = [
     category: 'pouches',
     image: '/products/hadab-pouch.jpg',
     textureImage: '/products/hadab-pouch.jpg',
-    tag: 'Everyday Atelier',
-    tagArabic: 'مقتنيات يومية',
+    tag: 'Everyday Essential',
+    tagArabic: 'أساسيات يومية',
     description: 'Compact zip pouch with thick tactile ribbing, waterproof linen liner, and hand-braided zip pull.',
     descriptionArabic: 'حقيبة صغيرة مع سحاب مدمج وبطانة كتان عازلة ومقبض سحاب مجدول يدوياً.',
     stitchDetail: 'Crossed treble ribs with hand-sewn YKK brass zip',
@@ -238,7 +238,7 @@ const INITIAL_ORDERS = [
     total: 135,
     status: 'hooking',
     statusArabic: 'قيد الحياكة اليدوية',
-    artisan: 'Noor (Amman Atelier)',
+    artisan: 'Noor (Amman Workshop)',
   },
   {
     orderNumber: 'HDB-2026-088',
@@ -266,7 +266,7 @@ const INITIAL_ORDERS = [
     total: 260,
     status: 'finishing',
     statusArabic: 'تشطيب الأطراف والأرشيف',
-    artisan: 'Rania (Kuwait Studio)',
+    artisan: 'Rania (Kuwait Workshop)',
   },
   {
     orderNumber: 'HDB-2026-087',
@@ -287,7 +287,7 @@ const INITIAL_ORDERS = [
     total: 48,
     status: 'shipped',
     statusArabic: 'تم الشحن مع الشحن السريع',
-    artisan: 'Noor (Amman Atelier)',
+    artisan: 'Noor (Amman Workshop)',
   },
   {
     orderNumber: 'HDB-2026-086',
@@ -308,7 +308,7 @@ const INITIAL_ORDERS = [
     total: 270,
     status: 'delivered',
     statusArabic: 'تم التسليم بنجاح',
-    artisan: 'Hala (Amman Atelier)',
+    artisan: 'Hala (Amman Workshop)',
   },
 ];
 
@@ -328,13 +328,13 @@ async function seed() {
     if (admin) {
       admin.password = hashedPassword;
       admin.role = 'admin';
-      admin.name = 'HADAB Master Atelier';
+      admin.name = 'HADAB Admin';
       admin.status = 'vip';
       await admin.save();
       console.log(`[Seed] Admin account updated: ${adminEmail}`);
     } else {
       admin = await User.create({
-        name: 'HADAB Master Atelier',
+        name: 'HADAB Admin',
         email: adminEmail,
         password: hashedPassword,
         phone: '+965 9900 0000',

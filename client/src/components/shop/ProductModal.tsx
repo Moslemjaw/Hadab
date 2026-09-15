@@ -111,11 +111,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
               <div className="mt-2 flex items-baseline gap-3">
                 <span className="font-serif text-xl font-semibold text-brown-800">
-                  ${product.price}
+                  {product.price} {isAr ? 'د.ك' : 'KWD'}
                 </span>
                 {product.originalPrice && (
                   <span className="text-xs text-brown-400 line-through">
-                    ${product.originalPrice}
+                    {product.originalPrice} {isAr ? 'د.ك' : 'KWD'}
                   </span>
                 )}
               </div>

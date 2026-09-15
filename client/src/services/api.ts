@@ -158,4 +158,22 @@ export const api = {
     const data = await res.json();
     return data.map((c: any) => ({ ...c, id: c._id || c.id }));
   },
+
+  // Cloudinary Upload
+  async uploadImage(file: File): Promise<{ url: string; public_id: string }> {
+    const token = localStorage.getItem('hadab_token');
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch(`${API_BASE}/upload/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Image upload failed');
+    return data;
+  },
 };

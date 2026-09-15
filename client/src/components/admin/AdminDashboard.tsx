@@ -36,7 +36,8 @@ import {
   Truck,
   AlertCircle,
   Home,
-  Check
+  Check,
+  Upload
 } from 'lucide-react';
 import { FEATURED_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
@@ -298,9 +299,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState('');
   const [newProductNameAr, setNewProductNameAr] = useState('');
-  const [newProductPrice, setNewProductPrice] = useState<number>(120);
+  const [newProductPrice, setNewProductPrice] = useState<number>(15);
   const [newProductCategory, setNewProductCategory] = useState<'bags' | 'clothing' | 'accessories' | 'headwear' | 'pouches'>('bags');
   const [newProductTag, setNewProductTag] = useState('New Drop');
+  const [newProductImage, setNewProductImage] = useState<string>('/products/hadab-bag.jpg');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Filtered Data
   const filteredProducts = useMemo(() => {
@@ -427,14 +430,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       price: Number(newProductPrice),
       category: newProductCategory,
       tag: newProductTag,
-      image: '/products/hadab-bag.jpg',
-      textureImage: '/products/hadab-bag.jpg',
-      description: 'Bespoke hand-hooked piece crafted with unbleached cotton ribbon.',
-      descriptionArabic: 'قطعة حرفية محبوكة يدوياً من خيوط القطن الطبيعي غير المعالج.',
-      stitchDetail: 'Single-crochet ribbing with reinforced base tension.',
-      stitchDetailArabic: 'حياكة يدوية مضلعة مع قاعدة معززة.',
-      yarnType: '100% Cotton Ribbon',
-      yarnTypeArabic: 'شريط قطني طبيعي ١٠٠٪',
+      image: newProductImage || '/products/hadab-bag.jpg',
+      textureImage: newProductImage || '/products/hadab-bag.jpg',
+      description: 'Handmade crochet piece crafted with quality unbleached cotton cord.',
+      descriptionArabic: 'قطعة كروشيه يدوية مصنوعة بعناية من خيوط القطن الطبيعي.',
+      stitchDetail: 'Hand-crocheted stitch with reinforced shape.',
+      stitchDetailArabic: 'حياكة يدوية متقنة تحافظ على قوام القطعة.',
+      yarnType: '100% Cotton Yarn',
+      yarnTypeArabic: 'خيوط قطن طبيعي ١٠٠٪',
       colorName: 'Desert Oat',
       colorNameArabic: 'بيج صحراوي',
       colorHex: '#D6C7B2',
@@ -474,13 +477,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setEditingProduct(null);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const res = await api.uploadImage(file);
+      setNewProductImage(res.url);
+      tactileAudio.playChime();
+    } catch (err: any) {
+      alert(err.message || 'Image upload failed');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const openNewProductModal = () => {
     setEditingProduct(null);
     setNewProductName('');
     setNewProductNameAr('');
-    setNewProductPrice(120);
+    setNewProductPrice(15);
     setNewProductCategory('bags');
-    setNewProductTag('Atelier New');
+    setNewProductTag('New Drop');
+    setNewProductImage('/products/hadab-bag.jpg');
     setIsProductModalOpen(true);
   };
 
@@ -491,6 +511,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setNewProductPrice(product.price);
     setNewProductCategory(product.category);
     setNewProductTag(product.tag || 'Classic');
+    setNewProductImage(product.image || '/products/hadab-bag.jpg');
     setIsProductModalOpen(true);
   };
   
@@ -730,7 +751,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'إجمالي المبيعات' : 'Total Revenue'}</span>
                     <div className="p-2 rounded-xl bg-sage-100 text-sage-600 group-hover:scale-110 transition-transform"><DollarSign size={16} /></div>
                   </div>
-                  <div className="font-serif text-3xl font-medium text-brown-900">${totalRevenue.toLocaleString()}</div>
+                  <div className="font-serif text-3xl font-medium text-brown-900">{totalRevenue.toLocaleString()} {isAr ? 'د.ك' : 'KD'}</div>
                   <div className="mt-4 flex flex-col gap-2">
                     <div className="flex items-center gap-1.5 text-[11px] text-sage-600 font-medium">
                       <TrendingUp size={13} />
@@ -892,7 +913,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               </span>
                             </td>
                             <td className="py-4 text-end font-medium text-brown-900 font-serif text-sm">
-                              ${order.total}
+                              {order.total} {isAr ? 'د.ك' : 'KD'}
                             </td>
                             <td className="py-4 text-center">
                               <button onClick={() => {setActiveTab('orders'); setExpandedOrderId(order.id);}} className="p-1.5 rounded-lg text-brown-400 hover:text-brown-900 hover:bg-brown-100 transition-colors opacity-0 group-hover:opacity-100">
@@ -1021,7 +1042,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             <h4 className="font-serif text-[15px] text-brown-950 font-normal leading-snug">
                               {isAr ? p.nameArabic || p.name : p.name}
                             </h4>
-                            <span className="font-serif text-sm font-semibold text-brown-900 whitespace-nowrap">${p.price}</span>
+                            <span className="font-serif text-sm font-semibold text-brown-900 whitespace-nowrap">{p.price} {isAr ? 'د.ك' : 'KD'}</span>
                           </div>
 
                           <p className="text-[11px] text-brown-500 font-light line-clamp-2 leading-relaxed mb-3 px-1">
@@ -1100,7 +1121,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             <td className="py-3 px-4">
                               <span className="px-2 py-1 rounded bg-cream-100 text-[10px] uppercase tracking-wider text-brown-700">{p.category}</span>
                             </td>
-                            <td className="py-3 px-4 font-serif font-medium text-brown-900">${p.price}</td>
+                            <td className="py-3 px-4 font-serif font-medium text-brown-900">{p.price} {isAr ? 'د.ك' : 'KD'}</td>
                             <td className="py-3 px-4">
                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-medium text-sage-700 bg-sage-50 border border-sage-200">
                                 <span className="w-1.5 h-1.5 rounded-full bg-sage-400"></span> In Stock
@@ -1213,7 +1234,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             </span>
                             
                             <div className="flex items-center gap-4">
-                              <div className="font-serif text-lg font-bold text-brown-900">${order.total}</div>
+                              <div className="font-serif text-lg font-bold text-brown-900">{order.total} {isAr ? 'د.ك' : 'KD'}</div>
                               <button className="text-brown-400 hover:text-brown-900 p-1">
                                 {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                               </button>
@@ -1810,15 +1831,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Price ($ USD) *</label>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
+                    {isAr ? 'السعر (د.ك KWD) *' : 'Price (KWD / د.ك) *'}
+                  </label>
                   <div className="relative">
-                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-400" />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brown-500">KD</span>
                     <input
                       type="number"
                       required
                       value={newProductPrice}
                       onChange={(e) => setNewProductPrice(Number(e.target.value))}
-                      className="w-full py-2.5 pl-8 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                      className="w-full py-2.5 pl-9 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
                     />
                   </div>
                 </div>
@@ -1839,7 +1862,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Archive Badge Tag</label>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Product Photo (Cloudinary)</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-dashed border-brown-300 hover:border-burgundy-500 bg-white/60 cursor-pointer transition-colors">
+                    <Upload size={14} className="text-brown-500" />
+                    <span className="text-xs text-brown-700 font-medium">
+                      {isUploadingImage ? (isAr ? 'جاري الرفع إلى كلاوديناري...' : 'Uploading to Cloudinary...') : (isAr ? 'اختيار صورة ورفعها' : 'Upload photo')}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isUploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                  {newProductImage && (
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-brown-300 shrink-0 bg-cream-100">
+                      <img src={newProductImage} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Badge / Tag</label>
                 <input
                   type="text"
                   value={newProductTag}

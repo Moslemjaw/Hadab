@@ -74,7 +74,7 @@ export const Footer: React.FC<FooterProps> = ({
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full border border-brown-700/80 hover:border-blush-300 hover:text-blush-200 text-cream-200 flex items-center justify-center transition-all bg-brown-800/40 active:scale-95"
-                aria-label="Instagram Atelier"
+                aria-label="Instagram Hadab"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
@@ -83,7 +83,7 @@ export const Footer: React.FC<FooterProps> = ({
                 </svg>
               </a>
               <a
-                href="mailto:atelier@hadab.craft"
+                href="mailto:Byhadab@gmail.com"
                 className="w-9 h-9 rounded-full border border-brown-700/80 hover:border-blush-300 hover:text-blush-200 text-cream-200 flex items-center justify-center transition-all bg-brown-800/40 active:scale-95"
                 aria-label="Email the Maker"
               >

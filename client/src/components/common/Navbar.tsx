@@ -162,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-4 text-cream-100 z-20">
             {/* Currency Selector */}
             <div className="hidden lg:flex items-center text-[11.5px] uppercase tracking-[0.22em] font-semibold text-cream-100/90 hover:text-cream-100 transition-colors">
-              <span className="cursor-default">USD ($)</span>
+              <span className="cursor-default">{language === 'ar' ? 'د.ك (KWD)' : 'KWD (د.ك)'}</span>
             </div>
 
             {/* Desktop Language Switcher (hidden on mobile, visible md+) */}

@@ -7,6 +7,7 @@ import productRoutes from './routes/productRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import orderRoutes from './routes/orderRoutes';
 import customerRoutes from './routes/customerRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 dotenv.config();
 
@@ -25,7 +26,7 @@ app.use(express.json());
 
 // API Health Check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', atelier: 'HADAB Studio API', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', shop: 'HADAB Handmade Shop API', timestamp: new Date().toISOString() });
 });
 
 // Routes
@@ -34,7 +35,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.listen(PORT, () => {
-  console.log(`[HADAB Backend] Atelier Server running smoothly on port ${PORT}`);
+  console.log(`[HADAB Backend] Handmade Shop Server running on port ${PORT}`);
 });

@@ -307,7 +307,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
                             {prodName}
                           </h3>
                           <span className="font-serif text-xs xs:text-sm sm:text-base font-semibold text-brown-900 shrink-0">
-                            ${prod.price}
+                            {prod.price} {isAr ? 'د.ك' : 'KWD'}
                           </span>
                         </div>
 

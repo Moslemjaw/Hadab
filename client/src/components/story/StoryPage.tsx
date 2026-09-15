@@ -195,7 +195,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-brown-950/60 via-transparent to-transparent opacity-60" />
                   <span className={`absolute bottom-3 ${isAr ? 'right-4' : 'left-4'} text-[10px] uppercase tracking-widest text-cream-100 font-semibold`}>
-                    {isAr ? 'نسيج الأتيليه' : 'Atelier Weave'}
+                    {isAr ? 'نسيج هداب' : 'Hadab Weave'}
                   </span>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
           <div className={`lg:col-span-6 space-y-6 ${isAr ? 'lg:pr-4' : 'lg:pl-4'}`}>
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-burgundy-500 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-burgundy-500" />
-              <span>{isAr ? 'بداية الأتيليه' : 'The Atelier Beginning'}</span>
+              <span>{isAr ? 'بدايتنا' : 'Our Beginning'}</span>
             </div>
 
             <h2 className="font-serif text-2xl sm:text-4xl text-brown-900 font-normal leading-tight">
@@ -232,7 +232,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
                 &ldquo;{isAr ? 'الفروق الدقيقة بين الغرز ليست عيوباً—إنما هي بصمة يد حيّة تتنفس وتبدع بإتقان.' : 'Small variations in tension are not imperfections—they are proof of a living, breathing human artisan at work.'}&rdquo;
               </p>
               <span className="text-[10px] uppercase tracking-widest font-semibold text-brown-500 block">
-                {isAr ? 'فلسفة الأتيليه' : 'The Atelier Philosophy'}
+                {isAr ? 'فلسفتنا' : 'Our Philosophy'}
               </span>
             </div>
           </div>

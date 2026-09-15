@@ -41,11 +41,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     (acc, item) => acc + item.product.price * item.quantity,
     0
   );
-  const freeShippingThreshold = 80;
+  const freeShippingThreshold = 25;
   const progressToFreeShipping = Math.min(
     100,
     (total / freeShippingThreshold) * 100
   );
+  const curr = language === 'ar' ? 'د.ك' : 'KWD';
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -88,7 +89,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </span>
                   ) : (
                     <span>
-                      {t.addForFreeDelivery.replace('${amount}', (freeShippingThreshold - total).toFixed(0))}
+                      {t.addForFreeDelivery.replace('{amount}', (freeShippingThreshold - total).toFixed(0))}
                     </span>
                   )}
                 </span>
@@ -145,7 +146,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </span>
                     </div>
                     <div className="text-xs font-semibold text-brown-800">
-                      ${product.price * quantity}
+                      {product.price * quantity} {curr}
                     </div>
                   </div>
                 </div>
@@ -157,7 +158,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           <div className="p-5 sm:p-6 border-t border-brown-200/80 bg-cream-100 safe-bottom">
             <div className="flex justify-between text-sm text-brown-800 font-medium mb-3 sm:mb-4">
               <span>{t.subtotal}</span>
-              <span className="font-serif text-lg font-semibold">${total}</span>
+              <span className="font-serif text-lg font-semibold">{total} {curr}</span>
             </div>
             <button
               type="button"
