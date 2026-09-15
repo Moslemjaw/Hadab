@@ -27,6 +27,7 @@ export interface Product {
 
 export interface Category {
   id: string;
+  slug?: string;
   name: string;
   nameArabic: string;
   description: string;

@@ -35,6 +35,7 @@ export interface FilterState {
 
 interface CollectionFiltersProps {
   products: Product[];
+  categories?: { id: string; name: string; nameArabic?: string; slug?: string }[];
   filteredCount: number;
   filters: FilterState;
   minDatasetPrice: number;
@@ -56,6 +57,7 @@ const FIBER_OPTIONS = [
 
 export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   products,
+  categories,
   filteredCount,
   filters,
   minDatasetPrice,
@@ -64,6 +66,9 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   onResetFilters,
 }) => {
   const { language, t } = useLanguage();
+  const activeCategories = useMemo(() => {
+    return categories && categories.length > 0 ? categories : CATEGORIES;
+  }, [categories]);
   // Popover state: 'price' | 'material' | 'color' | 'sort' | null
   const [activePopover, setActivePopover] = useState<string | null>(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -158,16 +163,17 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
             <span className="text-[10px] font-normal opacity-60">({products.length})</span>
           </button>
 
-          {CATEGORIES.map((cat) => {
-            const isActive = filters.selectedCategory === cat.id;
-            const count = products.filter((p) => p.category === cat.id).length;
-            const label = language === 'ar' ? cat.nameArabic : cat.name;
+          {activeCategories.map((cat: any) => {
+            const catKey = cat.slug || cat.id;
+            const isActive = filters.selectedCategory === catKey || filters.selectedCategory === cat.id;
+            const count = products.filter((p) => p.category === catKey || p.category === cat.id).length;
+            const label = language === 'ar' ? (cat.nameArabic || cat.name) : cat.name;
             return (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => {
-                  onUpdateFilters({ selectedCategory: cat.id });
+                  onUpdateFilters({ selectedCategory: catKey });
                   tactileAudio.playScrubTick(320);
                 }}
                 className={`pb-2.5 text-xs sm:text-[13px] tracking-[0.14em] uppercase transition-all whitespace-nowrap border-b-2 flex items-center gap-1.5 ${
@@ -371,9 +377,11 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
           {filters.selectedCategory !== 'all' && (
             <span className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-cream-100 border border-brown-200/80 text-brown-800 text-xs shadow-warm-sm">
               <span>
-                {language === 'ar'
-                  ? `التصنيف: ${CATEGORIES.find((c) => c.id === filters.selectedCategory)?.nameArabic || filters.selectedCategory}`
-                  : `Category: ${CATEGORIES.find((c) => c.id === filters.selectedCategory)?.name || filters.selectedCategory}`}
+                {(() => {
+                  const matched: any = activeCategories.find((c: any) => (c.slug || c.id) === filters.selectedCategory || c.id === filters.selectedCategory);
+                  const catName = matched ? (language === 'ar' ? (matched.nameArabic || matched.name) : matched.name) : filters.selectedCategory;
+                  return language === 'ar' ? `التصنيف: ${catName}` : `Category: ${catName}`;
+                })()}
               </span>
               <button
                 type="button"
@@ -561,24 +569,26 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
                     <span>{t.allCategories}</span>
                     <span>{products.length}</span>
                   </button>
-                  {CATEGORIES.map((cat) => {
-                    const label = language === 'ar' ? cat.nameArabic : cat.name;
+                  {activeCategories.map((cat: any) => {
+                    const catKey = cat.slug || cat.id;
+                    const label = language === 'ar' ? (cat.nameArabic || cat.name) : cat.name;
+                    const count = products.filter((p) => p.category === catKey || p.category === cat.id).length;
                     return (
                       <button
                         key={cat.id}
                         type="button"
                         onClick={() => {
-                          onUpdateFilters({ selectedCategory: cat.id });
+                          onUpdateFilters({ selectedCategory: catKey });
                           tactileAudio.playScrubTick(320);
                         }}
                         className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
-                          filters.selectedCategory === cat.id
+                          filters.selectedCategory === catKey || filters.selectedCategory === cat.id
                             ? 'bg-brown-900 text-cream-100 font-medium'
                             : 'text-brown-700 hover:bg-cream-200/70'
                         }`}
                       >
                         <span>{label}</span>
-                        <span>{products.filter((p) => p.category === cat.id).length}</span>
+                        <span>{count}</span>
                       </button>
                     );
                   })}

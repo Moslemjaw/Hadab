@@ -9,11 +9,12 @@ import {
   ArrowLeft,
   Tag,
 } from 'lucide-react';
-import { ALL_PRODUCTS, CATEGORIES } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { tactileAudio } from '../../utils/audio';
 import { CollectionFilters, type FilterState } from './CollectionFilters';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 
 interface CollectionPageProps {
   onAddToBag: (product: Product) => void;
@@ -31,21 +32,66 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   initialSearch = '',
 }) => {
   const { language, t } = useLanguage();
-  // Price bounds from dataset
+  const { isAdmin } = useAuth();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; nameArabic?: string; slug?: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load live products and categories from MongoDB Atlas
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCollectionData = async () => {
+      setIsLoading(true);
+      try {
+        const [prodsRes, catsRes] = await Promise.allSettled([
+          api.getProducts(),
+          api.getCategories(),
+        ]);
+
+        if (isMounted) {
+          if (prodsRes.status === 'fulfilled' && Array.isArray(prodsRes.value)) {
+            setProducts(prodsRes.value);
+          }
+          if (catsRes.status === 'fulfilled' && Array.isArray(catsRes.value)) {
+            setCategories(
+              catsRes.value.map((c: any) => ({
+                id: c.slug || c.id || c._id,
+                name: c.name,
+                nameArabic: c.nameAr || c.nameArabic || c.name,
+                slug: c.slug,
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load live collection data:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchCollectionData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Dynamic price bounds computed from live products
   const minDatasetPrice = useMemo(
-    () => Math.min(...ALL_PRODUCTS.map((p) => p.price)),
-    []
+    () => (products.length > 0 ? Math.min(...products.map((p) => p.price)) : 0),
+    [products]
   );
   const maxDatasetPrice = useMemo(
-    () => Math.max(...ALL_PRODUCTS.map((p) => p.price)),
-    []
+    () => (products.length > 0 ? Math.max(...products.map((p) => p.price)) : 100),
+    [products]
   );
 
   // Filter & Search states
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: initialSearch,
     selectedCategory: initialCategory,
-    maxPrice: maxDatasetPrice,
+    maxPrice: 100,
     priceBracket: 'all',
     onlySale: false,
     selectedMaterial: 'all',
@@ -54,6 +100,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
     gridCols: 4,
     mobileGridCols: 2,
   });
+
+  // Sync maxPrice when products are loaded from database
+  useEffect(() => {
+    if (products.length > 0) {
+      setFilters((prev) => ({ ...prev, maxPrice: maxDatasetPrice }));
+    }
+  }, [products, maxDatasetPrice]);
 
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -96,39 +149,52 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
   };
 
   // Quick search keywords
-  const popularKeywords = language === 'ar'
-    ? [
-        { label: 'حقائب توت', query: 'توت' },
-        { label: 'قبعات', query: 'قبعة' },
-        { label: 'كارديجان', query: 'كارديجان' },
-        { label: 'كلاتش', query: 'كلاتش' },
-        { label: 'حبال قطنية', query: 'قطن' },
-        { label: 'كتان طبيعي', query: 'كتان' },
-      ]
-    : [
-        { label: 'Tote', query: 'Tote' },
-        { label: 'Bucket Hat', query: 'Bucket Hat' },
-        { label: 'Cardigan', query: 'Cardigan' },
-        { label: 'Clutch', query: 'Clutch' },
-        { label: 'Cotton Cord', query: 'Cotton Cord' },
-        { label: 'Organic Linen', query: 'Organic Linen' },
-      ];
+  const popularKeywords = useMemo(() => {
+    if (categories.length > 0) {
+      return categories.map((cat) => ({
+        label: language === 'ar' && cat.nameArabic ? cat.nameArabic : cat.name,
+        query: cat.slug || cat.id,
+      }));
+    }
+    return language === 'ar'
+      ? [
+          { label: 'حقائب', query: 'bags' },
+          { label: 'ملابس', query: 'clothing' },
+          { label: 'قبعات', query: 'headwear' },
+          { label: 'إكسسوارات', query: 'accessories' },
+          { label: 'قطن طبيعي', query: 'قطن' },
+        ]
+      : [
+          { label: 'Bags', query: 'bags' },
+          { label: 'Clothing', query: 'clothing' },
+          { label: 'Headwear', query: 'headwear' },
+          { label: 'Accessories', query: 'accessories' },
+          { label: 'Natural Cotton', query: 'cotton' },
+        ];
+  }, [categories, language]);
 
   // Filtering & Sorting pipeline
   const filteredProducts = useMemo(() => {
-    return ALL_PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       // 1. Enhanced Tokenized Search Query
       if (filters.searchQuery.trim()) {
         const queryTerms = filters.searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        const catObj = categories.find((c) => c.id === product.category || c.slug === product.category);
         const searchableText = [
           product.name,
           product.nameArabic || '',
-          product.description,
-          product.yarnType,
-          product.stitchDetail,
+          product.description || '',
+          product.descriptionArabic || '',
+          product.yarnType || '',
+          product.yarnTypeArabic || '',
+          product.stitchDetail || '',
           product.tag || '',
-          product.colorName,
-          CATEGORIES.find((c) => c.id === product.category)?.name || product.category,
+          product.tagArabic || '',
+          product.colorName || '',
+          product.colorNameArabic || '',
+          catObj?.name || '',
+          catObj?.nameArabic || '',
+          product.category || '',
           String(product.price),
         ].join(' ').toLowerCase();
 
@@ -139,8 +205,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       }
 
       // 2. Category Filter
-      if (filters.selectedCategory !== 'all' && product.category !== filters.selectedCategory) {
-        return false;
+      if (filters.selectedCategory !== 'all') {
+        const matchesCategory =
+          product.category === filters.selectedCategory ||
+          (product as any).categorySlug === filters.selectedCategory;
+        if (!matchesCategory) {
+          return false;
+        }
       }
 
       // 3. Discount Filter
@@ -159,7 +230,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       // 6. Fiber & Material Filter
       if (filters.selectedMaterial !== 'all') {
         const matchKey = filters.selectedMaterial.toLowerCase();
-        if (!product.yarnType.toLowerCase().includes(matchKey)) {
+        if (!product.yarnType || !product.yarnType.toLowerCase().includes(matchKey)) {
           return false;
         }
       }
@@ -179,7 +250,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       if (!a.isFeatured && b.isFeatured) return 1;
       return 0;
     });
-  }, [filters]);
+  }, [products, categories, filters]);
 
   return (
     <div className="min-h-screen bg-cream-200 text-brown-800 pb-28 select-none font-sans">
@@ -222,7 +293,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             <div className="hidden sm:flex items-center gap-3 self-start md:self-end bg-cream-100/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-cream-200/15">
               <div className={language === 'ar' ? 'text-left' : 'text-right'}>
                 <span className="block text-2xl font-serif font-medium text-cream-100 leading-none">
-                  {filteredProducts.length}
+                  {products.length}
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-cream-300/70 font-light">
                   {language === 'ar' ? 'قطعة متوفرة' : 'Pieces Available'}
@@ -231,7 +302,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
               <div className="h-8 w-[1px] bg-cream-100/20" />
               <div className={language === 'ar' ? 'text-right' : 'text-left'}>
                 <span className="block text-2xl font-serif font-medium text-cream-100 leading-none">
-                  4
+                  {categories.length > 0 ? categories.length : 4}
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-cream-300/70 font-light">
                   {language === 'ar' ? 'عائلات حرفة' : 'Craft Families'}
@@ -309,8 +380,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                         {filteredProducts.slice(0, 4).map((p) => {
                           const pName = language === 'ar' && p.nameArabic ? p.nameArabic : p.name;
                           const pYarn = language === 'ar' && p.yarnTypeArabic ? p.yarnTypeArabic : p.yarnType;
-                          const catObj = CATEGORIES.find((c) => c.id === p.category);
-                          const pCat = catObj ? (language === 'ar' ? catObj.nameArabic : catObj.name) : p.category;
+                          const catObj = categories.find((c) => c.id === p.category || c.slug === p.category);
+                          const pCat = catObj ? (language === 'ar' ? (catObj.nameArabic || catObj.name) : catObj.name) : p.category;
                           return (
                             <div
                               key={p.id}
@@ -423,7 +494,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8">
         {/* NEW ENHANCED SHOP FILTERS SYSTEM */}
         <CollectionFilters
-          products={ALL_PRODUCTS}
+          products={products}
+          categories={categories}
           filteredCount={filteredProducts.length}
           filters={filters}
           minDatasetPrice={minDatasetPrice}
@@ -432,8 +504,38 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
           onResetFilters={resetFilters}
         />
 
-        {/* Product Grid */}
-        {filteredProducts.length === 0 ? (
+        {/* Product Grid & States */}
+        {isLoading ? (
+          <div className="py-24 text-center flex flex-col items-center justify-center">
+            <div className="w-10 h-10 border-2 border-brown-300 border-t-burgundy-600 rounded-full animate-spin mb-4" />
+            <p className="text-xs text-brown-500 font-light uppercase tracking-widest">
+              {language === 'ar' ? 'جاري تحميل القطع اليدوية...' : 'Loading handcrafted pieces...'}
+            </p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="py-20 text-center flex flex-col items-center justify-center bg-cream-100/60 rounded-3xl border border-dashed border-brown-300/80 mt-6 p-8 max-w-xl mx-auto shadow-warm-sm">
+            <div className="w-16 h-16 rounded-full bg-cream-200/80 flex items-center justify-center text-brown-400 mb-4 shadow-sm">
+              <ShoppingBag size={28} className="opacity-70" />
+            </div>
+            <h3 className="font-serif text-2xl text-brown-900 font-normal">
+              {language === 'ar' ? 'تشكيلة جديدة قادمة قريباً' : 'New Pieces Handcrafted Soon'}
+            </h3>
+            <p className="text-xs sm:text-sm text-brown-600 font-light mt-2 max-w-md leading-relaxed">
+              {language === 'ar'
+                ? 'يعمل حرفيونا في الأردن حالياً على حياكة قطع وتصاميم كروشيه جديدة بحبال وخيوط قطنية طبيعية. ترقبوا التشكيلة الجديدة قريباً!'
+                : 'Our artisan team in Jordan is currently hand-hooking new bespoke crochet pieces from natural cotton cords. Stay tuned for our new drop!'}
+            </p>
+            {isAdmin && (
+              <a
+                href="#admin"
+                className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+              >
+                <span>{language === 'ar' ? 'إضافة قطع من لوحة التحكم' : 'Add Pieces in Admin Panel'}</span>
+                <ArrowLeft size={13} className={language === 'ar' ? '' : 'rotate-180'} />
+              </a>
+            )}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="py-24 text-center flex flex-col items-center justify-center bg-cream-100/50 rounded-3xl border border-dashed border-brown-300 mt-6">
             <div className="w-14 h-14 rounded-full bg-cream-200 flex items-center justify-center text-brown-400 mb-4">
               <Search size={24} />
@@ -531,8 +633,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       {/* Craft Family indicator */}
                       <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-brown-400 font-semibold block mb-0.5">
                         {(() => {
-                          const cat = CATEGORIES.find((c) => c.id === product.category);
-                          return cat ? (language === 'ar' ? cat.nameArabic : cat.name) : product.category;
+                          const cat = categories.find((c) => c.id === product.category || c.slug === product.category);
+                          return cat ? (language === 'ar' ? (cat.nameArabic || cat.name) : cat.name) : product.category;
                         })()}
                       </span>
 

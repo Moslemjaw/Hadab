@@ -440,27 +440,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     };
 
     if (editingProduct) {
-      setProductsList((prev) =>
-        prev.map((p) =>
-          p.id === editingProduct.id
-            ? {
-                ...p,
-                ...productPayload,
-              }
-            : p
-        )
-      );
       try {
-        await api.updateProduct(editingProduct.id, productPayload);
-      } catch (err) {
+        const updated = await api.updateProduct(editingProduct.id, productPayload);
+        setProductsList((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? updated : p))
+        );
+        alert(isAr ? 'تم تحديث القطعة في قاعدة البيانات بنجاح ✓' : 'Product updated in database successfully ✓');
+      } catch (err: any) {
         console.error('Failed to update product in database:', err);
+        alert(isAr ? `تعذر تحديث القطعة في قاعدة البيانات: ${err.message}` : `Failed to update piece in database: ${err.message}`);
+        // Keep local optimistic update
+        setProductsList((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? { ...p, ...productPayload } : p))
+        );
       }
     } else {
       try {
         const created = await api.createProduct(productPayload);
         setProductsList((prev) => [created, ...prev]);
-      } catch (err) {
-        console.error('Failed to create product in database, saving locally:', err);
+        alert(isAr ? 'تمت إضافة القطعة إلى قاعدة البيانات بنجاح ✓' : 'Product saved to database successfully ✓');
+      } catch (err: any) {
+        console.error('Failed to create product in database:', err);
+        alert(isAr ? `تنبيه: تعذر الحفظ في قاعدة البيانات (${err.message})، تم الحفظ محلياً` : `Warning: Failed to save to database (${err.message}). Saved locally.`);
         const fallbackId = `custom-${Date.now()}`;
         setProductsList((prev) => [{ ...productPayload, id: fallbackId } as Product, ...prev]);
       }
