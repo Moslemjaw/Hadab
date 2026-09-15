@@ -66,12 +66,12 @@ export const StoryPage: React.FC<StoryPageProps> = ({
             className="group inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-semibold text-brown-700 hover:text-burgundy-600 transition-colors min-h-[44px]"
           >
             <ArrowLeft size={14} className={isAr ? 'rotate-180 group-hover:translate-x-1 transition-transform' : 'group-hover:-translate-x-1 transition-transform'} />
-            <span>{isAr ? 'العودة للمشغل' : 'Back to Atelier'}</span>
+            <span>{isAr ? 'العودة للمتجر' : 'Back to Shop'}</span>
           </button>
 
           <div className="flex items-center gap-3">
             <span className="text-[11px] uppercase tracking-[0.24em] font-semibold text-brown-500 hidden sm:inline">
-              {isAr ? 'هَدَب • قصة المشغل' : 'HADAB • The Atelier Story'}
+              {isAr ? 'هَدَب • قصتنا' : 'HADAB • Our Story'}
             </span>
             <button
               type="button"
@@ -387,11 +387,11 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         </div>
       </section>
 
-      {/* Act IV: The 4 Core Principles of Our Atelier */}
+      {/* Act IV: The 4 Core Principles of HADAB */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-16 sm:py-24 border-t border-brown-200/60">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-[10px] uppercase tracking-[0.28em] text-brown-500 font-bold block mb-2">
-            {isAr ? 'ميثاق المشغل' : 'The Atelier Code'}
+            {isAr ? 'مبادئ متجرنا' : 'Our Brand Values'}
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl text-brown-900 font-normal">
             {t.craftPhilosophyTitle}
@@ -490,7 +490,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <Feather size={24} className="mx-auto text-blush-200 mb-2" />
             <span className="text-[10px] uppercase tracking-[0.28em] text-cream-300/70 font-semibold block">
-              {isAr ? 'رسائل المشغل' : 'Atelier Dispatches'}
+              {isAr ? 'رسائل المتجر' : 'Store Newsletter'}
             </span>
             <h3 className="font-serif text-2xl sm:text-4xl text-cream-100 font-normal">
               {isAr ? 'تابعي خطوات الرحلة أولاً بأول' : 'Follow the journey as it unfolds'}
@@ -529,7 +529,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
       {/* Final Action Bar */}
       <footer className="max-w-3xl mx-auto px-4 text-center space-y-4">
         <p className="text-xs uppercase tracking-[0.2em] font-semibold text-brown-500">
-          {isAr ? 'مستعدة لاقتناء قطعة من المشغل؟' : 'Ready to experience the work?'}
+          {isAr ? 'مستعدة لاختيار قطعتك المفضلة؟' : 'Ready to explore the collection?'}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">

@@ -229,7 +229,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Editorial Bar */}
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-cream-400/80 font-light gap-4 safe-bottom">
           <div className="flex flex-col xs:flex-row items-center gap-2 xs:gap-3 text-center sm:text-left">
-            <span>© {new Date().getFullYear()} HADAB ATELIER.</span>
+            <span>© {new Date().getFullYear()} HADAB.</span>
             <span className="hidden xs:inline text-brown-600">•</span>
             <span>{t.footerRights}</span>
           </div>

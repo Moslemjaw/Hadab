@@ -198,8 +198,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             className="inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] text-cream-300 hover:text-blush-200 transition-colors mb-1.5 sm:mb-6 group"
           >
             <ArrowLeft size={12} className={language === 'ar' ? 'rotate-180 group-hover:translate-x-1 transition-transform' : 'group-hover:-translate-x-1 transition-transform'} />
-            <span className="hidden sm:inline">{language === 'ar' ? 'العودة لتجربة المشغل' : 'Return to Atelier Experience'}</span>
-            <span className="sm:hidden inline">{language === 'ar' ? 'المشغل' : 'Atelier'}</span>
+            <span className="hidden sm:inline">{language === 'ar' ? 'العودة للصفحة الرئيسية' : 'Return to Home'}</span>
+            <span className="sm:hidden inline">{language === 'ar' ? 'الرئيسية' : 'Home'}</span>
           </button>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-6">
@@ -289,7 +289,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                   <div>
                     <div className="flex items-center justify-between pb-2 mb-2 border-b border-brown-200/60 text-xs">
                       <span className="font-semibold font-serif text-brown-900">
-                        {language === 'ar' ? `نتائج مطابقة من المشغل (${filteredProducts.length})` : `Matching Atelier Pieces (${filteredProducts.length})`}
+                        {language === 'ar' ? `منتجات مطابقة (${filteredProducts.length})` : `Matching Products (${filteredProducts.length})`}
                       </span>
                       <button
                         type="button"
@@ -360,7 +360,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[10.5px] uppercase tracking-wider font-semibold text-brown-500">
-                        {language === 'ar' ? 'عمليات البحث الشائعة' : 'Popular Atelier Searches'}
+                        {language === 'ar' ? 'عمليات البحث الشائعة' : 'Popular Searches'}
                       </span>
                       <button
                         type="button"

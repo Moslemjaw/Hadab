@@ -551,8 +551,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   // Erase All Data handler
   const handleEraseData = async () => {
     const confirmText = isAr
-      ? 'هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات والتصنيفات والعملاء نهائياً. اكتب "DELETE" للتأكيد.'
-      : 'Are you sure? This will permanently delete ALL products, orders, categories, and customers. Type "DELETE" to confirm.';
+      ? 'هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات وبيانات العملاء نهائياً مع الاحتفاظ بالتصنيفات وحساب الأدمن. اكتب "DELETE" للتأكيد.'
+      : 'Are you sure? This will delete all products, orders, and customers while preserving categories and the admin account. Type "DELETE" to confirm.';
     const input = window.prompt(confirmText);
     if (input !== 'DELETE') {
       if (input !== null) {
@@ -564,16 +564,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setIsErasing(true);
     try {
       const result = await api.eraseAllData();
-      // Clear local state
+      // Clear local state (preserve categories)
       setProductsList([]);
       setOrdersList([]);
-      setCategoryList([]);
       setCustomersList([]);
       tactileAudio.playScrubTick(200);
       alert(
         isAr
-          ? `تم حذف البيانات بنجاح:\n${result.deleted?.products || 0} منتج\n${result.deleted?.orders || 0} طلب\n${result.deleted?.categories || 0} تصنيف\n${result.deleted?.customers || 0} عميل`
-          : `Data erased successfully:\n${result.deleted?.products || 0} products\n${result.deleted?.orders || 0} orders\n${result.deleted?.categories || 0} categories\n${result.deleted?.customers || 0} customers`
+          ? `تم مسح البيانات بنجاح مع الاحتفاظ بالتصنيفات وحساب الإدارة:\n- ${result.deleted?.products || 0} منتج تم حذفه\n- ${result.deleted?.orders || 0} طلب تم حذفه\n- ${result.deleted?.customers || 0} حساب عميل تم حذفه`
+          : `Data erased successfully (categories & admin preserved):\n- ${result.deleted?.products || 0} products deleted\n- ${result.deleted?.orders || 0} orders deleted\n- ${result.deleted?.customers || 0} customer accounts deleted`
       );
     } catch (err: any) {
       alert(err.message || 'Failed to erase data');
@@ -981,7 +980,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   <div className="flex items-center justify-between mb-5">
                     <div>
                       <h3 className="font-serif text-lg text-brown-900 font-medium">
-                        {isAr ? 'أحدث طلبات المشغل الحرفية' : 'Recent Bespoke Orders'}
+                        {isAr ? 'أحدث طلبات المتجر' : 'Recent Orders'}
                       </h3>
                     </div>
                     <button
@@ -1419,10 +1418,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               </div>
 
                               <div>
-                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">Atelier Management</h4>
+                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">{isAr ? 'إدارة الطلب والشحن' : 'Order Fulfillment'}</h4>
                                 <div className="flex flex-col gap-3 bg-cream-50/50 p-4 rounded-xl border border-brown-100">
                                   <div className="flex items-center justify-between text-xs">
-                                    <span className="text-brown-500">Assigned Artisan:</span>
+                                    <span className="text-brown-500">{isAr ? 'الموقع المسؤول:' : 'Fulfillment Hub:'}</span>
                                     <span className="font-semibold text-brown-900">{order.artisan}</span>
                                   </div>
                                   <div className="h-px bg-brown-200/50"></div>
@@ -1454,121 +1453,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             </div>
           )}
 
-          {/* =====================================================================
-              TAB 4: ARTISANS & WORKSHOPS
-          ====================================================================== */}
-          {activeTab === 'artisans' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 bg-sage-100 text-sage-800 text-[10px] font-bold uppercase tracking-wider rounded-full">2 Active Workshops</span>
-                <span className="px-3 py-1 bg-brown-100 text-brown-600 text-[10px] font-bold uppercase tracking-wider rounded-full">10 Master Artisans</span>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                {/* Amman Atelier */}
-                <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 space-y-6 flex flex-col hover:border-brown-300 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-blush-100 flex items-center justify-center font-serif text-xl font-bold text-burgundy-700 shadow-inner border border-blush-200/50">JO</div>
-                      <div>
-                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">{isAr ? 'مشغل عمّان الرئيسي' : 'Amman Main Workshop'}</h3>
-                        <p className="text-xs text-brown-500 font-light flex items-center gap-1"><MapPin size={10}/> Amman, Jordan</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        tactileAudio.playScrubTick(300);
-                        alert(isAr ? 'مشغل عمّان: السعة الحالية ٨٥٪، يعمل الحرفيون على ٧ قطع يدوية' : 'Amman Workshop: 85% capacity, artisans currently hand-hooking 7 pieces.');
-                      }}
-                      title={isAr ? 'عرض التفاصيل' : 'View Workshop Info'}
-                      className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors cursor-pointer"
-                    >
-                      <Edit2 size={14}/>
-                    </button>
-                  </div>
-                  
-                  <p className="text-[13px] text-brown-600 font-light leading-relaxed">
-                    Specialized in raw unbleached braided cotton cords, plant-dying vats, and signature tote structures. Primary production facility for heavy-gauge hooking.
-                  </p>
-
-                  {/* Capacity Progress */}
-                  <div>
-                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-brown-500 mb-2">
-                      <span>Queue Capacity</span>
-                      <span className="text-amber-600">85% Full</span>
-                    </div>
-                    <div className="w-full h-2 bg-brown-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: '85%' }}></div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-brown-200/50">
-                    <div className="bg-white p-3 rounded-xl border border-brown-100">
-                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Active Pieces</div>
-                      <div className="font-serif text-xl text-brown-900">7</div>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-brown-100">
-                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Avg Lead Time</div>
-                      <div className="font-serif text-xl text-brown-900">4-6 Days</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Kuwait Studio */}
-                <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm p-6 space-y-6 flex flex-col hover:border-brown-300 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-sage-100 flex items-center justify-center font-serif text-xl font-bold text-sage-800 shadow-inner border border-sage-200/50">KW</div>
-                      <div>
-                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">{isAr ? 'استوديو الكويت للتوزيع' : 'Kuwait Delivery Hub'}</h3>
-                        <p className="text-xs text-brown-500 font-light flex items-center gap-1"><MapPin size={10}/> Kuwait City, Kuwait</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        tactileAudio.playScrubTick(300);
-                        alert(isAr ? 'استوديو الكويت: السعة الحالية ٤٠٪، جاهز لاستلام وتوصيل الطلبات' : 'Kuwait Hub: 40% capacity, ready for express dispatch across Kuwait.');
-                      }}
-                      title={isAr ? 'عرض التفاصيل' : 'View Hub Info'}
-                      className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors cursor-pointer"
-                    >
-                      <Edit2 size={14}/>
-                    </button>
-                  </div>
-                  
-                  <p className="text-[13px] text-brown-600 font-light leading-relaxed">
-                    Center for contemporary silhouette prototyping, micro-accessories, detailed finishing work, and bespoke VIP archival boxing and dispatch.
-                  </p>
-
-                  {/* Capacity Progress */}
-                  <div>
-                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-brown-500 mb-2">
-                      <span>Queue Capacity</span>
-                      <span className="text-sage-600">40% Full</span>
-                    </div>
-                    <div className="w-full h-2 bg-brown-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-sage-400 rounded-full" style={{ width: '40%' }}></div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-brown-200/50">
-                    <div className="bg-white p-3 rounded-xl border border-brown-100">
-                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Active Pieces</div>
-                      <div className="font-serif text-xl text-brown-900">3</div>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-brown-100">
-                      <div className="text-[10px] uppercase text-brown-400 mb-1 font-medium">Avg Lead Time</div>
-                      <div className="font-serif text-xl text-brown-900">2-3 Days</div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
 
           {/* =====================================================================
               TAB 5: CATEGORIES MANAGEMENT

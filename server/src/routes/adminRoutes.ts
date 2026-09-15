@@ -10,19 +10,23 @@ const router = Router();
 // DELETE erase all data (Admin only)
 router.delete('/erase-all', authenticateToken, requireAdmin, async (_req: Request, res: Response): Promise<void> => {
   try {
-    const [products, orders, categories, customers] = await Promise.all([
+    const [products, orders, customers] = await Promise.all([
       Product.deleteMany({}),
       Order.deleteMany({}),
-      Category.deleteMany({}),
-      User.deleteMany({ role: { $ne: 'admin' } }),
+      User.deleteMany({
+        $and: [
+          { role: { $ne: 'admin' } },
+          { email: { $ne: 'byhadab@gmail.com' } },
+        ],
+      }),
     ]);
 
     res.json({
-      message: 'All data erased successfully',
+      message: 'Data erased successfully (categories and admin account preserved)',
       deleted: {
         products: products.deletedCount,
         orders: orders.deletedCount,
-        categories: categories.deletedCount,
+        categories: 0,
         customers: customers.deletedCount,
       },
     });
