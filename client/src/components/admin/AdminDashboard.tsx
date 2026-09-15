@@ -621,11 +621,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const getBreadcrumbLabel = () => {
     const map: Record<string, string> = {
       overview: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview',
-      products: isAr ? 'كتالوج المنتجات' : 'Pieces Catalog',
-      orders: isAr ? 'طلبات الحياكة' : 'Bespoke Orders',
+      products: isAr ? 'كتالوج المنتجات' : 'Products Catalog',
+      orders: isAr ? 'الطلبات' : 'Orders',
       categories: isAr ? 'التصنيفات' : 'Categories',
       customers: isAr ? 'العملاء' : 'Customers',
-      artisans: isAr ? 'المشاغل والحرفيون' : 'Workshops',
       settings: isAr ? 'إعدادات المتجر' : 'Store Settings',
     };
     return map[activeTab] || '';
@@ -661,7 +660,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
               <div>
                 <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0]">HADAB</span>
-                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">Admin Panel</span>
+                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">{isAr ? 'إدارة المتجر' : 'Store Admin'}</span>
               </div>
             </div>
             <button className="md:hidden p-1.5 text-brown-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
@@ -673,11 +672,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           <nav className="space-y-1.5">
             {[
               { id: 'overview', label: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview', icon: LayoutDashboard },
-              { id: 'products', label: isAr ? 'كتالوج المنتجات' : 'Pieces Catalog', icon: Package, count: productsList.length },
-              { id: 'orders', label: isAr ? 'طلبات الحياكة' : 'Bespoke Orders', icon: ShoppingBag, count: activeOrdersCount, pulse: activeOrdersCount > 0 },
+              { id: 'products', label: isAr ? 'كتالوج المنتجات' : 'Products Catalog', icon: Package, count: productsList.length },
+              { id: 'orders', label: isAr ? 'الطلبات' : 'Orders', icon: ShoppingBag, count: activeOrdersCount, pulse: activeOrdersCount > 0 },
               { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag, count: categoryList.length },
               { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: MOCK_CUSTOMERS.length },
-              { id: 'artisans', label: isAr ? 'المشاغل والحرفيون' : 'Workshops', icon: Scissors },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -844,18 +842,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           
           <div className="mb-6">
              <h1 className="font-serif text-2xl text-brown-950 font-normal">
-              {activeTab === 'overview' && (isAr ? 'نظرة عامة على المشغل' : 'Overview & Performance')}
-              {activeTab === 'products' && (isAr ? 'إدارة كتالوج القطع اليدوية' : 'Handcrafted Pieces Catalog')}
-              {activeTab === 'orders' && (isAr ? 'متابعة الطلبات المخصصة' : 'Custom Orders & Stitch Progress')}
-              {activeTab === 'artisans' && (isAr ? 'شبكة المشاغل (عمّان والكويت)' : 'Artisans & Workshops Network')}
+              {activeTab === 'overview' && (isAr ? 'نظرة عامة على المتجر' : 'Store Overview & Performance')}
+              {activeTab === 'products' && (isAr ? 'إدارة المنتجات والمخزون' : 'Products & Catalog Management')}
+              {activeTab === 'orders' && (isAr ? 'إدارة طلبات المتجر' : 'Store Orders & Fulfillment')}
               {activeTab === 'settings' && (isAr ? 'إعدادات المتجر' : 'Store Settings')}
               {activeTab === 'categories' && (isAr ? 'إدارة التصنيفات' : 'Product Categories')}
               {activeTab === 'customers' && (isAr ? 'قاعدة العملاء' : 'Customer Directory')}
             </h1>
             <p className="text-xs text-brown-500 font-light mt-1">
-              {activeTab === 'overview' && (isAr ? 'متابعة حية للإنتاج البطيء والمبيعات' : 'Live tracking for deliberate slow-craft batches and delivery')}
-              {activeTab === 'products' && (isAr ? 'إدارة الأرشيف والتصاميم المتاحة للطلب' : 'Manage your archive and available designs for bespoke ordering')}
-              {activeTab === 'orders' && (isAr ? 'تتبع مراحل الحياكة والتسليم' : 'Track the timeline from single crochet to final dispatch')}
+              {activeTab === 'overview' && (isAr ? 'متابعة حية للمبيعات والطلبات وأداء المتجر' : 'Live tracking for store sales, performance, and orders')}
+              {activeTab === 'products' && (isAr ? 'إدارة المنتجات وتفاصيل القطع والأسعار' : 'Manage your store products, descriptions, and pricing')}
+              {activeTab === 'orders' && (isAr ? 'تتبع حالات الطلبات والشحن للعملاء' : 'Track orders status, shipping, and customer fulfillment')}
             </p>
           </div>
 
