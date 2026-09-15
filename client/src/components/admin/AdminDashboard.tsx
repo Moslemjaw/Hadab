@@ -321,6 +321,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [newProductCategory, setNewProductCategory] = useState<'bags' | 'clothing' | 'accessories' | 'headwear' | 'pouches'>('bags');
   const [newProductTag, setNewProductTag] = useState('New Drop');
   const [newProductImage, setNewProductImage] = useState<string>('/products/hadab-bag.jpg');
+  const [newProductColors, setNewProductColors] = useState<string>('');
+  const [newProductSizes, setNewProductSizes] = useState<string>('');
+  const [newProductDiscount, setNewProductDiscount] = useState<number>(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Filtered Data
@@ -442,10 +445,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     e.preventDefault();
     tactileAudio.playChime();
 
+    const parsedColors = newProductColors
+      ? newProductColors.split(',').map((c) => c.trim()).filter(Boolean)
+      : [];
+    const parsedSizes = newProductSizes
+      ? newProductSizes.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    const discountVal = Number(newProductDiscount) || 0;
+    const originalPriceVal = discountVal > 0 ? Number(newProductPrice) : undefined;
+    const finalPriceVal = discountVal > 0 ? Math.max(0, Number(newProductPrice) - discountVal) : Number(newProductPrice);
+
     const productPayload = {
       name: newProductName,
       nameArabic: newProductNameAr || newProductName,
-      price: Number(newProductPrice),
+      price: finalPriceVal,
+      originalPrice: originalPriceVal,
+      discount: discountVal,
+      colors: parsedColors,
+      sizes: parsedSizes,
       category: newProductCategory,
       tag: newProductTag,
       image: newProductImage || '/products/hadab-bag.jpg',
@@ -456,11 +473,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       stitchDetailArabic: 'حياكة يدوية متقنة تحافظ على قوام القطعة.',
       yarnType: '100% Cotton Yarn',
       yarnTypeArabic: 'خيوط قطن طبيعي ١٠٠٪',
-      colorName: 'Desert Oat',
-      colorNameArabic: 'بيج صحراوي',
+      colorName: parsedColors.length > 0 ? parsedColors[0] : 'Desert Oat',
+      colorNameArabic: parsedColors.length > 0 ? parsedColors[0] : 'بيج صحراوي',
       colorHex: '#D6C7B2',
       isFeatured: false,
-      isSale: false,
+      isSale: discountVal > 0,
       stockCount: 10,
     };
 
@@ -516,6 +533,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setNewProductName('');
     setNewProductNameAr('');
     setNewProductPrice(15);
+    setNewProductColors('');
+    setNewProductSizes('');
+    setNewProductDiscount(0);
     setNewProductCategory('bags');
     setNewProductTag('New Drop');
     setNewProductImage('/products/hadab-bag.jpg');
@@ -526,7 +546,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setEditingProduct(product);
     setNewProductName(product.name);
     setNewProductNameAr(product.nameArabic || '');
-    setNewProductPrice(product.price);
+    // If product had discount and originalPrice, restore the base price
+    const basePrice = product.originalPrice ? product.originalPrice : product.price;
+    setNewProductPrice(basePrice);
+    setNewProductColors(product.colors ? product.colors.join(', ') : (product.colorName ? product.colorName : ''));
+    setNewProductSizes(product.sizes ? product.sizes.join(', ') : '');
+    const disc = product.discount !== undefined ? product.discount : (product.originalPrice ? (product.originalPrice - product.price) : 0);
+    setNewProductDiscount(disc);
     setNewProductCategory(product.category);
     setNewProductTag(product.tag || 'Classic');
     setNewProductImage(product.image || '/products/hadab-bag.jpg');
@@ -775,9 +801,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             
             {/* Breadcrumb */}
             <div className="hidden sm:flex items-center gap-2 text-[10.5px] uppercase tracking-wider text-brown-400 font-medium">
-              <Home size={12} />
+              <button
+                type="button"
+                onClick={() => {
+                  tactileAudio.playScrubTick(300);
+                  onBackToStore();
+                }}
+                className="hover:text-brown-900 transition-colors cursor-pointer p-0.5"
+                title={isAr ? 'العودة للمتجر' : 'Back to Store'}
+              >
+                <Home size={12} />
+              </button>
               <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
-              <span>Admin</span>
+              <button
+                type="button"
+                onClick={() => {
+                  tactileAudio.playScrubTick(300);
+                  setActiveTab('overview');
+                }}
+                className="hover:text-brown-900 transition-colors cursor-pointer"
+              >
+                Admin
+              </button>
               <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
               <span className="text-brown-900 font-semibold">{getBreadcrumbLabel()}</span>
             </div>
@@ -1950,15 +1995,67 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Badge / Tag</label>
-                <input
-                  type="text"
-                  value={newProductTag}
-                  onChange={(e) => setNewProductTag(e.target.value)}
-                  placeholder="e.g. Signature Piece / New Drop"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
+                    {isAr ? 'خصم اختياري (د.ك KWD)' : 'Discount (KWD / د.ك - Optional)'}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brown-500">-KD</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newProductDiscount}
+                      onChange={(e) => setNewProductDiscount(Number(e.target.value))}
+                      placeholder="0"
+                      className="w-full py-2.5 pl-11 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                    />
+                  </div>
+                  {newProductDiscount > 0 && (
+                    <span className="text-[10px] text-burgundy-600 font-semibold mt-1 block">
+                      {isAr ? `السعر بعد الخصم: ${Math.max(0, newProductPrice - newProductDiscount)} د.ك` : `Price after discount: ${Math.max(0, newProductPrice - newProductDiscount)} KWD`}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Badge / Tag</label>
+                  <input
+                    type="text"
+                    value={newProductTag}
+                    onChange={(e) => setNewProductTag(e.target.value)}
+                    placeholder="e.g. Signature Piece / New Drop"
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
+                    {isAr ? 'الألوان المتوفرة (مفصولة بفواصل)' : 'Colors (comma-separated)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={newProductColors}
+                    onChange={(e) => setNewProductColors(e.target.value)}
+                    placeholder={isAr ? 'مثال: أسود, بيج, رملي, زيتوني' : 'e.g. Beige, Sand, Charcoal, Olive'}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
+                    {isAr ? 'المقاسات المتوفرة (مفصولة بفواصل)' : 'Sizes (comma-separated)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={newProductSizes}
+                    onChange={(e) => setNewProductSizes(e.target.value)}
+                    placeholder={isAr ? 'مثال: Small, Medium, Large أو موحّد' : 'e.g. Small, Medium, Large or One Size'}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                  />
+                </div>
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-brown-200/60 mt-6">

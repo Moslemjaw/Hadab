@@ -179,7 +179,7 @@ export interface Translations {
   privacyLink: string;
   loginSuccess: string;
   registerSuccess: string;
-  atelierMemberBadge: string;
+  memberBadge: string;
   memberBenefit1: string;
   memberBenefit2: string;
   memberBenefit3: string;
@@ -356,7 +356,7 @@ const translations: Record<Language, Translations> = {
     privacyLink: 'Privacy Policy',
     loginSuccess: 'Welcome back to HADAB',
     registerSuccess: 'Your account has been created successfully',
-    atelierMemberBadge: 'Member Benefits',
+    memberBadge: 'Member Benefits',
     memberBenefit1: 'Save your favorite items to your wishlist',
     memberBenefit2: 'Sync your shopping bag across all your devices',
     memberBenefit3: 'Easily track your handmade order until delivery',
@@ -531,7 +531,7 @@ const translations: Record<Language, Translations> = {
     privacyLink: 'سياسة الخصوصية',
     loginSuccess: 'أهلاً بعودتكِ إلى متجر هَدَب',
     registerSuccess: 'تم إنشاء حسابكِ بنجاح',
-    atelierMemberBadge: 'مزايا التسوق معنا',
+    memberBadge: 'مزايا التسوق معنا',
     memberBenefit1: 'حفظ القطع المفضلة لديكِ في قائمة الأمنيات',
     memberBenefit2: 'مزامنة سلة التسوق عبر جميع أجهزتكِ بسهولة',
     memberBenefit3: 'تتبّع دقيق لكل طلب حتى وصوله إلى باب منزلكِ',

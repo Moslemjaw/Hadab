@@ -184,7 +184,7 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
         </div>
       </div>
 
-      {/* 2. UNIFIED ATELIER REFINEMENT BAR (Mobile & Computer) */}
+      {/* 2. UNIFIED SHOP REFINEMENT BAR (Mobile & Computer) */}
       <div className="py-2 border-b border-brown-200/60 flex items-center justify-between gap-3">
         {/* LEFT: Master Filters Trigger & Quick Sale Toggle */}
         <div className="flex items-center gap-2">

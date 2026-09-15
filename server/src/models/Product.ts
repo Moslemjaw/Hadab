@@ -1,4 +1,4 @@
-﻿import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IProduct extends Document {
   name: string;
@@ -19,6 +19,9 @@ export interface IProduct extends Document {
   colorName: string;
   colorNameArabic?: string;
   colorHex: string;
+  colors?: string[];
+  sizes?: string[];
+  discount?: number;
   isFeatured: boolean;
   isSale: boolean;
   stockCount: number;
@@ -51,6 +54,9 @@ const ProductSchema = new Schema<IProduct>(
     colorName: { type: String, default: 'Desert Oat' },
     colorNameArabic: { type: String, default: 'بيج صحراوي' },
     colorHex: { type: String, default: '#D6C7B2' },
+    colors: { type: [String], default: [] },
+    sizes: { type: [String], default: [] },
+    discount: { type: Number, default: 0 },
     isFeatured: { type: Boolean, default: false },
     isSale: { type: Boolean, default: false },
     stockCount: { type: Number, default: 10 },

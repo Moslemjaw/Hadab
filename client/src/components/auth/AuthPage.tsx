@@ -463,7 +463,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </p>
                 )}
 
-                {/* Submit Button (Deep Atelier Brown Pill Button) */}
+                {/* Submit Button (Deep Brown Pill Button) */}
                 <div className="pt-2">
                   <button
                     type="submit"

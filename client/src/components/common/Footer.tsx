@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="relative max-w-7xl mx-auto z-10">
         {/* Main Content Layout */}
         <div className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 pb-10 sm:pb-12 border-b border-brown-800/60">
-          {/* Column 1: Atelier Identity */}
+          {/* Column 1: Store Identity */}
           <div className="space-y-3.5">
             <div className="flex items-center gap-2.5">
               <img
@@ -148,7 +148,7 @@ export const Footer: React.FC<FooterProps> = ({
               </ul>
             </div>
 
-            {/* Column 3: Atelier Care */}
+            {/* Column 3: Customer Care */}
             <div>
               <h4 className="font-serif text-cream-100 font-semibold tracking-[0.2em] uppercase text-[11px] pb-2.5 border-b border-brown-800/70 md:border-none">
                 {t.footerCareJournal}

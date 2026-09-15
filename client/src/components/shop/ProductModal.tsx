@@ -113,12 +113,57 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <span className="font-serif text-xl font-semibold text-brown-800">
                   {product.price} {isAr ? 'د.ك' : 'KWD'}
                 </span>
-                {product.originalPrice && (
-                  <span className="text-xs text-brown-400 line-through">
-                    {product.originalPrice} {isAr ? 'د.ك' : 'KWD'}
-                  </span>
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <>
+                    <span className="text-xs text-brown-400 line-through">
+                      {product.originalPrice} {isAr ? 'د.ك' : 'KWD'}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-burgundy-600 text-cream-100 text-[9px] font-bold uppercase tracking-wider">
+                      {isAr
+                        ? `وفر ${product.originalPrice - product.price} د.ك`
+                        : `Save ${product.originalPrice - product.price} KWD`}
+                    </span>
+                  </>
                 )}
               </div>
+
+              {/* Color Options */}
+              {product.colors && product.colors.length > 0 && (
+                <div className="mt-4">
+                  <label className="block text-[10px] uppercase tracking-wider font-semibold text-brown-600 mb-1.5">
+                    {isAr ? 'الألوان المتوفرة:' : 'Available Colors:'}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.colors.map((c) => (
+                      <span
+                        key={c}
+                        className="px-2.5 py-1 rounded-lg bg-cream-200 border border-brown-300 text-brown-800 text-xs font-medium"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Size Options */}
+              {product.sizes && product.sizes.length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-[10px] uppercase tracking-wider font-semibold text-brown-600 mb-1.5">
+                    {isAr ? 'المقاسات المتوفرة:' : 'Available Sizes:'}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.sizes.map((s) => (
+                      <span
+                        key={s}
+                        className="px-2.5 py-1 rounded-lg bg-cream-200 border border-brown-300 text-brown-800 text-xs font-medium"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <p className="mt-4 text-xs sm:text-sm text-brown-600 font-light leading-relaxed">
                 {displayDesc}

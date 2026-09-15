@@ -18,6 +18,9 @@ export interface Product {
   colorName: string;
   colorNameArabic?: string;
   colorHex: string;
+  colors?: string[];
+  sizes?: string[];
+  discount?: number;
   isFeatured?: boolean;
   isSale?: boolean;
 }

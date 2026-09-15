@@ -421,7 +421,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8">
-        {/* NEW ENHANCED ATELIER FILTERS SYSTEM */}
+        {/* NEW ENHANCED SHOP FILTERS SYSTEM */}
         <CollectionFilters
           products={ALL_PRODUCTS}
           filteredCount={filteredProducts.length}

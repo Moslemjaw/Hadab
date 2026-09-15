@@ -510,7 +510,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
         </div>
       </div>
 
-      {/* Bottom Atelier Cue - Accessible with safe-area offset and touch target */}
+      {/* Bottom Scroll Cue - Accessible with safe-area offset and touch target */}
       <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 pointer-events-auto z-30">
         <button
           type="button"
