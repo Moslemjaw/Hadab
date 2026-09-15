@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CATEGORIES } from '../../constants/mockData';
 import { ArrowLeft, ArrowRight, Sparkles, Layers } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
+import { api } from '../../services/api';
 
 interface CategoriesPageProps {
   onSelectCategory: (categoryId: string) => void;
@@ -14,9 +15,34 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   onBackToHome,
 }) => {
   const { language, t } = useLanguage();
+  const [categoriesList, setCategoriesList] = useState(CATEGORIES);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    const loadCategories = async () => {
+      try {
+        const live = await api.getCategories();
+        if (Array.isArray(live) && live.length > 0) {
+          setCategoriesList(
+            live.map((c: any) => ({
+              id: c.slug || c.id || c._id,
+              name: c.name,
+              nameArabic: c.nameAr || c.nameArabic || c.name,
+              description: c.description || '',
+              descriptionArabic: c.descriptionAr || c.descriptionArabic || '',
+              image: c.image || '/products/hadab-bag.jpg',
+              count: c.count || 0,
+              color: c.color || '#D9B99B',
+              accentBg: c.accentBg || 'bg-cream-100',
+              accentBorder: c.accentBorder || 'border-brown-200',
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+    loadCategories();
   }, []);
 
   const handleCategoryClick = (catId: string) => {
@@ -40,7 +66,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
 
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] font-semibold text-brown-500">
             <Layers size={13} className="text-burgundy-600" />
-            <span>{CATEGORIES.length} {t.navCategories}</span>
+            <span>{categoriesList.length} {t.navCategories}</span>
           </div>
         </div>
       </div>
@@ -66,7 +92,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
       {/* Simple Categories Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8">
-          {CATEGORIES.map((cat, index) => {
+          {categoriesList.map((cat, index) => {
             const catTitle = language === 'ar' ? cat.nameArabic : cat.name;
             const catDesc = language === 'ar' && cat.descriptionArabic ? cat.descriptionArabic : cat.description;
 
