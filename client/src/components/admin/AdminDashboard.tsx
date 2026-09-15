@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard,
   Package,
@@ -41,6 +41,8 @@ import {
 import { FEATURED_PRODUCTS } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 
 interface OrderItem {
@@ -177,6 +179,7 @@ const MOCK_REVENUE_DATA = [
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { language, toggleLanguage } = useLanguage();
+  const { user } = useAuth();
   const isAr = language === 'ar';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
@@ -184,6 +187,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   
   const [productsList, setProductsList] = useState<Product[]>(FEATURED_PRODUCTS);
   const [ordersList, setOrdersList] = useState<OrderItem[]>(INITIAL_ORDERS);
+  const [customersList, setCustomersList] = useState<CustomerRecord[]>(MOCK_CUSTOMERS);
   
   const [globalSearch, setGlobalSearch] = useState('');
   
@@ -197,6 +201,77 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       pieceCount: FEATURED_PRODUCTS.filter((p) => p.category === cat.slug).length,
     }))
   );
+
+  // Load live data from MongoDB Atlas
+  useEffect(() => {
+    const fetchLiveData = async () => {
+      try {
+        const [liveProducts, liveOrders, liveCategories, liveCustomers] = await Promise.allSettled([
+          api.getProducts(),
+          api.getOrders(),
+          api.getCategories(),
+          api.getCustomers(),
+        ]);
+
+        if (liveProducts.status === 'fulfilled' && liveProducts.value.length > 0) {
+          setProductsList(liveProducts.value);
+        }
+        if (liveOrders.status === 'fulfilled' && liveOrders.value.length > 0) {
+          setOrdersList(
+            liveOrders.value.map((o: any) => ({
+              id: o.id || o._id,
+              orderNumber: o.orderNumber,
+              customerName: o.customerName,
+              customerEmail: o.customerEmail,
+              customerPhone: o.customerPhone || '',
+              destination: o.destination,
+              destinationArabic: o.destinationArabic || 'الكويت',
+              items: o.items || [],
+              total: o.total,
+              status: o.status,
+              statusArabic: o.statusArabic || '',
+              artisan: o.artisan || 'Noor (Amman Atelier)',
+              createdAt: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'Recent',
+            }))
+          );
+        }
+        if (liveCategories.status === 'fulfilled' && liveCategories.value.length > 0) {
+          setCategoryList(
+            liveCategories.value.map((c: any) => ({
+              id: c.id || c._id,
+              name: c.name,
+              nameAr: c.nameAr || c.name,
+              slug: c.slug,
+              pieceCount: c.count || 0,
+              description: c.description || '',
+              descriptionAr: c.descriptionAr || '',
+              color: c.color || '#D9B99B',
+            }))
+          );
+        }
+        if (liveCustomers.status === 'fulfilled' && liveCustomers.value.length > 0) {
+          setCustomersList(
+            liveCustomers.value.map((u: any) => ({
+              id: u.id || u._id,
+              name: u.name,
+              email: u.email,
+              phone: u.phone || '',
+              country: u.country || 'Kuwait',
+              totalOrders: u.totalOrders || 0,
+              totalSpent: u.totalSpent || 0,
+              lastOrderDate: u.lastOrderDate || 'Recent',
+              status: u.status || 'active',
+              rating: u.rating || 5,
+            }))
+          );
+        }
+      } catch {
+        // Fallback to initial mock data if server isn't reachable yet
+      }
+    };
+
+    fetchLiveData();
+  }, []);
   
   // UI States
   const [productView, setProductView] = useState<'grid' | 'list'>('grid');
@@ -250,12 +325,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   }, [ordersList, globalSearch, statusFilter]);
   
   const filteredCustomers = useMemo(() => {
-    return MOCK_CUSTOMERS.filter((c) => {
+    return customersList.filter((c) => {
       const matchesSearch = c.name.toLowerCase().includes(globalSearch.toLowerCase()) || c.email.toLowerCase().includes(globalSearch.toLowerCase());
       const matchesFilter = customerFilter === 'all' || c.status === customerFilter;
       return matchesSearch && matchesFilter;
     });
-  }, [globalSearch, customerFilter]);
+  }, [customersList, globalSearch, customerFilter]);
 
   // KPIs
   const totalRevenue = ordersList.reduce((sum, o) => sum + o.total, 0);
@@ -263,26 +338,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const inCraftCount = ordersList.filter((o) => o.status === 'hooking' || o.status === 'finishing').length;
 
   // Handlers
-  const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderItem['status']) => {
+  const handleUpdateOrderStatus = async (orderId: string, nextStatus: OrderItem['status']) => {
     tactileAudio.playScrubTick(340);
+    const statusLabels: Record<OrderItem['status'], string> = {
+      pending: isAr ? 'قيد الانتظار' : 'Pending',
+      hooking: isAr ? 'قيد الحياكة اليدوية' : 'Hooking in Progress',
+      finishing: isAr ? 'تشطيب الأطراف والأرشيف' : 'Finishing & Wrapping',
+      shipped: isAr ? 'تم الشحن' : 'Dispatched',
+      delivered: isAr ? 'تم التسليم' : 'Delivered',
+    };
+
     setOrdersList((prev) =>
-      prev.map((o) => {
-        if (o.id === orderId) {
-          const statusLabels: Record<OrderItem['status'], string> = {
-            pending: isAr ? 'قيد الانتظار' : 'Pending',
-            hooking: isAr ? 'قيد الحياكة اليدوية' : 'Hooking in Progress',
-            finishing: isAr ? 'تشطيب الأطراف والأرشيف' : 'Finishing & Wrapping',
-            shipped: isAr ? 'تم الشحن' : 'Dispatched',
-            delivered: isAr ? 'تم التسليم' : 'Delivered',
-          };
-          return { ...o, status: nextStatus, statusArabic: statusLabels[nextStatus] };
-        }
-        return o;
-      })
+      prev.map((o) =>
+        o.id === orderId ? { ...o, status: nextStatus, statusArabic: statusLabels[nextStatus] } : o
+      )
     );
+
+    try {
+      await api.updateOrderStatus(orderId, {
+        status: nextStatus,
+        statusArabic: statusLabels[nextStatus],
+      });
+    } catch (err) {
+      console.error('Failed to sync order status to database:', err);
+    }
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (window.confirm(isAr ? 'هل أنتِ متأكدة من حذف هذه القطعة من المتجر؟' : 'Are you sure you want to remove this piece?')) {
       tactileAudio.playScrubTick(300);
       setProductsList((prev) => prev.filter((p) => p.id !== id));
@@ -291,15 +373,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         next.delete(id);
         return next;
       });
+
+      try {
+        await api.deleteProduct(id);
+      } catch (err) {
+        console.error('Failed to delete product from database:', err);
+      }
     }
   };
 
-  const handleBulkDeleteProducts = () => {
+  const handleBulkDeleteProducts = async () => {
     if (selectedProductIds.size === 0) return;
     if (window.confirm(isAr ? 'هل أنتِ متأكدة من حذف القطع المحددة؟' : 'Are you sure you want to delete selected pieces?')) {
       tactileAudio.playScrubTick(300);
+      const idsToDelete = Array.from(selectedProductIds);
       setProductsList(prev => prev.filter(p => !selectedProductIds.has(p.id)));
       setSelectedProductIds(new Set());
+
+      for (const id of idsToDelete) {
+        try {
+          await api.deleteProduct(id);
+        } catch (err) {
+          console.error(`Failed to delete product ${id}:`, err);
+        }
+      }
     }
   };
 
@@ -320,9 +417,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     }
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     tactileAudio.playChime();
+
+    const productPayload = {
+      name: newProductName,
+      nameArabic: newProductNameAr || newProductName,
+      price: Number(newProductPrice),
+      category: newProductCategory,
+      tag: newProductTag,
+      image: '/products/hadab-bag.jpg',
+      textureImage: '/products/hadab-bag.jpg',
+      description: 'Bespoke hand-hooked piece crafted with unbleached cotton ribbon.',
+      descriptionArabic: 'قطعة حرفية محبوكة يدوياً من خيوط القطن الطبيعي غير المعالج.',
+      stitchDetail: 'Single-crochet ribbing with reinforced base tension.',
+      stitchDetailArabic: 'حياكة يدوية مضلعة مع قاعدة معززة.',
+      yarnType: '100% Cotton Ribbon',
+      yarnTypeArabic: 'شريط قطني طبيعي ١٠٠٪',
+      colorName: 'Desert Oat',
+      colorNameArabic: 'بيج صحراوي',
+      colorHex: '#D6C7B2',
+      isFeatured: false,
+      isSale: false,
+      stockCount: 10,
+    };
 
     if (editingProduct) {
       setProductsList((prev) =>
@@ -330,33 +449,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           p.id === editingProduct.id
             ? {
                 ...p,
-                name: newProductName,
-                nameArabic: newProductNameAr || newProductName,
-                price: Number(newProductPrice),
-                category: newProductCategory,
-                tag: newProductTag,
+                ...productPayload,
               }
             : p
         )
       );
+      try {
+        await api.updateProduct(editingProduct.id, productPayload);
+      } catch (err) {
+        console.error('Failed to update product in database:', err);
+      }
     } else {
-      const newEntry: Product = {
-        id: `custom-${Date.now()}`,
-        name: newProductName,
-        nameArabic: newProductNameAr || newProductName,
-        price: Number(newProductPrice),
-        category: newProductCategory,
-        image: '/products/hadab-bag.jpg',
-        textureImage: '/products/hadab-bag.jpg',
-        tag: newProductTag,
-        description: 'Bespoke hand-hooked piece crafted with unbleached cotton ribbon.',
-        descriptionArabic: 'قطعة حرفية محبوكة يدوياً من خيوط القطن الطبيعي غير المعالج.',
-        stitchDetail: 'Single-crochet ribbing with reinforced base tension.',
-        yarnType: '100% Cotton Ribbon',
-        colorName: 'Desert Oat',
-        colorHex: '#D6C7B2',
-      };
-      setProductsList((prev) => [newEntry, ...prev]);
+      try {
+        const created = await api.createProduct(productPayload);
+        setProductsList((prev) => [created, ...prev]);
+      } catch (err) {
+        console.error('Failed to create product in database, saving locally:', err);
+        const fallbackId = `custom-${Date.now()}`;
+        setProductsList((prev) => [{ ...productPayload, id: fallbackId } as Product, ...prev]);
+      }
     }
 
     setIsProductModalOpen(false);
@@ -573,11 +684,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">
-                <div className="text-xs font-semibold text-brown-900 leading-none mb-1">Haya J.</div>
-                <div className="text-[10px] text-brown-500 uppercase tracking-wider leading-none">Master Admin</div>
+                <div className="text-xs font-semibold text-brown-900 leading-none mb-1">
+                  {user?.name || 'HADAB Master'}
+                </div>
+                <div className="text-[10px] text-brown-500 uppercase tracking-wider leading-none">
+                  {user?.email || 'Byhadab@gmail.com'}
+                </div>
               </div>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cream-200 to-blush-100 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900 shadow-sm cursor-pointer hover:ring-2 ring-offset-2 ring-[#F7F2EB] ring-brown-200 transition-all">
-                HJ
+                {user?.email ? user.email.slice(0, 2).toUpperCase() : 'HB'}
               </div>
             </div>
           </div>

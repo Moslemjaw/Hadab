@@ -1,0 +1,38 @@
+﻿import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+export interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    res.status(401).json({ message: 'Access token required' });
+    return;
+  }
+
+  const secret = process.env.JWT_SECRET || 'hadab_secret_fallback';
+  jwt.verify(token, secret, (err, decoded) => {
+    if (err) {
+      res.status(403).json({ message: 'Invalid or expired token' });
+      return;
+    }
+    req.user = decoded as { id: string; email: string; role: string };
+    next();
+  });
+};
+
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.user || req.user.role !== 'admin') {
+    res.status(403).json({ message: 'Admin access forbidden' });
+    return;
+  }
+  next();
+};

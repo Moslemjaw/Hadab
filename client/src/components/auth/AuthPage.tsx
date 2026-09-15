@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { tactileAudio } from '../../utils/audio';
 
 interface AuthPageProps {
@@ -32,6 +33,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   onExploreCollection,
 }) => {
   const { language, t } = useLanguage();
+  const { login, register } = useAuth();
   const isAr = language === 'ar';
 
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
@@ -66,7 +68,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     setSuccessMessage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -90,20 +92,32 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     setIsSubmitting(true);
     tactileAudio.playScrubTick(440);
 
-    setTimeout(() => {
+    try {
+      let loggedInUser;
+      if (mode === 'signin') {
+        loggedInUser = await login(email.trim(), password);
+      } else {
+        loggedInUser = await register(fullName.trim(), email.trim(), password, phone.trim());
+      }
+
       setIsSubmitting(false);
       tactileAudio.playChime();
       const msg = mode === 'signin' ? t.loginSuccess : t.registerSuccess;
       setSuccessMessage(msg);
 
       setTimeout(() => {
-        if (onSuccess) {
+        if (loggedInUser.role === 'admin' || loggedInUser.email.toLowerCase() === 'byhadab@gmail.com') {
+          window.location.hash = 'admin';
+        } else if (onSuccess) {
           onSuccess();
         } else {
           onBackToHome();
         }
-      }, 1400);
-    }, 900);
+      }, 1000);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setErrorMessage(err.message || (isAr ? 'حدث خطأ أثناء تسجيل الدخول' : 'Authentication failed'));
+    }
   };
 
   return (
