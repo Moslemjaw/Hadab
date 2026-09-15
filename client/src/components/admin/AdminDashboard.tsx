@@ -75,7 +75,7 @@ const INITIAL_ORDERS: OrderItem[] = [
     total: 135,
     status: 'hooking',
     statusArabic: 'قيد الحياكة اليدوية',
-    artisan: 'Noor (Amman Atelier)',
+    artisan: 'Noor (Amman)',
     createdAt: 'Today, 11:20 AM',
   },
   {
@@ -90,7 +90,7 @@ const INITIAL_ORDERS: OrderItem[] = [
     total: 310,
     status: 'finishing',
     statusArabic: 'تشطيب الأطراف والأرشيف',
-    artisan: 'Rania (Kuwait Studio)',
+    artisan: 'Rania (Kuwait)',
     createdAt: 'Yesterday, 4:15 PM',
   },
   {
@@ -105,7 +105,7 @@ const INITIAL_ORDERS: OrderItem[] = [
     total: 68,
     status: 'shipped',
     statusArabic: 'تم الشحن مع الشحن السريع',
-    artisan: 'Noor (Amman Atelier)',
+    artisan: 'Noor (Amman)',
     createdAt: 'Sep 13, 2026',
   },
   {
@@ -120,7 +120,7 @@ const INITIAL_ORDERS: OrderItem[] = [
     total: 270,
     status: 'delivered',
     statusArabic: 'تم التسليم بنجاح',
-    artisan: 'Hala (Amman Atelier)',
+    artisan: 'Hala (Amman)',
     createdAt: 'Sep 11, 2026',
   },
 ];
@@ -164,7 +164,7 @@ interface CategoryRecord {
 
 const MOCK_CATEGORIES: CategoryRecord[] = [
   { id: 'cat-1', name: 'Bags & Totes', nameAr: 'الحقائب والشنط', slug: 'bags', pieceCount: 0, description: 'Hand-hooked totes, shoulder bags, and market baskets from 100% natural cotton cord.', descriptionAr: 'حقائب محبوكة يدوياً من خيوط القطن الطبيعي', color: '#D9B99B' },
-  { id: 'cat-2', name: 'Wearables', nameAr: 'الملابس', slug: 'clothing', pieceCount: 0, description: 'Crochet vests, tops and wraps made to order in Amman & Kuwait ateliers.', descriptionAr: 'سترات وملابس كروشيه مصنوعة بالطلب', color: '#A3B99B' },
+  { id: 'cat-2', name: 'Wearables', nameAr: 'الملابس', slug: 'clothing', pieceCount: 0, description: 'Crochet vests, tops and wraps made to order in Amman & Kuwait.', descriptionAr: 'سترات وملابس كروشيه مصنوعة بالطلب', color: '#A3B99B' },
   { id: 'cat-3', name: 'Hats & Headwear', nameAr: 'القبعات والأغطية', slug: 'headwear', pieceCount: 0, description: 'Sun hats, bucket styles, and brimmed silhouettes woven from natural yarn.', descriptionAr: 'قبعات يدوية من الخيوط الطبيعية', color: '#C9B99B' },
   { id: 'cat-4', name: 'Accessories', nameAr: 'الإكسسوارات', slug: 'pouches', pieceCount: 0, description: 'Pouches, coin purses, keychains and micro-accessories.', descriptionAr: 'حقائب صغيرة، محافظ ومفاتيح حرفية', color: '#B9C9CB' },
 ];
@@ -231,7 +231,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               total: o.total,
               status: o.status,
               statusArabic: o.statusArabic || '',
-              artisan: o.artisan || 'Noor (Amman Atelier)',
+              artisan: o.artisan || 'Noor (Amman)',
               createdAt: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'Recent',
             }))
           );
@@ -280,12 +280,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
 
-  const [settingsState, setSettingsState] = useState({
-    notifications: true,
-    maintenance: false,
-    autoArchive: true,
-    darkMode: false,
+  interface AdminSettings {
+    notifications: boolean;
+    maintenance: boolean;
+    autoArchive: boolean;
+    darkMode: boolean;
+  }
+
+  const [settingsState, setSettingsState] = useState<AdminSettings>(() => {
+    const saved = localStorage.getItem('hadab_admin_settings');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* fallback */ }
+    }
+    return {
+      notifications: true,
+      maintenance: false,
+      autoArchive: true,
+      darkMode: false,
+    };
   });
+
+  const [settingsCurrency, setSettingsCurrency] = useState(() => localStorage.getItem('hadab_currency') || 'KWD');
+  const [settingsThreshold, setSettingsThreshold] = useState(() => Number(localStorage.getItem('hadab_threshold')) || 25);
+  const [settingsEmail, setSettingsEmail] = useState(() => localStorage.getItem('hadab_email') || 'Byhadab@gmail.com');
+  const [isErasing, setIsErasing] = useState(false);
 
   // Modal States
   const [editingCategory, setEditingCategory] = useState<CategoryRecord | null>(null);
@@ -515,6 +533,91 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setIsProductModalOpen(true);
   };
   
+  // Persist settings toggles to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
+  }, [settingsState]);
+
+  // Save Preferences handler
+  const handleSavePreferences = () => {
+    localStorage.setItem('hadab_currency', settingsCurrency);
+    localStorage.setItem('hadab_threshold', String(settingsThreshold));
+    localStorage.setItem('hadab_email', settingsEmail);
+    localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
+    tactileAudio.playChime();
+    alert(isAr ? 'تم حفظ إعدادات المتجر بنجاح ✓' : 'Settings saved successfully ✓');
+  };
+
+  // Erase All Data handler
+  const handleEraseData = async () => {
+    const confirmText = isAr
+      ? 'هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات والتصنيفات والعملاء نهائياً. اكتب "DELETE" للتأكيد.'
+      : 'Are you sure? This will permanently delete ALL products, orders, categories, and customers. Type "DELETE" to confirm.';
+    const input = window.prompt(confirmText);
+    if (input !== 'DELETE') {
+      if (input !== null) {
+        alert(isAr ? 'لم يتم تأكيد الحذف. لم يتم حذف أي شيء.' : 'Confirmation not matched. Nothing was deleted.');
+      }
+      return;
+    }
+
+    setIsErasing(true);
+    try {
+      const result = await api.eraseAllData();
+      // Clear local state
+      setProductsList([]);
+      setOrdersList([]);
+      setCategoryList([]);
+      setCustomersList([]);
+      tactileAudio.playScrubTick(200);
+      alert(
+        isAr
+          ? `تم حذف البيانات بنجاح:\n${result.deleted?.products || 0} منتج\n${result.deleted?.orders || 0} طلب\n${result.deleted?.categories || 0} تصنيف\n${result.deleted?.customers || 0} عميل`
+          : `Data erased successfully:\n${result.deleted?.products || 0} products\n${result.deleted?.orders || 0} orders\n${result.deleted?.categories || 0} categories\n${result.deleted?.customers || 0} customers`
+      );
+    } catch (err: any) {
+      alert(err.message || 'Failed to erase data');
+    } finally {
+      setIsErasing(false);
+    }
+  };
+
+  // Export customers as CSV
+  const handleExportCSV = () => {
+    const headers = ['Name', 'Email', 'Phone', 'Country', 'Orders', 'Total Spent (KD)', 'Status'];
+    const rows = filteredCustomers.map(c => [
+      c.name,
+      c.email,
+      c.phone,
+      c.country,
+      String(c.totalOrders),
+      String(c.totalSpent),
+      c.status,
+    ]);
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `hadab-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    tactileAudio.playChime();
+  };
+
+  // Category delete with API sync
+  const handleDeleteCategory = async (catId: string) => {
+    if (window.confirm(isAr ? 'هل تريد حذف هذا التصنيف؟' : 'Remove this category?')) {
+      tactileAudio.playScrubTick(300);
+      setCategoryList((prev) => prev.filter((c) => c.id !== catId));
+      try {
+        await api.deleteCategory(catId);
+      } catch (err) {
+        console.error('Failed to delete category from database:', err);
+      }
+    }
+  };
+
   const getBreadcrumbLabel = () => {
     const map: Record<string, string> = {
       overview: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview',
@@ -522,7 +625,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       orders: isAr ? 'طلبات الحياكة' : 'Bespoke Orders',
       categories: isAr ? 'التصنيفات' : 'Categories',
       customers: isAr ? 'العملاء' : 'Customers',
-      artisans: isAr ? 'المشاغل والحرفيون' : 'Atelier Workshops',
+      artisans: isAr ? 'المشاغل والحرفيون' : 'Workshops',
       settings: isAr ? 'إعدادات المتجر' : 'Store Settings',
     };
     return map[activeTab] || '';
@@ -558,7 +661,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
               <div>
                 <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0]">HADAB</span>
-                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">Atelier Admin</span>
+                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">Admin Panel</span>
               </div>
             </div>
             <button className="md:hidden p-1.5 text-brown-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
@@ -574,7 +677,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               { id: 'orders', label: isAr ? 'طلبات الحياكة' : 'Bespoke Orders', icon: ShoppingBag, count: activeOrdersCount, pulse: activeOrdersCount > 0 },
               { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag, count: categoryList.length },
               { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: MOCK_CUSTOMERS.length },
-              { id: 'artisans', label: isAr ? 'المشاغل والحرفيون' : 'Atelier Workshops', icon: Scissors },
+              { id: 'artisans', label: isAr ? 'المشاغل والحرفيون' : 'Workshops', icon: Scissors },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -696,23 +799,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <button className="relative p-2 rounded-full hover:bg-cream-100 text-brown-600 transition-colors">
+            <button
+              type="button"
+              onClick={() => {
+                tactileAudio.playScrubTick(300);
+                setActiveTab('orders');
+              }}
+              title={isAr ? `${activeOrdersCount} طلبات نشطة` : `${activeOrdersCount} active orders`}
+              className="relative p-2 rounded-full hover:bg-cream-100 text-brown-600 transition-colors cursor-pointer"
+            >
               <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-burgundy-500 border border-white" />
+              {activeOrdersCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-burgundy-500 border border-white" />
+              )}
             </button>
             
             <div className="h-6 w-px bg-brown-200/60 hidden sm:block"></div>
 
-            <div className="flex items-center gap-3">
+            <div
+              onClick={() => {
+                tactileAudio.playScrubTick(320);
+                setActiveTab('settings');
+              }}
+              className="flex items-center gap-3 cursor-pointer group"
+              title={isAr ? 'إعدادات المتجر' : 'Store Settings'}
+            >
               <div className="hidden sm:block text-right">
-                <div className="text-xs font-semibold text-brown-900 leading-none mb-1">
+                <div className="text-xs font-semibold text-brown-900 leading-none mb-1 group-hover:text-burgundy-700 transition-colors">
                   {user?.name || 'HADAB Master'}
                 </div>
                 <div className="text-[10px] text-brown-500 uppercase tracking-wider leading-none">
                   {user?.email || 'Byhadab@gmail.com'}
                 </div>
               </div>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cream-200 to-blush-100 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900 shadow-sm cursor-pointer hover:ring-2 ring-offset-2 ring-[#F7F2EB] ring-brown-200 transition-all">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cream-200 to-blush-100 border border-brown-300 flex items-center justify-center font-serif text-xs font-bold text-brown-900 shadow-sm group-hover:ring-2 ring-offset-2 ring-[#F7F2EB] ring-brown-200 transition-all">
                 {user?.email ? user.email.slice(0, 2).toUpperCase() : 'HB'}
               </div>
             </div>
@@ -724,11 +844,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           
           <div className="mb-6">
              <h1 className="font-serif text-2xl text-brown-950 font-normal">
-              {activeTab === 'overview' && (isAr ? 'نظرة عامة على المشغل' : 'Atelier Overview & Performance')}
+              {activeTab === 'overview' && (isAr ? 'نظرة عامة على المشغل' : 'Overview & Performance')}
               {activeTab === 'products' && (isAr ? 'إدارة كتالوج القطع اليدوية' : 'Handcrafted Pieces Catalog')}
               {activeTab === 'orders' && (isAr ? 'متابعة الطلبات المخصصة' : 'Custom Orders & Stitch Progress')}
               {activeTab === 'artisans' && (isAr ? 'شبكة المشاغل (عمّان والكويت)' : 'Artisans & Workshops Network')}
-              {activeTab === 'settings' && (isAr ? 'إعدادات المتجر' : 'Store & Atelier Preferences')}
+              {activeTab === 'settings' && (isAr ? 'إعدادات المتجر' : 'Store Settings')}
               {activeTab === 'categories' && (isAr ? 'إدارة التصنيفات' : 'Product Categories')}
               {activeTab === 'customers' && (isAr ? 'قاعدة العملاء' : 'Customer Directory')}
             </h1>
@@ -1355,11 +1475,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-blush-100 flex items-center justify-center font-serif text-xl font-bold text-burgundy-700 shadow-inner border border-blush-200/50">JO</div>
                       <div>
-                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">Amman Atelier Hub</h3>
+                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">{isAr ? 'مشغل عمّان الرئيسي' : 'Amman Main Workshop'}</h3>
                         <p className="text-xs text-brown-500 font-light flex items-center gap-1"><MapPin size={10}/> Amman, Jordan</p>
                       </div>
                     </div>
-                    <button className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors"><Edit2 size={14}/></button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        alert(isAr ? 'مشغل عمّان: السعة الحالية ٨٥٪، يعمل الحرفيون على ٧ قطع يدوية' : 'Amman Workshop: 85% capacity, artisans currently hand-hooking 7 pieces.');
+                      }}
+                      title={isAr ? 'عرض التفاصيل' : 'View Workshop Info'}
+                      className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors cursor-pointer"
+                    >
+                      <Edit2 size={14}/>
+                    </button>
                   </div>
                   
                   <p className="text-[13px] text-brown-600 font-light leading-relaxed">
@@ -1395,11 +1525,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-sage-100 flex items-center justify-center font-serif text-xl font-bold text-sage-800 shadow-inner border border-sage-200/50">KW</div>
                       <div>
-                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">Kuwait Design Studio</h3>
+                        <h3 className="font-serif text-xl text-brown-900 font-medium leading-none mb-1">{isAr ? 'استوديو الكويت للتوزيع' : 'Kuwait Delivery Hub'}</h3>
                         <p className="text-xs text-brown-500 font-light flex items-center gap-1"><MapPin size={10}/> Kuwait City, Kuwait</p>
                       </div>
                     </div>
-                    <button className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors"><Edit2 size={14}/></button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        alert(isAr ? 'استوديو الكويت: السعة الحالية ٤٠٪، جاهز لاستلام وتوصيل الطلبات' : 'Kuwait Hub: 40% capacity, ready for express dispatch across Kuwait.');
+                      }}
+                      title={isAr ? 'عرض التفاصيل' : 'View Hub Info'}
+                      className="p-2 rounded-xl bg-white text-brown-400 hover:text-brown-900 shadow-sm border border-brown-100 transition-colors cursor-pointer"
+                    >
+                      <Edit2 size={14}/>
+                    </button>
                   </div>
                   
                   <p className="text-[13px] text-brown-600 font-light leading-relaxed">
@@ -1489,13 +1629,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (window.confirm(isAr ? 'هل تريد حذف هذا التصنيف؟' : 'Remove this category?')) {
-                              tactileAudio.playScrubTick(300);
-                              setCategoryList((prev) => prev.filter((c) => c.id !== cat.id));
-                            }
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-burgundy-50 text-brown-300 hover:text-burgundy-600 transition-colors shadow-sm border border-transparent hover:border-burgundy-100"
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          title={isAr ? 'حذف التصنيف' : 'Delete Category'}
+                          className="p-1.5 rounded-lg hover:bg-burgundy-50 text-brown-300 hover:text-burgundy-600 transition-colors shadow-sm border border-transparent hover:border-burgundy-100 cursor-pointer"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -1568,9 +1704,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   ))}
                 </div>
 
-                <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-white border border-brown-200 rounded-full text-[10px] font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 shadow-sm transition-colors">
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-white border border-brown-200 rounded-full text-[10px] font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 shadow-sm transition-colors cursor-pointer"
+                >
                   <Download size={14} />
-                  <span>Export CSV</span>
+                  <span>{isAr ? 'تصدير كملف CSV' : 'Export CSV'}</span>
                 </button>
               </div>
 
@@ -1660,14 +1800,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                                     <div className="flex-1 space-y-4">
                                       <h4 className="text-[10px] uppercase font-bold text-brown-400 tracking-wider">Quick Actions</h4>
                                       <div className="flex flex-col gap-2">
-                                        <button className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between">
-                                          <span>View Order History</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            tactileAudio.playScrubTick(320);
+                                            setGlobalSearch(customer.email);
+                                            setActiveTab('orders');
+                                          }}
+                                          className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between cursor-pointer"
+                                        >
+                                          <span>{isAr ? 'عرض سجل طلبات العميل' : 'View Order History'}</span>
                                           <ArrowUpRight size={14} className="text-brown-400" />
                                         </button>
-                                        <button className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between">
-                                          <span>Send Personalized Offer Email</span>
+                                        <a
+                                          href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(isAr ? `مرحباً ${customer.name}، معك متجر هَدَب للأشغال اليدوية الكروشيه.` : `Hello ${customer.name}, this is HADAB handmade crochet shop.`)}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between cursor-pointer"
+                                        >
+                                          <span>{isAr ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}</span>
+                                          <Phone size={14} className="text-emerald-600" />
+                                        </a>
+                                        <a
+                                          href={`mailto:${customer.email}?subject=${encodeURIComponent(isAr ? 'عرض خاص من هَدَب' : 'Special Offer from HADAB')}`}
+                                          className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between cursor-pointer"
+                                        >
+                                          <span>{isAr ? 'إرسال بريد إلكتروني' : 'Send Email Offer'}</span>
                                           <Mail size={14} className="text-brown-400" />
-                                        </button>
+                                        </a>
                                       </div>
                                     </div>
                                   </div>
@@ -1701,7 +1861,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'العملة الأساسية' : 'Default Currency'}</label>
-                      <select defaultValue="KWD" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300">
+                      <select
+                        value={settingsCurrency}
+                        onChange={(e) => setSettingsCurrency(e.target.value)}
+                        className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 cursor-pointer"
+                      >
                         <option value="KWD">KWD (د.ك) - Kuwait Dinar (Primary)</option>
                         <option value="JOD">JOD (د.أ) - Jordan Dinar (Origin)</option>
                         <option value="USD">USD ($) - International</option>
@@ -1711,14 +1875,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'حد الشحن المجاني للكويت' : 'Free Shipping Threshold to Kuwait'}</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-500 font-bold text-xs">KD</span>
-                        <input type="number" defaultValue={25} className="w-full py-2.5 pl-9 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
+                        <input
+                          type="number"
+                          value={settingsThreshold}
+                          onChange={(e) => setSettingsThreshold(Number(e.target.value))}
+                          className="w-full py-2.5 pl-9 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300"
+                        />
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'بريد استفسارات المتجر' : 'Store Inquiries Email'}</label>
-                    <input type="email" defaultValue="Byhadab@gmail.com" className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300" />
+                    <input
+                      type="email"
+                      value={settingsEmail}
+                      onChange={(e) => setSettingsEmail(e.target.value)}
+                      className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300"
+                    />
                   </div>
                 </div>
               </div>
@@ -1726,15 +1900,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               {/* System Toggles */}
               <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-brown-200/50 bg-white/50">
-                  <h3 className="font-serif text-lg text-brown-900 font-medium">System Configuration</h3>
-                  <p className="text-xs text-brown-500 font-light mt-0.5">Toggle automation and notification features.</p>
+                  <h3 className="font-serif text-lg text-brown-900 font-medium">{isAr ? 'إعدادات النظام والأتمتة' : 'System Configuration'}</h3>
+                  <p className="text-xs text-brown-500 font-light mt-0.5">{isAr ? 'تفعيل الإشعارات وتحديثات المتجر' : 'Toggle automation and notification features.'}</p>
                 </div>
                 
                 <div className="divide-y divide-brown-100">
                   {[
-                    { id: 'notifications', label: 'Push Notifications', desc: 'Receive alerts for new custom orders and artisan updates.' },
-                    { id: 'autoArchive', label: 'Auto-Archive Shipped', desc: 'Automatically move orders to archive 30 days after delivery.' },
-                    { id: 'maintenance', label: 'Maintenance Mode', desc: 'Hide storefront from public while updating collections.' }
+                    { id: 'notifications', label: isAr ? 'إشعارات الطلبات' : 'Push Notifications', desc: isAr ? 'تلقي تنبيهات عند استلام طلبات كروشيه جديدة' : 'Receive alerts for new custom orders and artisan updates.' },
+                    { id: 'autoArchive', label: isAr ? 'أرشفة الطلبات المسلمة' : 'Auto-Archive Shipped', desc: isAr ? 'أرشفة الطلبات تلقائياً بعد التسليم بـ ٣٠ يوماً' : 'Automatically move orders to archive 30 days after delivery.' },
+                    { id: 'maintenance', label: isAr ? 'وضع الصيانة' : 'Maintenance Mode', desc: isAr ? 'إخفاء المتجر مؤقتاً أثناء تحديث التشكيلات' : 'Hide storefront from public while updating collections.' }
                   ].map((setting) => (
                     <div key={setting.id} className="p-5 flex items-center justify-between gap-4">
                       <div>
@@ -1744,8 +1918,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       
                       {/* Toggle Switch */}
                       <button 
-                        onClick={() => setSettingsState(prev => ({ ...prev, [setting.id]: !prev[setting.id as keyof typeof settingsState] }))}
-                        className={`relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none ${settingsState[setting.id as keyof typeof settingsState] ? 'bg-blush-400' : 'bg-brown-200'}`}
+                        type="button"
+                        onClick={() => {
+                          tactileAudio.playScrubTick(340);
+                          setSettingsState(prev => ({ ...prev, [setting.id]: !prev[setting.id as keyof typeof settingsState] }));
+                        }}
+                        className={`relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${settingsState[setting.id as keyof typeof settingsState] ? 'bg-blush-400' : 'bg-brown-200'}`}
                       >
                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 shadow-sm ${settingsState[setting.id as keyof typeof settingsState] ? 'left-6' : 'left-1'}`}></div>
                       </button>
@@ -1759,16 +1937,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 <div className="p-5 border-b border-burgundy-200/50 bg-white/30">
                   <h3 className="font-serif text-lg text-burgundy-900 font-medium flex items-center gap-2">
                     <AlertCircle size={18} className="text-burgundy-600"/>
-                    Danger Zone
+                    {isAr ? 'منطقة الحذف الشامل' : 'Danger Zone'}
                   </h3>
                 </div>
                 <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <div className="text-sm font-medium text-burgundy-900 mb-1">Delete Store Data</div>
-                    <div className="text-xs text-burgundy-700/70 max-w-md">Permanently remove all products, orders, and customer data. This action cannot be undone.</div>
+                    <div className="text-sm font-medium text-burgundy-900 mb-1">{isAr ? 'مسح بيانات المتجر' : 'Delete Store Data'}</div>
+                    <div className="text-xs text-burgundy-700/70 max-w-md">
+                      {isAr
+                        ? 'حذف جميع المنتجات والطلبات والتصنيفات والعملاء نهائياً مع الاحتفاظ بحساب الإدارة فقط. لا يمكن التراجع عن هذا الإجراء.'
+                        : 'Permanently remove all products, orders, categories, and customer accounts except the admin account. This action cannot be undone.'}
+                    </div>
                   </div>
-                  <button className="px-4 py-2 bg-white border border-burgundy-300 text-burgundy-700 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-burgundy-600 hover:text-white transition-colors shadow-sm whitespace-nowrap">
-                    Erase Data
+                  <button
+                    type="button"
+                    disabled={isErasing}
+                    onClick={handleEraseData}
+                    className="px-4 py-2 bg-white border border-burgundy-300 text-burgundy-700 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-burgundy-600 hover:text-white transition-colors shadow-sm whitespace-nowrap cursor-pointer disabled:opacity-50"
+                  >
+                    {isErasing ? (isAr ? 'جاري الحذف...' : 'Erasing Data...') : (isAr ? 'مسح جميع البيانات' : 'Erase Data')}
                   </button>
                 </div>
               </div>
@@ -1776,10 +1963,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               <div className="flex justify-end pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    tactileAudio.playChime();
-                    alert(isAr ? 'تم حفظ إعدادات المتجر بنجاح' : 'Settings saved successfully');
-                  }}
+                  onClick={handleSavePreferences}
                   className="px-8 py-3 rounded-full bg-[#2E221B] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:bg-[#3D2D25] hover:-translate-y-0.5 transition-all cursor-pointer"
                 >
                   {isAr ? 'حفظ التغييرات' : 'Save Preferences'}
@@ -1927,23 +2111,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               {isAr ? 'ادخل اسم التصنيف والوصف' : 'Enter the category name and description'}
             </p>
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 tactileAudio.playChime();
+                const slug = catNameEn.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const catPayload = {
+                  name: catNameEn,
+                  nameAr: catNameAr || catNameEn,
+                  description: catDescEn,
+                  descriptionAr: catDescAr || catDescEn,
+                  slug: editingCategory ? editingCategory.slug : slug,
+                  color: editingCategory ? editingCategory.color : '#C9B99B',
+                };
+
                 if (editingCategory) {
                   setCategoryList((prev) =>
                     prev.map((c) =>
                       c.id === editingCategory.id
-                        ? { ...c, name: catNameEn, nameAr: catNameAr, description: catDescEn, descriptionAr: catDescAr }
+                        ? { ...c, ...catPayload }
                         : c
                     )
                   );
+                  try {
+                    await api.updateCategory(editingCategory.id, catPayload);
+                  } catch (err) {
+                    console.error('Failed to update category in DB:', err);
+                  }
                 } else {
-                  const slug = catNameEn.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                  setCategoryList((prev) => [
-                    ...prev,
-                    { id: `cat-${Date.now()}`, name: catNameEn, nameAr: catNameAr, slug, pieceCount: 0, description: catDescEn, descriptionAr: catDescAr, color: '#C9B99B' },
-                  ]);
+                  try {
+                    const created = await api.createCategory(catPayload);
+                    setCategoryList((prev) => [
+                      ...prev,
+                      {
+                        id: created.id || created._id,
+                        name: created.name,
+                        nameAr: created.nameAr,
+                        slug: created.slug,
+                        pieceCount: 0,
+                        description: created.description,
+                        descriptionAr: created.descriptionAr,
+                        color: created.color || '#C9B99B',
+                      },
+                    ]);
+                  } catch (err) {
+                    console.error('Failed to create category in DB, saving locally:', err);
+                    setCategoryList((prev) => [
+                      ...prev,
+                      { id: `cat-${Date.now()}`, ...catPayload, pieceCount: 0 },
+                    ]);
+                  }
                 }
                 setIsCatModalOpen(false);
                 setEditingCategory(null);

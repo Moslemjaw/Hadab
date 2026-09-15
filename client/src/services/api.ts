@@ -217,4 +217,15 @@ export const api = {
     if (!res.ok) throw new Error(data.message || 'Image upload failed');
     return data;
   },
+
+  // Admin
+  async eraseAllData() {
+    const res = await fetch(`${API_BASE}/admin/erase-all`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to erase data');
+    return data;
+  },
 };
