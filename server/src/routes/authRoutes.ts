@@ -1,4 +1,4 @@
-﻿import { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
@@ -108,6 +108,26 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const user = await User.findById(req.user?.id).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    res.json({ user });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
+
+// Update current user profile
+router.put('/profile', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { name, phone, country } = req.body;
+    const updateData: any = {};
+    if (name) updateData.name = name.trim();
+    if (phone !== undefined) updateData.phone = phone.trim();
+    if (country) updateData.country = country;
+
+    const user = await User.findByIdAndUpdate(req.user?.id, updateData, { new: true }).select('-password');
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;

@@ -322,6 +322,33 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   />
                 </div>
 
+                {/* Payment Option: WhatsApp Payment */}
+                <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-brown-900 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle size={16} className="text-emerald-600" />
+                      <span className="font-semibold text-xs">
+                        {isAr ? 'طريقة الدفع: عبر واتساب' : 'Payment Method: via WhatsApp'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                      KNET
+                    </span>
+                  </div>
+                  <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
+                    <p className="text-[11.5px] text-brown-900 font-bold">
+                      {isAr
+                        ? 'سيتواصل معك فريق خدمة العملاء الآن لإتمام عملية الدفع'
+                        : 'Now our customer service will contact you for the payment'}
+                    </p>
+                    <p className="text-[10.5px] text-brown-600 font-light mt-0.5">
+                      {isAr
+                        ? 'سنرسل لك رابط دفع KNET مخصص أو تأكيد الدفع عند الاستلام.'
+                        : 'We will send you a secure KNET link or confirm cash on delivery.'}
+                    </p>
+                  </div>
+                </div>
+
                 {/* Price Breakdown */}
                 <div className="pt-3 border-t border-brown-200 space-y-1.5 text-brown-600">
                   <div className="flex justify-between">
@@ -366,11 +393,28 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                 <p className="text-xs text-brown-600 font-light leading-relaxed max-w-xs">
                   {isAr
-                    ? 'بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى الكويت. سنتواصل معك لتأكيد موعد التسليم.'
-                    : 'We are preparing your handmade pieces with care in Jordan and shipping them straight to Kuwait. We will reach out shortly.'}
+                    ? 'بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى الكويت.'
+                    : 'We are preparing your handmade pieces with care in Jordan and shipping them straight to Kuwait.'}
                 </p>
 
-                <div className="w-full pt-4 space-y-2.5">
+                {/* Prominent Payment Notice */}
+                <div className="w-full p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-center space-y-1">
+                  <div className="inline-flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+                    <Sparkles size={14} className="text-burgundy-600" />
+                    <span>
+                      {isAr
+                        ? 'سيتواصل معك فريق خدمة العملاء الآن لإتمام عملية الدفع'
+                        : 'Now our customer service will contact you for the payment'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-brown-600 font-light">
+                    {isAr
+                      ? 'يرجى مراجعة رسائل الواتساب للحصول على رابط دفع KNET وتأكيد موعد الشحن.'
+                      : 'Please check your WhatsApp messages for the KNET payment link and delivery confirmation.'}
+                  </p>
+                </div>
+
+                <div className="w-full pt-2 space-y-2.5">
                   <a
                     href={`https://wa.me/96599000000?text=${whatsappMessage}`}
                     target="_blank"

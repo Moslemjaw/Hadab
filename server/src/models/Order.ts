@@ -1,4 +1,4 @@
-﻿import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IOrderItem extends Document {
   orderNumber: string;
@@ -16,6 +16,8 @@ export interface IOrderItem extends Document {
     quantity: number;
   }[];
   total: number;
+  address?: string;
+  notes?: string;
   status: 'pending' | 'hooking' | 'finishing' | 'shipped' | 'delivered';
   statusArabic: string;
   artisan: string;
@@ -29,6 +31,8 @@ const OrderSchema = new Schema<IOrderItem>(
     customerName: { type: String, required: true },
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, default: '' },
+    address: { type: String, default: '' },
+    notes: { type: String, default: '' },
     destination: {
       type: String,
       enum: ['Jordan', 'Kuwait', 'UAE', 'Saudi Arabia'],
@@ -52,7 +56,7 @@ const OrderSchema = new Schema<IOrderItem>(
       default: 'pending',
     },
     statusArabic: { type: String, default: 'قيد الانتظار' },
-    artisan: { type: String, default: 'Noor (Amman Atelier)' },
+    artisan: { type: String, default: 'Hadab Team (Amman)' },
   },
   {
     timestamps: true,

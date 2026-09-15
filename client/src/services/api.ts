@@ -138,6 +138,26 @@ export const api = {
     return data.map((o: any) => ({ ...o, id: o._id || o.id }));
   },
 
+  async getMyOrders() {
+    const res = await fetch(`${API_BASE}/orders/my-orders`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch your orders');
+    const data = await res.json();
+    return data.map((o: any) => ({ ...o, id: o._id || o.id }));
+  },
+
+  async updateProfile(profileData: { name?: string; phone?: string; country?: string }) {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update profile');
+    return data.user;
+  },
+
   async createOrder(orderData: {
     customerName: string;
     customerEmail?: string;

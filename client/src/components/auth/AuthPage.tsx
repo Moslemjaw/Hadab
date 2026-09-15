@@ -152,17 +152,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <div className="lg:col-span-5 flex flex-col justify-center space-y-6 order-2 lg:order-1">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cream-100 border border-brown-200 text-[10.5px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-burgundy-600 shadow-warm-sm self-start">
               <Sparkles size={12} className="text-burgundy-600" />
-              <span>{t.atelierMemberBadge}</span>
+              <span>{isAr ? 'عائلة هَدَب' : 'HADAB Community'}</span>
             </div>
 
             <div className="space-y-3">
               <h2 className="font-serif text-3xl sm:text-4xl text-brown-900 font-normal leading-tight">
-                {isAr ? 'انضمي إلى دائرة مشغل هَدَب' : 'Step into the HADAB Atelier Circle'}
+                {isAr ? 'انضمي إلى عائلة هَدَب' : 'Join the HADAB Family'}
               </h2>
               <p className="text-xs sm:text-sm text-brown-600 font-light leading-relaxed">
                 {isAr
-                  ? 'صُممت بوابة الأعضاء لتمنحك تجربة تسوق راقية تتناسب مع خصوصية الحرف اليدوية البطيئة.'
-                  : 'Crafted for connoisseurs of deliberate slow-craft. Enjoy seamless bespoke privileges across all your devices.'}
+                  ? 'مشروعنا المنزلي مقره الأردن ونشحن جميع القطع المحبوكة يدوياً مباشرة إلى الكويت. سجلي دخولك لمتابعة طلباتك.'
+                  : 'Handmade crochet & knitwear crafted with care in Jordan and shipped directly to Kuwait. Sign in to track your orders.'}
               </p>
             </div>
 

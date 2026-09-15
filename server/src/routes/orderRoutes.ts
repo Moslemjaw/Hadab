@@ -1,8 +1,30 @@
 import { Router, Request, Response } from 'express';
 import { Order } from '../models/Order';
-import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+// GET customer's own order history
+router.get('/my-orders', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userEmail = req.user?.email;
+    if (!userEmail) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
+    }
+
+    const orders = await Order.find({
+      $or: [
+        { customerEmail: userEmail.toLowerCase() },
+        { customerEmail: userEmail },
+      ],
+    }).sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
 
 // GET all orders (Admin only)
 router.get('/', authenticateToken, requireAdmin, async (_req: Request, res: Response): Promise<void> => {

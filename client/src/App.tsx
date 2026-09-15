@@ -8,12 +8,15 @@ import { CategoriesPage } from './components/shop/CategoriesPage';
 import { StoryPage } from './components/story/StoryPage';
 import { AuthPage } from './components/auth/AuthPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { CustomerDashboard } from './components/customer/CustomerDashboard';
 import { ProductModal } from './components/shop/ProductModal';
 import type { Product } from './types';
 import { FEATURED_PRODUCTS } from './constants/mockData';
+import { useAuth } from './context/AuthContext';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin'>('home');
+  const { user, isAdmin } = useAuth();
+  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin' | 'customer'>('home');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
   const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([
@@ -37,7 +40,9 @@ export function App() {
       } else if (hash === '#signup' || hash === '#register') {
         setAuthMode('signup');
         setCurrentView('auth');
-      } else if (hash === '#account' || hash === '#auth') {
+      } else if (hash === '#account' || hash === '#customer' || hash === '#orders' || hash === '#profile') {
+        setCurrentView('customer');
+      } else if (hash === '#auth') {
         setCurrentView('auth');
       } else if (hash === '#admin' || hash === '#dashboard') {
         setCurrentView('admin');
@@ -98,6 +103,16 @@ export function App() {
   };
 
   const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
+    if (user) {
+      if (isAdmin) {
+        handleOpenAdmin();
+      } else {
+        setCurrentView('customer');
+        window.location.hash = 'account';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
     setAuthMode(mode);
     setCurrentView('auth');
     window.location.hash = mode === 'signup' ? 'signup' : 'signin';
@@ -118,8 +133,8 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-200 text-brown-700 font-sans selection:bg-blush-200 selection:text-brown-900">
-      {/* Sticky Luxury Navbar — hidden only for admin (has its own sidebar) */}
-      {currentView !== 'admin' && (
+      {/* Sticky Luxury Navbar — hidden only for admin & customer portal (they have their own headers) */}
+      {currentView !== 'admin' && currentView !== 'customer' && (
         <Navbar
           cartCount={totalBagCount}
           onOpenCart={() => setIsCartOpen(true)}
@@ -180,19 +195,28 @@ export function App() {
           <AdminDashboard
             onBackToStore={handleGoHome}
           />
+        ) : currentView === 'customer' ? (
+          /* Customer Portal: Order history, Kuwait address, WhatsApp payment & support */
+          <CustomerDashboard
+            onBackToStore={handleGoHome}
+            onOpenCollection={() => handleOpenCollection('all')}
+          />
         ) : (
           /* Dedicated Sign In / Sign Up Page */
           <AuthPage
             initialMode={authMode}
             onBackToHome={handleGoHome}
-            onSuccess={handleGoHome}
+            onSuccess={() => {
+              setCurrentView('customer');
+              window.location.hash = 'account';
+            }}
             onExploreCollection={() => handleOpenCollection('all')}
           />
         )}
       </main>
 
-      {/* Warm Brown Footer — hidden only for admin (has its own layout) */}
-      {currentView !== 'admin' && (
+      {/* Warm Brown Footer — hidden for admin & customer portals */}
+      {currentView !== 'admin' && currentView !== 'customer' && (
         <Footer
           onOpenCollection={handleOpenCollection}
           onOpenCategories={handleOpenCategories}
