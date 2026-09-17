@@ -109,6 +109,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     if (!product || isPaused || galleryImages.length <= 1) return;
 
     const variants = product.colorVariants;
+    const colors = product.colors;
     const timer = setInterval(() => {
       setSelectedImageIndex((prev) => {
         const nextIndex = (prev + 1) % galleryImages.length;
@@ -116,12 +117,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
         // Sync active color variant if this slide matches a variant's photo
         if (variants && variants.length > 0) {
-          const matchedIdx = variants.findIndex(
+          let matchedIdx = variants.findIndex(
             (v) => v.images && v.images.includes(nextUrl)
           );
+          if (matchedIdx === -1 && nextIndex < variants.length) {
+            matchedIdx = nextIndex;
+          }
           if (matchedIdx !== -1) {
             setSelectedVariantIndex(matchedIdx);
           }
+        } else if (colors && nextIndex < colors.length) {
+          setSelectedFallbackColor(colors[nextIndex]);
         }
         return nextIndex;
       });
@@ -142,17 +148,33 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const handleSelectVariant = (index: number) => {
     setSelectedVariantIndex(index);
     const variant = product?.colorVariants?.[index];
+
+    let targetIdx = -1;
+    // 1. If this variant has explicitly assigned images, find its index in galleryImages
     if (variant && variant.images && variant.images.length > 0) {
-      const imgIdx = galleryImages.indexOf(variant.images[0]);
-      if (imgIdx !== -1) {
-        setSelectedImageIndex(imgIdx);
-      }
+      const foundIdx = galleryImages.indexOf(variant.images[0]);
+      if (foundIdx !== -1) targetIdx = foundIdx;
+    }
+
+    // 2. Direct 1-to-1 index fallback (e.g. 1st color -> 1st image, 2nd color -> 2nd image)
+    if (targetIdx === -1 && index < galleryImages.length) {
+      targetIdx = index;
+    }
+
+    if (targetIdx !== -1) {
+      setSelectedImageIndex(targetIdx);
     }
     tactileAudio.playScrubTick(360);
   };
 
   const handleSelectFallbackColor = (c: string) => {
     setSelectedFallbackColor(c);
+    if (product?.colors && product.colors.length > 0) {
+      const cIdx = product.colors.indexOf(c);
+      if (cIdx !== -1 && cIdx < galleryImages.length) {
+        setSelectedImageIndex(cIdx);
+      }
+    }
     tactileAudio.playScrubTick(360);
   };
 
@@ -168,12 +190,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     // Sync active color variant if this thumbnail matches a variant
     if (product?.colorVariants && product.colorVariants.length > 0) {
       const clickedUrl = galleryImages[idx];
-      const matchedIdx = product.colorVariants.findIndex(
+      let matchedIdx = product.colorVariants.findIndex(
         (v) => v.images && v.images.includes(clickedUrl)
       );
+      if (matchedIdx === -1 && idx < product.colorVariants.length) {
+        matchedIdx = idx;
+      }
       if (matchedIdx !== -1) {
         setSelectedVariantIndex(matchedIdx);
       }
+    } else if (product?.colors && idx < product.colors.length) {
+      setSelectedFallbackColor(product.colors[idx]);
     }
   };
 
