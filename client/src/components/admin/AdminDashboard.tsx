@@ -38,7 +38,8 @@ import {
   Home,
   Check,
   Upload,
-  LogOut
+  LogOut,
+  Printer
 } from 'lucide-react';
 import type { Product, ColorVariant } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -51,6 +52,7 @@ import { COUNTRY_CODES } from '../../constants/countryCodes';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 import { useNotification } from '../../context/NotificationContext';
+import { downloadOrderInvoicePdf } from '../../utils/invoiceGenerator';
 
 interface OrderItem {
   id: string;
@@ -62,6 +64,8 @@ interface OrderItem {
   destinationArabic: string;
   items: { product: Product; quantity: number }[];
   total: number;
+  address?: string;
+  notes?: string;
   status: string;
   statusArabic: string;
   paymentStatus?: 'unpaid' | 'contacting' | 'paid';
@@ -150,6 +154,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             customerPhone: o.customerPhone || '',
             destination: o.destination || 'Kuwait',
             destinationArabic: o.destinationArabic || 'الكويت',
+            address: o.address || '',
+            notes: o.notes || '',
             total: o.total || 0,
             items: Array.isArray(o.items)
               ? o.items.map((it: any) => ({
@@ -1961,12 +1967,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             {/* Customer & Management */}
                             <div className="space-y-6">
                               <div>
-                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">Customer Information</h4>
-                                <div className="bg-white p-4 rounded-xl border border-brown-100 shadow-sm text-xs space-y-2">
-                                  <div className="flex items-center gap-2"><Users size={12} className="text-brown-400"/> <span className="font-medium text-brown-900">{order.customerName}</span></div>
-                                  <div className="flex items-center gap-2"><Mail size={12} className="text-brown-400"/> <a href={`mailto:${order.customerEmail}`} className="text-brown-600 hover:underline">{order.customerEmail}</a></div>
-                                  <div className="flex items-center gap-2"><Phone size={12} className="text-brown-400"/> <span>{order.customerPhone}</span></div>
-                                  <div className="flex items-center gap-2"><MapPin size={12} className="text-brown-400"/> <span>{order.destination}</span></div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500">
+                                    {isAr ? 'معلومات العميل والتوصيل' : 'Customer & Delivery Info'}
+                                  </h4>
+                                  <button
+                                    onClick={() => downloadOrderInvoicePdf(order, isAr ? 'د.ك' : 'KD', settingsPhone, settingsEmail)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-brown-900 hover:bg-brown-800 text-white rounded-lg text-[11px] font-semibold transition-all shadow-xs hover:shadow cursor-pointer"
+                                  >
+                                    <Printer size={12} />
+                                    <span>{isAr ? 'تحميل الفاتورة PDF' : 'Download PDF Bill'}</span>
+                                  </button>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-brown-100 shadow-sm text-xs space-y-2.5">
+                                  <div className="flex items-center gap-2">
+                                    <Users size={13} className="text-brown-400 shrink-0"/>
+                                    <span className="font-medium text-brown-900">{order.customerName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Mail size={13} className="text-brown-400 shrink-0"/>
+                                    <a href={`mailto:${order.customerEmail}`} className="text-brown-600 hover:underline">{order.customerEmail}</a>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Phone size={13} className="text-brown-400 shrink-0"/>
+                                    <span className="font-mono text-brown-800">{order.customerPhone || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2 pt-1 border-t border-brown-100/70">
+                                    <MapPin size={13} className="text-brown-500 shrink-0 mt-0.5"/>
+                                    <div className="flex-1">
+                                      <div className="font-semibold text-brown-900">{order.destination}</div>
+                                      {order.address ? (
+                                        <div className="text-[11px] text-brown-600 mt-0.5 leading-relaxed bg-cream-50/60 p-2 rounded-lg border border-brown-100/60">
+                                          {order.address}
+                                        </div>
+                                      ) : (
+                                        <div className="text-[11px] text-brown-400 italic mt-0.5">
+                                          {isAr ? 'لم يُحدد عنوان تفصيلي' : 'No detailed address provided'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {order.notes && (
+                                    <div className="pt-1 border-t border-brown-100/70 text-[11px] text-brown-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100">
+                                      <span className="font-bold text-amber-900">{isAr ? 'ملاحظات: ' : 'Notes: '}</span>
+                                      <span>{order.notes}</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
