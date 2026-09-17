@@ -31,20 +31,21 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
   };
 
   return (
-    <section id="categories" className="py-24 sm:py-32 px-4 sm:px-8 lg:px-16 max-w-[1400px] mx-auto overflow-hidden">
-      {/* Minimal Header */}
-      <div 
-        ref={headerRef}
-        className={`flex flex-col items-center text-center mb-14 sm:mb-20 scroll-reveal ${headerRevealed ? 'revealed' : ''}`}
-      >
-        <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-brown-400 font-medium mb-3">
-          {isAr ? 'التصنيفات' : 'The Archive'}
-        </span>
-        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-brown-900 font-normal tracking-tight">
-          {isAr ? 'المجموعات' : 'Collections'}
-        </h2>
-        <div className="w-10 h-px bg-brown-300/60 mt-4" />
-      </div>
+    <section id="categories" className="relative mt-4 sm:mt-8 pt-16 sm:pt-20 pb-24 sm:pb-32 bg-[#ECE3D6]/70 rounded-t-[40px] sm:rounded-t-[60px] border-t border-brown-300/40 shadow-[0_-12px_32px_rgba(74,56,47,0.03)] overflow-hidden">
+      <div className="px-4 sm:px-8 lg:px-16 max-w-[1400px] mx-auto">
+        {/* Minimal Header */}
+        <div 
+          ref={headerRef}
+          className={`flex flex-col items-center text-center mb-12 sm:mb-16 scroll-reveal ${headerRevealed ? 'revealed' : ''}`}
+        >
+          <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-brown-400 font-medium mb-2.5">
+            {isAr ? 'التصنيفات' : 'The Archive'}
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-brown-900 font-normal tracking-tight">
+            {isAr ? 'المجموعات' : 'Collections'}
+          </h2>
+          <div className="w-10 h-px bg-brown-300/60 mt-3.5" />
+        </div>
 
       {/* Asymmetric Alternating Full-Bleed Tiles */}
       <div 
@@ -105,6 +106,7 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
             </div>
           );
         })}
+      </div>
       </div>
     </section>
   );

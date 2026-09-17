@@ -34,7 +34,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
   };
 
   return (
-    <section id="featured" className="py-24 sm:py-32 px-4 sm:px-8 lg:px-16 max-w-[1400px] mx-auto overflow-hidden">
+    <section id="featured" className="pt-20 sm:pt-28 pb-10 sm:pb-12 px-4 sm:px-8 lg:px-16 max-w-[1400px] mx-auto overflow-hidden">
       {/* Editorial Header */}
       <div 
         ref={headerRef}
@@ -151,7 +151,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
 
       {/* Editorial View All CTA */}
       {onExploreCatalog && (
-        <div className="mt-28 sm:mt-36 flex justify-center">
+        <div className="mt-12 sm:mt-14 flex justify-center">
           <button
             type="button"
             onClick={onExploreCatalog}
