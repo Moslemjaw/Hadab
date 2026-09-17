@@ -107,25 +107,25 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
           </div>
         </div>
 
-        {/* BEAT 1: THE FORM & BAG FRAME (Frames 8 - 18) */}
+        {/* BEAT 1: THE FORM & BAG FRAME (Frames 8 - 20) */}
         <div
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
           style={getBeatStyle(1)}
         >
-          <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-20 xl:px-28 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
-            {/* Left sentence on desktop */}
-            <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto max-w-xs sm:max-w-sm lg:max-w-md`}>
-              <p className="font-serif italic text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight select-none">
+          <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-20 xl:px-28 flex flex-col justify-between h-[68vh] xs:h-[72vh] sm:h-[78vh] md:h-auto md:flex-row md:items-center py-6 sm:py-8 md:py-0">
+            {/* Top on mobile / Left sentence on desktop */}
+            <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto max-w-xs sm:max-w-sm lg:max-w-md pt-2 sm:pt-4 md:pt-0`}>
+              <p className="font-serif italic text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight select-none">
                 {t.beat1Title1}
               </p>
             </div>
 
-            {/* Guaranteed Center Safe Zone for Bag */}
+            {/* Guaranteed Center Safe Zone for Bag on Desktop */}
             <div className="hidden md:block flex-shrink-0 w-[420px] lg:w-[500px] xl:w-[580px]" />
 
-            {/* Right sentence on desktop */}
-            <div className={`text-center ${isAr ? 'md:text-left' : 'md:text-right'} pointer-events-auto max-w-xs sm:max-w-sm lg:max-w-md`}>
-              <p className="font-serif italic text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight select-none">
+            {/* Bottom on mobile / Right sentence on desktop */}
+            <div className={`text-center ${isAr ? 'md:text-left' : 'md:text-right'} pointer-events-auto max-w-xs sm:max-w-sm lg:max-w-md pb-2 sm:pb-4 md:pb-0`}>
+              <p className="font-serif italic text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight select-none">
                 {t.beat1Title2}
               </p>
             </div>

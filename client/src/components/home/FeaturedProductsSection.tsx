@@ -49,10 +49,10 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
         <div className="w-10 h-px bg-brown-300/60 mt-4" />
       </div>
 
-      {/* Refined Luxury Responsive Grid */}
+      {/* Refined Luxury Responsive Grid: 2 cols on mobile, 4 cols on desktop */}
       <div 
         ref={gridRef}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-6 lg:gap-8 max-w-7xl mx-auto"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 max-w-7xl mx-auto"
       >
         {displayProducts.map((product, idx) => {
           const isAdded = addedIds.includes(product.id);
@@ -60,8 +60,8 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
           return (
             <div
               key={product.id}
-              className={`group flex flex-col cursor-pointer transition-all duration-500 max-w-sm sm:max-w-none mx-auto w-full scroll-reveal ${gridRevealed ? 'revealed' : ''}`}
-              style={{ animationDelay: `${idx * 100}ms` }}
+              className={`group flex flex-col cursor-pointer transition-all duration-500 w-full scroll-reveal ${gridRevealed ? 'revealed' : ''}`}
+              style={{ animationDelay: `${idx * 80}ms` }}
               onClick={() => onSelectProduct && onSelectProduct(product)}
             >
               {/* Product Visual Frame */}
@@ -75,34 +75,34 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
 
                 {/* Sale Badge */}
                 {(product.isSale || (product.originalPrice && product.originalPrice > product.price)) && (
-                  <span className={`absolute top-3.5 ${isAr ? 'right-3.5' : 'left-3.5'} px-2.5 py-0.5 rounded-full bg-burgundy-600/90 backdrop-blur-sm text-cream-100 text-[9px] sm:text-[10px] font-medium uppercase tracking-widest shadow-sm`}>
+                  <span className={`absolute top-2.5 sm:top-3.5 ${isAr ? 'right-2.5 sm:right-3.5' : 'left-2.5 sm:left-3.5'} px-2 sm:px-2.5 py-0.5 rounded-full bg-burgundy-600/90 backdrop-blur-sm text-cream-100 text-[8px] sm:text-[10px] font-medium uppercase tracking-widest shadow-sm`}>
                     {isAr ? 'تخفيض' : 'Sale'}
                   </span>
                 )}
 
-                {/* Quick Add Overlay on Hover */}
-                <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 bg-gradient-to-t from-brown-950/75 via-brown-950/25 to-transparent opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between">
-                  <span className="text-[11px] text-cream-100 font-light tracking-wide hidden sm:inline">
+                {/* Quick Add Overlay: touch-friendly on mobile, hover slide on desktop */}
+                <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3.5 bg-gradient-to-t from-brown-950/70 via-brown-950/20 to-transparent sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between">
+                  <span className="text-[10.5px] text-cream-100 font-light tracking-wide hidden lg:inline">
                     {isAr ? 'استكشف' : 'Quick View'}
                   </span>
                   <button
                     type="button"
                     onClick={(e) => handleAdd(e, product)}
-                    className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-medium uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 shadow-warm active:scale-95 ml-auto ${
+                    className={`p-1.5 sm:px-3.5 sm:py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-medium uppercase tracking-wider transition-all duration-200 flex items-center gap-1 shadow-warm active:scale-90 ml-auto ${
                       isAdded
                         ? 'bg-sage-600 text-cream-100'
-                        : 'bg-cream-100 hover:bg-white text-brown-900'
+                        : 'bg-cream-100/95 hover:bg-white text-brown-900'
                     }`}
                   >
                     {isAdded ? (
                       <>
-                        <Check size={12} />
-                        <span>{isAr ? 'أُضيف' : 'Added'}</span>
+                        <Check size={11} />
+                        <span className="hidden sm:inline">{isAr ? 'أُضيف' : 'Added'}</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag size={12} />
-                        <span>{t.addToBag}</span>
+                        <ShoppingBag size={11} />
+                        <span className="hidden sm:inline">{t.addToBag}</span>
                       </>
                     )}
                   </button>
@@ -110,13 +110,13 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
               </div>
 
               {/* Minimalist Editorial Details */}
-              <div className="pt-4 pb-1 flex items-start justify-between gap-3">
+              <div className="pt-2.5 sm:pt-3.5 pb-1 flex items-start justify-between gap-1.5 sm:gap-3">
                 <div className="space-y-0.5 min-w-0">
-                  <h3 className="font-serif text-base sm:text-lg text-brown-900 font-normal tracking-tight group-hover:text-burgundy-600 transition-colors truncate">
+                  <h3 className="font-serif text-xs sm:text-base lg:text-lg text-brown-900 font-normal tracking-tight group-hover:text-burgundy-600 transition-colors truncate">
                     {isAr ? (product.nameArabic || product.name) : product.name}
                   </h3>
                   {product.colors && product.colors.length > 0 && (
-                    <div className="flex items-center gap-1 pt-0.5">
+                    <div className="hidden sm:flex items-center gap-1 pt-0.5">
                       {product.colors.slice(0, 3).map((col, cIdx, arr) => (
                         <span 
                           key={cIdx} 
@@ -129,14 +129,14 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   )}
                 </div>
 
-                <div className="flex items-baseline gap-1.5 shrink-0 pt-0.5">
+                <div className="flex items-baseline gap-1 shrink-0 pt-0.5">
                   {product.originalPrice && product.originalPrice > product.price && (
-                    <span className="text-[11px] text-brown-400 line-through">
+                    <span className="text-[10px] sm:text-[11px] text-brown-400 line-through">
                       {product.originalPrice}
                     </span>
                   )}
-                  <span className="font-medium text-sm sm:text-base text-brown-900">
-                    {product.price} <span className="text-[10px] uppercase text-brown-500 font-normal">{isAr ? 'د.ك' : 'KWD'}</span>
+                  <span className="font-medium text-xs sm:text-sm lg:text-base text-brown-900">
+                    {product.price} <span className="text-[9px] sm:text-[10px] uppercase text-brown-500 font-normal">{isAr ? 'د.ك' : 'KWD'}</span>
                   </span>
                 </div>
               </div>
