@@ -134,23 +134,20 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
 
         {/* BEAT 1: THE FORM & BAG FRAME (Frames 8 - 18) */}
         <div
-          className="absolute inset-0 flex items-center pointer-events-none"
+          className="absolute inset-0 flex items-end justify-center pointer-events-none"
           style={getBeatStyle(1)}
         >
-          <div className="w-full max-w-[1400px] mx-auto px-4 xs:px-6 sm:px-12 lg:px-16 flex flex-col md:flex-row items-center justify-between h-[65vh] md:h-auto py-6 md:py-0">
-            {/* Top on mobile / Left on desktop */}
+          <div className="w-full max-w-[1400px] mx-auto px-4 xs:px-6 sm:px-12 lg:px-16 pb-14 sm:pb-16 md:pb-20 flex flex-col md:flex-row items-center md:items-end justify-between gap-3 md:gap-0">
+            {/* Left on desktop */}
             <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto`}>
-              <p className="font-serif italic text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-brown-900 font-normal tracking-tight whitespace-normal sm:whitespace-nowrap select-none animate-breathe-left transition-transform duration-700">
+              <p className="font-serif italic text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight whitespace-normal sm:whitespace-nowrap select-none">
                 {t.beat1Title1}
               </p>
             </div>
 
-            {/* Center Area: Completely open for the centered Bag Frame */}
-            <div className="hidden lg:block flex-1 min-w-[280px]" />
-
-            {/* Bottom on mobile / Right on desktop */}
+            {/* Right on desktop */}
             <div className={`text-center ${isAr ? 'md:text-left' : 'md:text-right'} pointer-events-auto`}>
-              <p className="font-serif italic text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-brown-900 font-normal tracking-tight whitespace-normal sm:whitespace-nowrap select-none animate-breathe-right transition-transform duration-700">
+              <p className="font-serif italic text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight whitespace-normal sm:whitespace-nowrap select-none">
                 {t.beat1Title2}
               </p>
             </div>
