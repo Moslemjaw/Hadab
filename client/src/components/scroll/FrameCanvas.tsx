@@ -6,7 +6,7 @@ interface FrameCanvasProps {
   isAr?: boolean;
 }
 
-const TOTAL_FRAMES = 19;
+const TOTAL_FRAMES = 21;
 
 export const FrameCanvas: React.FC<FrameCanvasProps> = ({ currentFrame, onLoaded, isAr = false }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

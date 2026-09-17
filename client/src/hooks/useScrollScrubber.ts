@@ -9,11 +9,11 @@ export interface ScrollScrubberState {
   scrollToBeat: (beatIndex: number) => void;
 }
 
-const TOTAL_FRAMES = 19;
+const TOTAL_FRAMES = 21;
 
 export const BEATS = [
   { index: 0, title: '01 Overture', subtitle: 'The craft begins', range: [0, 8], frameTarget: 0 },
-  { index: 1, title: '02 The Form', subtitle: 'Handmade, one stitch at a time', range: [9, 18], frameTarget: 18 },
+  { index: 1, title: '02 The Form', subtitle: 'Handmade, one stitch at a time', range: [9, 20], frameTarget: 20 },
 ];
 
 export function useScrollScrubber(containerRef: React.RefObject<HTMLDivElement | null>): ScrollScrubberState {
