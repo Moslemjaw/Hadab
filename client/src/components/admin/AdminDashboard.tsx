@@ -49,6 +49,7 @@ import { SUPPORTED_CURRENCIES, type CurrencyCode } from '../../constants/currenc
 import { type ShippingConfig, type CountryShippingRate, DEFAULT_SHIPPING_CONFIG } from '../../constants/shipping';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
+import { useNotification } from '../../context/NotificationContext';
 
 interface OrderItem {
   id: string;
@@ -102,6 +103,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const { user, logout } = useAuth();
   const { refreshData } = useShopData();
   const { baseCurrency, setBaseCurrency, shippingConfig, setShippingConfig, refreshSettings } = useCurrency();
+  const { showToast, confirmDialog, promptDialog } = useNotification();
   const isAr = language === 'ar';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'settings' | 'categories' | 'customers'>('overview');
@@ -426,7 +428,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (window.confirm(isAr ? 'هل أنتِ متأكدة من حذف هذه القطعة من المتجر؟' : 'Are you sure you want to remove this piece?')) {
+    const confirmed = await confirmDialog({
+      title: isAr ? 'حذف القطعة' : 'Remove Piece',
+      message: isAr ? 'هل أنتِ متأكدة من حذف هذه القطعة من المتجر؟' : 'Are you sure you want to remove this piece from the atelier?',
+      confirmText: isAr ? 'حذف' : 'Remove',
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+      isDanger: true,
+    });
+    if (confirmed) {
       tactileAudio.playScrubTick(300);
       setProductsList((prev) => prev.filter((p) => p.id !== id));
       setSelectedProductIds(prev => {
@@ -438,15 +447,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       try {
         await api.deleteProduct(id);
         refreshData();
+        showToast(isAr ? 'تم حذف القطعة بنجاح' : 'Piece removed successfully', 'success');
       } catch (err) {
         console.error('Failed to delete product from database:', err);
+        showToast(isAr ? 'فشل حذف القطعة من السيرفر' : 'Failed to delete piece from database', 'error');
       }
     }
   };
 
   const handleBulkDeleteProducts = async () => {
     if (selectedProductIds.size === 0) return;
-    if (window.confirm(isAr ? 'هل أنتِ متأكدة من حذف القطع المحددة؟' : 'Are you sure you want to delete selected pieces?')) {
+    const confirmed = await confirmDialog({
+      title: isAr ? 'حذف القطع المحددة' : 'Delete Selected Pieces',
+      message: isAr ? 'هل أنتِ متأكدة من حذف جميع القطع المحددة؟' : 'Are you sure you want to delete all selected pieces?',
+      confirmText: isAr ? 'حذف الكل' : 'Delete All',
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+      isDanger: true,
+    });
+    if (confirmed) {
       tactileAudio.playScrubTick(300);
       const idsToDelete = Array.from(selectedProductIds);
       setProductsList(prev => prev.filter(p => !selectedProductIds.has(p.id)));
@@ -539,7 +557,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
     const token = localStorage.getItem('hadab_token');
     if (!token) {
-      alert(isAr ? 'يرجى تسجيل الدخول كمسؤول أولاً لحفظ القطعة في قاعدة البيانات' : 'Admin sign-in required to save products to the database.');
+      showToast(isAr ? 'يرجى تسجيل الدخول كمسؤول أولاً لحفظ القطعة في قاعدة البيانات' : 'Admin sign-in required to save products to the database.', 'warning');
       return;
     }
 
@@ -550,10 +568,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           prev.map((p) => (p.id === editingProduct.id ? updated : p))
         );
         refreshData();
-        alert(isAr ? 'تم تحديث القطعة في قاعدة البيانات بنجاح ✓' : 'Product updated in database successfully ✓');
+        showToast(isAr ? 'تم تحديث القطعة في قاعدة البيانات بنجاح ✓' : 'Product updated in database successfully ✓', 'success');
       } catch (err: any) {
         console.error('Failed to update product in database:', err);
-        alert(isAr ? `تعذر تحديث القطعة في قاعدة البيانات: ${err.message}` : `Failed to update piece in database: ${err.message}`);
+        showToast(isAr ? `تعذر تحديث القطعة في قاعدة البيانات: ${err.message}` : `Failed to update piece in database: ${err.message}`, 'error');
         // Keep local optimistic update
         setProductsList((prev) =>
           prev.map((p) => (p.id === editingProduct.id ? { ...p, ...productPayload } : p))
@@ -564,10 +582,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         const created = await api.createProduct(productPayload);
         setProductsList((prev) => [created, ...prev]);
         refreshData();
-        alert(isAr ? 'تمت إضافة القطعة إلى قاعدة البيانات بنجاح ✓' : 'Product saved to database successfully ✓');
+        showToast(isAr ? 'تمت إضافة القطعة إلى قاعدة البيانات بنجاح ✓' : 'Product saved to database successfully ✓', 'success');
       } catch (err: any) {
         console.error('Failed to create product in database:', err);
-        alert(isAr ? `تنبيه: تعذر الحفظ في قاعدة البيانات (${err.message})، تم الحفظ محلياً` : `Warning: Failed to save to database (${err.message}). Saved locally.`);
+        showToast(isAr ? `تنبيه: تعذر الحفظ في قاعدة البيانات (${err.message})، تم الحفظ محلياً` : `Warning: Failed to save to database (${err.message}). Saved locally.`, 'warning');
         const fallbackId = `custom-${Date.now()}`;
         setProductsList((prev) => [{ ...productPayload, id: fallbackId } as Product, ...prev]);
       }
@@ -608,7 +626,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       tactileAudio.playChime();
     } catch (err: any) {
       console.error('Upload error:', err);
-      alert(err.message || 'Image upload failed');
+      showToast(err.message || (isAr ? 'فشل رفع الصورة' : 'Image upload failed'), 'error');
     } finally {
       setIsUploadingImage(false);
       setUploadProgressText('');
@@ -753,7 +771,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
       localStorage.setItem('hadab_shipping_config', JSON.stringify(shippingPayload));
       tactileAudio.playChime();
-      alert(isAr ? 'تم حفظ إعدادات المتجر ورسوم الشحن بنجاح ✓' : 'Settings and shipping fees saved successfully ✓');
+      showToast(isAr ? 'تم حفظ إعدادات المتجر ورسوم الشحن بنجاح ✓' : 'Settings and shipping fees saved successfully ✓', 'success');
     } catch (err) {
       // Fallback to localStorage only
       localStorage.setItem('hadab_currency', settingsCurrency);
@@ -763,19 +781,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       setBaseCurrency(settingsCurrency as CurrencyCode);
       setShippingConfig(shippingPayload);
       tactileAudio.playChime();
-      alert(isAr ? 'تم حفظ الإعدادات محلياً ✓' : 'Settings saved locally ✓');
+      showToast(isAr ? 'تم حفظ الإعدادات محلياً ✓' : 'Settings saved locally ✓', 'success');
     }
   };
 
   // Erase All Data handler
   const handleEraseData = async () => {
-    const confirmText = isAr
+    const confirmMessage = isAr
       ? 'هل أنت متأكد؟ سيتم حذف جميع المنتجات والطلبات وبيانات العملاء نهائياً مع الاحتفاظ بالتصنيفات وحساب الأدمن. اكتب "DELETE" للتأكيد.'
       : 'Are you sure? This will delete all products, orders, and customers while preserving categories and the admin account. Type "DELETE" to confirm.';
-    const input = window.prompt(confirmText);
+    
+    const input = await promptDialog({
+      title: isAr ? 'مسح بيانات المتجر' : 'Erase Store Data',
+      message: confirmMessage,
+      placeholder: 'DELETE',
+      confirmText: isAr ? 'مسح نهائي' : 'Erase All',
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+    });
+
     if (input !== 'DELETE') {
       if (input !== null) {
-        alert(isAr ? 'لم يتم تأكيد الحذف. لم يتم حذف أي شيء.' : 'Confirmation not matched. Nothing was deleted.');
+        showToast(isAr ? 'لم يتم تأكيد الحذف. لم يتم مسح أي شيء.' : 'Confirmation not matched. Nothing was deleted.', 'warning');
       }
       return;
     }
@@ -788,13 +814,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       setOrdersList([]);
       setCustomersList([]);
       tactileAudio.playScrubTick(200);
-      alert(
+      showToast(
         isAr
-          ? `تم مسح البيانات بنجاح مع الاحتفاظ بالتصنيفات وحساب الإدارة:\n- ${result.deleted?.products || 0} منتج تم حذفه\n- ${result.deleted?.orders || 0} طلب تم حذفه\n- ${result.deleted?.customers || 0} حساب عميل تم حذفه`
-          : `Data erased successfully (categories & admin preserved):\n- ${result.deleted?.products || 0} products deleted\n- ${result.deleted?.orders || 0} orders deleted\n- ${result.deleted?.customers || 0} customer accounts deleted`
+          ? `تم مسح البيانات بنجاح: ${result.deleted?.products || 0} منتج، ${result.deleted?.orders || 0} طلب، ${result.deleted?.customers || 0} عميل.`
+          : `Data erased: ${result.deleted?.products || 0} products, ${result.deleted?.orders || 0} orders, ${result.deleted?.customers || 0} customers.`,
+        'success'
       );
     } catch (err: any) {
-      alert(err.message || 'Failed to erase data');
+      showToast(err.message || (isAr ? 'فشل مسح البيانات' : 'Failed to erase data'), 'error');
     } finally {
       setIsErasing(false);
     }
@@ -825,14 +852,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
   // Category delete with API sync
   const handleDeleteCategory = async (catId: string) => {
-    if (window.confirm(isAr ? 'هل تريد حذف هذا التصنيف؟' : 'Remove this category?')) {
+    const confirmed = await confirmDialog({
+      title: isAr ? 'حذف التصنيف' : 'Remove Category',
+      message: isAr ? 'هل تريدين حذف هذا التصنيف من المتجر؟' : 'Are you sure you want to remove this category?',
+      confirmText: isAr ? 'حذف' : 'Remove',
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+      isDanger: true,
+    });
+    if (confirmed) {
       tactileAudio.playScrubTick(300);
       setCategoryList((prev) => prev.filter((c) => c.id !== catId));
       try {
         await api.deleteCategory(catId);
         refreshData();
+        showToast(isAr ? 'تم حذف التصنيف بنجاح' : 'Category removed successfully', 'success');
       } catch (err) {
         console.error('Failed to delete category from database:', err);
+        showToast(isAr ? 'فشل حذف التصنيف من السيرفر' : 'Failed to delete category from database', 'error');
       }
     }
   };
@@ -3092,10 +3128,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   try {
                     await api.updateCategory(editingCategory.id, catPayload);
                     refreshData();
-                    alert(isAr ? 'تم تحديث التصنيف بنجاح ✓' : 'Category updated successfully ✓');
+                    showToast(isAr ? 'تم تحديث التصنيف بنجاح ✓' : 'Category updated successfully ✓', 'success');
                   } catch (err: any) {
                     console.error('Failed to update category in DB:', err);
-                    alert(isAr ? `تعذر تحديث التصنيف في السيرفر: ${err.message}` : `Failed to update category: ${err.message}`);
+                    showToast(isAr ? `تعذر تحديث التصنيف في السيرفر: ${err.message}` : `Failed to update category: ${err.message}`, 'error');
                   }
                 } else {
                   try {
@@ -3115,10 +3151,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       },
                     ]);
                     refreshData();
-                    alert(isAr ? 'تمت إضافة التصنيف بنجاح ✓' : 'Category created successfully ✓');
+                    showToast(isAr ? 'تمت إضافة التصنيف بنجاح ✓' : 'Category created successfully ✓', 'success');
                   } catch (err: any) {
                     console.error('Failed to create category in DB, saving locally:', err);
-                    alert(isAr ? `تنبيه: تعذر الحفظ في قاعدة البيانات (${err.message})، تم الحفظ محلياً` : `Warning: Failed to save to database (${err.message}). Saved locally.`);
+                    showToast(isAr ? `تنبيه: تعذر الحفظ في قاعدة البيانات (${err.message})، تم الحفظ محلياً` : `Warning: Failed to save to database (${err.message}). Saved locally.`, 'warning');
                     setCategoryList((prev) => [
                       ...prev,
                       { id: `cat-${Date.now()}`, ...catPayload, pieceCount: 0 },
@@ -3160,7 +3196,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           setCatImage(res.url);
                           tactileAudio.playChime();
                         } catch (err: any) {
-                          alert(err.message || 'Image upload failed');
+                          showToast(err.message || (isAr ? 'فشل رفع الصورة' : 'Image upload failed'), 'error');
                         } finally {
                           setIsUploadingCatImage(false);
                         }

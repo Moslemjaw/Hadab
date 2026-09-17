@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
-import { ShoppingBag, Check, ArrowRight, ArrowLeft, Eye } from 'lucide-react';
+import { ShoppingBag, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
@@ -82,11 +82,10 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   </span>
                 )}
 
-                {/* Quick Add Overlay: refined brown atelier buttons */}
-                <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 bg-gradient-to-t from-brown-950/80 via-brown-950/30 to-transparent sm:opacity-0 sm:translate-y-1.5 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between gap-2">
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brown-900/90 hover:bg-brown-950 text-cream-100 text-[10px] sm:text-[11px] font-medium tracking-wide backdrop-blur-md border border-brown-700/60 shadow-sm transition-colors">
-                    <Eye size={12} className="text-cream-200" />
-                    <span>{isAr ? 'معاينة' : 'Quick View'}</span>
+                {/* Quick Add Overlay: pure brown text for quick view + brown add to bag button */}
+                <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 bg-gradient-to-t from-brown-950/40 via-transparent to-transparent sm:opacity-0 sm:translate-y-1.5 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between gap-2">
+                  <span className="hidden sm:inline text-brown-900 font-medium text-[11px] sm:text-xs tracking-wide hover:underline underline-offset-4 cursor-pointer">
+                    {isAr ? 'معاينة سريعة' : 'Quick View'}
                   </span>
                   <button
                     type="button"

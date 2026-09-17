@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { tactileAudio } from '../../utils/audio';
 import { CountryCodeDropdown } from '../common/CountryCodeDropdown';
 import { type CountryCode, DEFAULT_COUNTRY } from '../../constants/countryCodes';
@@ -35,6 +36,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { login, register } = useAuth();
+  const { showToast } = useNotification();
   const isAr = language === 'ar';
 
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
@@ -380,7 +382,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         type="button"
                         onClick={() => {
                           tactileAudio.playScrubTick(300);
-                          alert(isAr ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك' : 'Password reset link sent to your email');
+                          showToast(
+                            isAr ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email',
+                            'success'
+                          );
                         }}
                         className="text-[11px] text-brown-500 hover:text-burgundy-600 transition-colors font-light cursor-pointer"
                       >
@@ -504,7 +509,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     type="button"
                     onClick={() => {
                       tactileAudio.playScrubTick(360);
-                      alert(isAr ? 'تسجيل الدخول باستخدام Google' : 'Continue with Google');
+                      showToast(isAr ? 'تسجيل الدخول عبر Google متاح قريباً' : 'Google sign-in available soon', 'info');
                     }}
                     className="py-3 px-4 rounded-full border border-brown-200/70 bg-white hover:bg-[#FDFBF7] text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer shadow-sm"
                   >
@@ -533,7 +538,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     type="button"
                     onClick={() => {
                       tactileAudio.playScrubTick(360);
-                      alert(isAr ? 'تسجيل الدخول باستخدام Apple' : 'Continue with Apple');
+                      showToast(isAr ? 'تسجيل الدخول عبر Apple متاح قريباً' : 'Apple sign-in available soon', 'info');
                     }}
                     className="py-3 px-4 rounded-full border border-brown-200/70 bg-white hover:bg-[#FDFBF7] text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer shadow-sm"
                   >

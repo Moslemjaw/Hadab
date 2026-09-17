@@ -6,6 +6,7 @@ import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 import { ShopDataProvider } from './context/ShopDataContext'
 import { CurrencyProvider } from './context/CurrencyContext'
+import { NotificationProvider } from './context/NotificationContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')!).render(
       <LanguageProvider>
         <CurrencyProvider>
           <ShopDataProvider>
-            <App />
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
           </ShopDataProvider>
         </CurrencyProvider>
       </LanguageProvider>
