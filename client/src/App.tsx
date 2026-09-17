@@ -12,7 +12,6 @@ import { CustomerDashboard } from './components/customer/CustomerDashboard';
 import { ProductModal } from './components/shop/ProductModal';
 import { FeaturedProductsSection } from './components/home/FeaturedProductsSection';
 import { CategoryTilesSection } from './components/home/CategoryTilesSection';
-import { BrandStatement } from './components/home/BrandStatement';
 import { Marquee } from './components/home/Marquee';
 import type { Product } from './types';
 import { useAuth } from './context/AuthContext';
@@ -170,8 +169,7 @@ export function App() {
               onSelectCategory={(catId) => handleOpenCollection(catId)}
             />
 
-            {/* Premium Brand Statement & Infinite Marquee */}
-            <BrandStatement />
+            {/* Infinite Marquee Strip */}
             <Marquee />
 
             {/* Curated Pieces & Collections Experience */}
