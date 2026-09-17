@@ -39,7 +39,8 @@ import {
   Check,
   Upload,
   LogOut,
-  Printer
+  Printer,
+  StickyNote
 } from 'lucide-react';
 import type { Product, ColorVariant } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -1979,38 +1980,105 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                                     <span>{isAr ? 'تحميل الفاتورة PDF' : 'Download PDF Bill'}</span>
                                   </button>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-brown-100 shadow-sm text-xs space-y-2.5">
-                                  <div className="flex items-center gap-2">
-                                    <Users size={13} className="text-brown-400 shrink-0"/>
-                                    <span className="font-medium text-brown-900">{order.customerName}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Mail size={13} className="text-brown-400 shrink-0"/>
-                                    <a href={`mailto:${order.customerEmail}`} className="text-brown-600 hover:underline">{order.customerEmail}</a>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Phone size={13} className="text-brown-400 shrink-0"/>
-                                    <span className="font-mono text-brown-800">{order.customerPhone || 'N/A'}</span>
-                                  </div>
-                                  <div className="flex items-start gap-2 pt-1 border-t border-brown-100/70">
-                                    <MapPin size={13} className="text-brown-500 shrink-0 mt-0.5"/>
-                                    <div className="flex-1">
-                                      <div className="font-semibold text-brown-900">{order.destination}</div>
-                                      {order.address ? (
-                                        <div className="text-[11px] text-brown-600 mt-0.5 leading-relaxed bg-cream-50/60 p-2 rounded-lg border border-brown-100/60">
-                                          {order.address}
-                                        </div>
-                                      ) : (
-                                        <div className="text-[11px] text-brown-400 italic mt-0.5">
-                                          {isAr ? 'لم يُحدد عنوان تفصيلي' : 'No detailed address provided'}
-                                        </div>
-                                      )}
+                                <div className="bg-white p-4 rounded-2xl border border-brown-200/80 shadow-xs text-xs space-y-3">
+                                  {/* Contact Row */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pb-3 border-b border-brown-100">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-7 h-7 rounded-lg bg-cream-100 flex items-center justify-center text-brown-600 shrink-0">
+                                        <Users size={13} />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="text-[10px] text-brown-400 font-medium leading-none mb-0.5">{isAr ? 'الاسم' : 'Name'}</div>
+                                        <div className="font-semibold text-brown-900 truncate">{order.customerName}</div>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-7 h-7 rounded-lg bg-cream-100 flex items-center justify-center text-brown-600 shrink-0">
+                                        <Phone size={13} />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="text-[10px] text-brown-400 font-medium leading-none mb-0.5">{isAr ? 'الهاتف' : 'Phone'}</div>
+                                        <a href={`tel:${order.customerPhone}`} className="font-mono font-medium text-brown-800 hover:text-brown-950 transition-colors">
+                                          {order.customerPhone || 'N/A'}
+                                        </a>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-7 h-7 rounded-lg bg-cream-100 flex items-center justify-center text-brown-600 shrink-0">
+                                        <Mail size={13} />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="text-[10px] text-brown-400 font-medium leading-none mb-0.5">{isAr ? 'البريد' : 'Email'}</div>
+                                        <a href={`mailto:${order.customerEmail}`} className="text-brown-700 hover:underline truncate block">
+                                          {order.customerEmail}
+                                        </a>
+                                      </div>
                                     </div>
                                   </div>
+
+                                  {/* Delivery Destination & Address */}
+                                  <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-1.5 text-brown-800 font-semibold text-[11px]">
+                                        <MapPin size={13} className="text-burgundy-700" />
+                                        <span>{isAr ? 'عنوان التوصيل' : 'Delivery Address'}</span>
+                                      </div>
+                                      <span className="px-2 py-0.5 rounded-full bg-cream-200/70 text-brown-800 text-[10px] font-bold">
+                                        {order.destination}
+                                      </span>
+                                    </div>
+
+                                    {order.address ? (
+                                      <div className="bg-[#FAF7F2] p-3 rounded-xl border border-brown-200/60">
+                                        {(() => {
+                                          // Clean up prefix if exists
+                                          let clean = order.address.replace(/^[^-]+-\s*/, '').trim();
+                                          if (!clean) clean = order.address;
+                                          const segments = clean.split(',').map((s) => s.trim()).filter(Boolean);
+
+                                          return (
+                                            <div className="flex flex-wrap gap-2 items-center">
+                                              {segments.map((seg, i) => {
+                                                const colonIdx = seg.indexOf(':');
+                                                if (colonIdx > -1) {
+                                                  const label = seg.slice(0, colonIdx).trim();
+                                                  const val = seg.slice(colonIdx + 1).trim();
+                                                  return (
+                                                    <div key={i} className="inline-flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-brown-200/70 shadow-2xs text-[11px]">
+                                                      <span className="text-brown-400 text-[10px] font-bold uppercase">{label}:</span>
+                                                      <span className="font-semibold text-brown-900">{val}</span>
+                                                    </div>
+                                                  );
+                                                }
+                                                return (
+                                                  <div key={i} className="inline-flex items-center bg-white px-2.5 py-1 rounded-lg border border-brown-200/70 shadow-2xs text-[11px] font-medium text-brown-900">
+                                                    {seg}
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    ) : (
+                                      <div className="text-[11px] text-brown-400 italic bg-cream-50 p-2.5 rounded-xl border border-brown-100">
+                                        {isAr ? 'لم يُسجل عنوان تفصيلي للطلب' : 'No detailed address recorded for this order'}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Notes (if available) */}
                                   {order.notes && (
-                                    <div className="pt-1 border-t border-brown-100/70 text-[11px] text-brown-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100">
-                                      <span className="font-bold text-amber-900">{isAr ? 'ملاحظات: ' : 'Notes: '}</span>
-                                      <span>{order.notes}</span>
+                                    <div className="pt-2 border-t border-brown-100/70">
+                                      <div className="flex items-start gap-2 bg-amber-50/70 p-2.5 rounded-xl border border-amber-200/70">
+                                        <StickyNote size={13} className="text-amber-700 shrink-0 mt-0.5" />
+                                        <div className="text-[11px]">
+                                          <span className="font-bold text-amber-900">{isAr ? 'ملاحظات العميل: ' : 'Customer Notes: '}</span>
+                                          <span className="text-amber-950 font-medium">{order.notes}</span>
+                                        </div>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
