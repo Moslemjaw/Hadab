@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useShopData } from '../../context/ShopDataContext';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -10,9 +10,18 @@ interface CategoryTilesSectionProps {
 
 export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSelectCategory }) => {
   const { isArabic: isAr } = useLanguage();
-  const { categories } = useShopData();
+  const { categories, products } = useShopData();
   const { ref: headerRef, isRevealed: headerRevealed } = useScrollReveal({ threshold: 0.2 });
   const { ref: gridRef, isRevealed: gridRevealed } = useScrollReveal({ threshold: 0.1 });
+
+  // Compute live product counts per category from actual products
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const cat of categories) {
+      counts[cat.id] = products.filter((p) => p.category === cat.id).length;
+    }
+    return counts;
+  }, [categories, products]);
 
   // Grid spans for 2 rows of alternating visual rhythm (7 cols + 5 cols, then 5 cols + 7 cols)
   const getColSpanClass = (index: number) => {
@@ -55,6 +64,7 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
         {categories.map((cat, idx) => {
           const colSpan = getColSpanClass(idx);
           const isLeftAnim = idx % 2 === 0;
+          const liveCount = categoryCounts[cat.id] || cat.count || 0;
 
           return (
             <div
@@ -73,23 +83,25 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
                 loading="lazy"
               />
 
-              {/* Luxury Vignette & Dark Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-brown-950/85 via-brown-950/30 to-brown-950/10 transition-opacity duration-500 group-hover:from-brown-950/90" />
+              {/* Stronger Gradient for Text Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5 transition-opacity duration-500 group-hover:from-black/80" />
 
-              {/* Top Tag */}
-              <div className="absolute top-3.5 sm:top-6 inset-x-4 sm:inset-x-6 flex justify-between items-center z-10">
-                <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-cream-100/20 backdrop-blur-md border border-white/20 text-cream-100 text-[9px] sm:text-[11px] font-medium tracking-wider uppercase">
-                  {cat.count} {isAr ? 'قطعة' : 'Pieces'}
-                </span>
-              </div>
+              {/* Top Tag — only show when count > 0 */}
+              {liveCount > 0 && (
+                <div className="absolute top-3.5 sm:top-6 inset-x-4 sm:inset-x-6 flex justify-between items-center z-10">
+                  <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-cream-100/20 backdrop-blur-md border border-white/20 text-cream-100 text-[9px] sm:text-[11px] font-medium tracking-wider uppercase">
+                    {liveCount} {isAr ? 'قطعة' : liveCount === 1 ? 'Piece' : 'Pieces'}
+                  </span>
+                </div>
+              )}
 
-              {/* Bottom Content Floating over Image */}
+              {/* Bottom Content — Larger Text for Visibility */}
               <div className="absolute bottom-3.5 sm:bottom-6 inset-x-4 sm:inset-x-6 z-10 flex items-end justify-between gap-3 sm:gap-4">
-                <div className="space-y-0.5 sm:space-y-1.5">
-                  <h3 className="font-serif text-lg sm:text-2xl lg:text-3xl text-cream-100 font-normal tracking-tight">
+                <div className="space-y-1 sm:space-y-2">
+                  <h3 className="font-serif text-xl sm:text-3xl lg:text-4xl text-white font-normal tracking-tight drop-shadow-lg">
                     {isAr ? cat.nameArabic : cat.name}
                   </h3>
-                  <p className="text-[11px] sm:text-xs text-cream-200/80 font-light line-clamp-1 max-w-md">
+                  <p className="text-xs sm:text-sm text-white/85 font-light line-clamp-2 max-w-md drop-shadow-md leading-relaxed">
                     {isAr ? cat.descriptionArabic : cat.description}
                   </p>
                 </div>
