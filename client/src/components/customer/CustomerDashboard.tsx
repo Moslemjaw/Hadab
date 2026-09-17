@@ -152,42 +152,6 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     }
   };
 
-  // Dynamic status update handler for orders
-  const handleUpdatePaymentStatus = async (orderId: string, nextStatus: OrderPaymentStatus) => {
-    tactileAudio.playScrubTick(380);
-
-    const labels: Record<OrderPaymentStatus, { en: string; ar: string }> = {
-      unpaid: { en: 'Unpaid', ar: 'غير مدفوع' },
-      contacting: { en: 'Contacting', ar: 'جاري التواصل' },
-      paid: { en: 'Paid', ar: 'تم الدفع' },
-    };
-
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o._id === orderId || o.orderNumber === orderId) {
-          return {
-            ...o,
-            paymentStatus: nextStatus,
-            paymentStatusArabic: labels[nextStatus].ar,
-            status: ['hooking', 'shipped', 'delivered'].includes(o.status) ? o.status : nextStatus,
-            statusArabic: ['hooking', 'shipped', 'delivered'].includes(o.status)
-              ? o.statusArabic
-              : labels[nextStatus].ar,
-          };
-        }
-        return o;
-      })
-    );
-
-    try {
-      await api.updateOrderStatus(orderId, {
-        status: nextStatus,
-        statusArabic: labels[nextStatus].ar,
-      });
-    } catch {
-      // Optimistic update retained
-    }
-  };
 
   const handleSaveAddress = (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,9 +196,9 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     [orders]
   );
 
-  // Status Badge Helper: paid, contacting, unpaid
+  // Status Badge Helper: paid, contacting, unpaid (updated by admin)
   const getOrderPaymentBadge = (order: any) => {
-    const raw = (order.paymentStatus || order.status || 'unpaid').toLowerCase();
+    const raw = (order.paymentStatus || 'unpaid').toLowerCase();
 
     if (raw === 'paid') {
       return {
@@ -263,7 +227,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     };
   };
 
-  // Fulfillment badge (if order is also in production/transit)
+  // Fulfillment badge (if order is in production/transit)
   const getFulfillmentPill = (status: string, statusArabic?: string) => {
     switch (status) {
       case 'delivered':
@@ -278,12 +242,23 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
           icon: Truck,
           color: 'text-sky-700 bg-sky-100/50',
         };
-      case 'hooking':
       case 'finishing':
+        return {
+          label: isAr ? 'تشطيب وتغليف' : 'Finishing',
+          icon: Clock,
+          color: 'text-amber-700 bg-amber-100/50',
+        };
+      case 'hooking':
         return {
           label: isAr ? (statusArabic || 'قيد الحياكة') : 'Handcrafting',
           icon: Clock,
           color: 'text-amber-700 bg-amber-100/50',
+        };
+      case 'pending':
+        return {
+          label: isAr ? 'قيد الانتظار' : 'Order Received',
+          icon: Clock,
+          color: 'text-brown-700 bg-brown-100/50',
         };
       default:
         return null;
@@ -532,37 +507,35 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     {isExpanded && (
                       <div className="border-t border-brown-200/50 bg-[#FAF7F2]/50 p-4 sm:p-5 space-y-4 animate-fade-in text-xs">
                         
-                        {/* Dynamic Status Switcher (Paid, Contacting, Unpaid) */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-brown-200/60">
-                          <span className="text-[11px] font-semibold text-brown-600">
-                            {isAr ? 'تغيير حالة الطلب:' : 'Order Status:'}
-                          </span>
-                          <div className="flex items-center gap-1.5">
-                            {[
-                              { id: 'unpaid' as OrderPaymentStatus, label: isAr ? 'غير مدفوع' : 'Unpaid', color: 'hover:bg-amber-100/60' },
-                              { id: 'contacting' as OrderPaymentStatus, label: isAr ? 'جاري التواصل' : 'Contacting', color: 'hover:bg-sky-100/60' },
-                              { id: 'paid' as OrderPaymentStatus, label: isAr ? 'تم الدفع' : 'Paid', color: 'hover:bg-emerald-100/60' },
-                            ].map((st) => {
-                              const isCur = paymentBadge.key === st.id;
-                              return (
-                                <button
-                                  key={st.id}
-                                  type="button"
-                                  onClick={() => handleUpdatePaymentStatus(order._id || order.orderNumber, st.id)}
-                                  className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
-                                    isCur
-                                      ? st.id === 'paid'
-                                        ? 'bg-emerald-700 text-white shadow-xs'
-                                        : st.id === 'contacting'
-                                        ? 'bg-sky-700 text-white shadow-xs'
-                                        : 'bg-amber-700 text-white shadow-xs'
-                                      : `bg-cream-100 text-brown-700 border border-brown-200/60 ${st.color}`
-                                  }`}
-                                >
-                                  {st.label}
-                                </button>
-                              );
-                            })}
+                        {/* Payment & Order Status Strip (Managed by Admin) */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-white rounded-xl border border-brown-200/60 shadow-xs">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${paymentBadge.bg}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${paymentBadge.dot}`} />
+                              <span>{isAr ? 'حالة الدفع:' : 'Payment:'} {paymentBadge.label}</span>
+                            </span>
+                            <span className="text-[11px] text-brown-500 font-light hidden sm:inline">
+                              {paymentBadge.key === 'paid'
+                                ? isAr ? 'تم تأكيد الدفع بنجاح' : 'Payment confirmed'
+                                : paymentBadge.key === 'contacting'
+                                ? isAr ? 'فريقنا يتواصل معك لإتمام الدفع' : 'Our team is coordinating with you'
+                                : isAr ? 'بانتظار إتمام الدفع عبر كي نت' : 'Awaiting payment via KNET'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-[11px] text-brown-600">
+                            <span className="text-brown-400 font-light">{isAr ? 'حالة الطلب:' : 'Fulfillment:'}</span>
+                            <span className="font-semibold text-brown-800">
+                              {order.status === 'delivered'
+                                ? isAr ? 'تم التسليم' : 'Delivered'
+                                : order.status === 'shipped'
+                                ? isAr ? 'تم الشحن' : 'Shipped'
+                                : order.status === 'finishing'
+                                ? isAr ? 'تشطيب وتغليف' : 'Finishing & Wrapping'
+                                : order.status === 'hooking'
+                                ? isAr ? 'قيد الحياكة اليدوية' : 'Handcrafting'
+                                : isAr ? 'قيد الانتظار' : 'Order Received'}
+                            </span>
                           </div>
                         </div>
 
@@ -643,7 +616,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                           <div className="grid grid-cols-4 gap-1 text-center">
                             {[
                               { title: isAr ? 'تأكيد الحجز' : 'Confirmed', active: true },
-                              { title: isAr ? 'حياكة بالأردن' : 'Handmade', active: order.status !== 'unpaid' && order.status !== 'pending' },
+                              { title: isAr ? 'حياكة بالأردن' : 'Handmade', active: ['hooking', 'finishing', 'shipped', 'delivered'].includes(order.status) },
                               { title: isAr ? 'شحن للكويت' : 'Shipping', active: order.status === 'shipped' || order.status === 'delivered' },
                               { title: isAr ? 'تم التسليم' : 'Delivered', active: order.status === 'delivered' },
                             ].map((step, idx) => (

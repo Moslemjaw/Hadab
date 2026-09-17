@@ -54,10 +54,10 @@ const OrderSchema = new Schema<IOrderItem>(
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['unpaid', 'contacting', 'paid', 'pending', 'hooking', 'finishing', 'shipped', 'delivered'],
-      default: 'unpaid',
+      enum: ['pending', 'hooking', 'finishing', 'shipped', 'delivered', 'unpaid', 'contacting', 'paid'],
+      default: 'pending',
     },
-    statusArabic: { type: String, default: 'غير مدفوع' },
+    statusArabic: { type: String, default: 'قيد الانتظار' },
     paymentStatus: {
       type: String,
       enum: ['unpaid', 'contacting', 'paid'],

@@ -61,8 +61,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const order = await Order.create({
       ...req.body,
       orderNumber,
-      status: req.body.status || 'unpaid',
-      statusArabic: req.body.statusArabic || 'غير مدفوع',
+      status: req.body.status || 'pending',
+      statusArabic: req.body.statusArabic || 'قيد الانتظار',
       paymentStatus: req.body.paymentStatus || 'unpaid',
       paymentStatusArabic: req.body.paymentStatusArabic || 'غير مدفوع',
     });

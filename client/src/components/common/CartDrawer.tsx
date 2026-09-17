@@ -91,8 +91,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         destinationArabic: 'الكويت',
         address: customerAddress,
         notes: customerNotes,
-        status: 'unpaid',
-        statusArabic: 'غير مدفوع',
+        status: 'pending',
+        statusArabic: 'قيد الانتظار',
         paymentStatus: 'unpaid',
         paymentStatusArabic: 'غير مدفوع',
         items: items.map((i) => {

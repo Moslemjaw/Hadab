@@ -57,9 +57,10 @@ interface OrderItem {
   destinationArabic: string;
   items: { product: Product; quantity: number }[];
   total: number;
-  status: 'unpaid' | 'contacting' | 'paid' | 'pending' | 'hooking' | 'finishing' | 'shipped' | 'delivered';
+  status: string;
   statusArabic: string;
   paymentStatus?: 'unpaid' | 'contacting' | 'paid';
+  paymentStatusArabic?: string;
   artisan: string;
   createdAt: string;
 }
@@ -146,6 +147,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             total: o.total || 0,
             status: o.status || 'pending',
             statusArabic: o.statusArabic || '',
+            paymentStatus: o.paymentStatus || 'unpaid',
+            paymentStatusArabic: o.paymentStatusArabic || 'غير مدفوع',
             artisan: o.artisan || 'Hadab Team',
             createdAt: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'Recent',
           }))
@@ -337,12 +340,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   }, [ordersList, isAr]);
 
   // Handlers
-  const handleUpdateOrderStatus = async (orderId: string, nextStatus: OrderItem['status']) => {
+  const handleUpdateOrderStatus = async (orderId: string, nextStatus: string) => {
     tactileAudio.playScrubTick(340);
-    const statusLabels: Record<OrderItem['status'], string> = {
-      unpaid: isAr ? 'غير مدفوع' : 'Unpaid',
-      contacting: isAr ? 'جاري التواصل' : 'Contacting Customer',
-      paid: isAr ? 'تم الدفع' : 'Paid',
+    const statusLabels: Record<string, string> = {
       pending: isAr ? 'قيد الانتظار' : 'Pending',
       hooking: isAr ? 'قيد الحياكة اليدوية' : 'Hooking in Progress',
       finishing: isAr ? 'تشطيب الأطراف والأرشيف' : 'Finishing & Wrapping',
@@ -350,16 +350,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       delivered: isAr ? 'تم التسليم' : 'Delivered',
     };
 
-    const isPaymentStatus = ['unpaid', 'contacting', 'paid'].includes(nextStatus);
-
     setOrdersList((prev) =>
       prev.map((o) =>
         o.id === orderId
           ? {
               ...o,
               status: nextStatus,
-              statusArabic: statusLabels[nextStatus],
-              paymentStatus: isPaymentStatus ? (nextStatus as any) : o.paymentStatus,
+              statusArabic: statusLabels[nextStatus] || nextStatus,
             }
           : o
       )
@@ -368,11 +365,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     try {
       await api.updateOrderStatus(orderId, {
         status: nextStatus,
-        statusArabic: statusLabels[nextStatus],
-        ...(isPaymentStatus ? { paymentStatus: nextStatus, paymentStatusArabic: statusLabels[nextStatus] } : {}),
+        statusArabic: statusLabels[nextStatus] || nextStatus,
       });
     } catch (err) {
       console.error('Failed to sync order status to database:', err);
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (orderId: string, nextPaymentStatus: 'unpaid' | 'contacting' | 'paid') => {
+    tactileAudio.playScrubTick(360);
+    const paymentLabels: Record<'unpaid' | 'contacting' | 'paid', string> = {
+      unpaid: isAr ? 'غير مدفوع' : 'Unpaid',
+      contacting: isAr ? 'جاري التواصل' : 'Contacting Customer',
+      paid: isAr ? 'تم الدفع' : 'Paid',
+    };
+
+    setOrdersList((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              paymentStatus: nextPaymentStatus,
+              paymentStatusArabic: paymentLabels[nextPaymentStatus],
+            }
+          : o
+      )
+    );
+
+    try {
+      await api.updateOrderStatus(orderId, {
+        paymentStatus: nextPaymentStatus,
+        paymentStatusArabic: paymentLabels[nextPaymentStatus],
+      });
+    } catch (err) {
+      console.error('Failed to sync payment status to database:', err);
     }
   };
 
@@ -1658,7 +1684,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   
                   // Timeline logic
                   const stages = ['pending', 'hooking', 'finishing', 'shipped', 'delivered'];
-                  const currentIndex = stages.indexOf(order.status);
+                  const cleanStatus = stages.includes(order.status) ? order.status : 'pending';
+                  const currentIndex = stages.indexOf(cleanStatus);
 
                   return (
                     <div key={order.id} className={`bg-[#FAF6F0] rounded-3xl border transition-all duration-300 ${isExpanded ? 'border-brown-300 shadow-md' : 'border-brown-200/60 shadow-sm hover:border-brown-300'}`}>
@@ -1690,25 +1717,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full border-t sm:border-t-0 border-brown-200/50 pt-3 sm:pt-0">
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:w-auto w-full border-t sm:border-t-0 border-brown-200/50 pt-3 sm:pt-0">
+                           {/* Payment Status Badge */}
                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                order.status === 'hooking' ? 'bg-blush-100 text-burgundy-700' : 
-                                order.status === 'finishing' ? 'bg-amber-100 text-amber-800' : 
-                                order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
-                                order.status === 'delivered' ? 'bg-sage-100 text-sage-800' :
-                                'bg-cream-100 text-brown-600'
-                              }`}
-                            >
-                              {order.status}
-                            </span>
+                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                               order.paymentStatus === 'paid'
+                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                 : order.paymentStatus === 'contacting'
+                                 ? 'bg-sky-50 text-sky-800 border-sky-200'
+                                 : 'bg-amber-50 text-amber-800 border-amber-200'
+                             }`}
+                           >
+                             <span className={`w-1.5 h-1.5 rounded-full ${
+                               order.paymentStatus === 'paid'
+                                 ? 'bg-emerald-500'
+                                 : order.paymentStatus === 'contacting'
+                                 ? 'bg-sky-500'
+                                 : 'bg-amber-500'
+                             }`} />
+                             {order.paymentStatus === 'paid'
+                               ? isAr ? 'تم الدفع' : 'Paid'
+                               : order.paymentStatus === 'contacting'
+                               ? isAr ? 'جاري التواصل' : 'Contacting'
+                               : isAr ? 'غير مدفوع' : 'Unpaid'}
+                           </span>
+
+                           {/* Order Fulfillment Status Badge */}
+                           <span
+                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                               order.status === 'hooking' ? 'bg-blush-100 text-burgundy-700' : 
+                               order.status === 'finishing' ? 'bg-amber-100 text-amber-800' : 
+                               order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
+                               order.status === 'delivered' ? 'bg-sage-100 text-sage-800' :
+                               'bg-cream-100 text-brown-600'
+                             }`}
+                           >
+                             {order.status === 'pending'
+                               ? isAr ? 'قيد الانتظار' : 'Pending'
+                               : order.status === 'hooking'
+                               ? isAr ? 'قيد الحياكة' : 'Hooking'
+                               : order.status === 'finishing'
+                               ? isAr ? 'تشطيب' : 'Finishing'
+                               : order.status === 'shipped'
+                               ? isAr ? 'تم الشحن' : 'Shipped'
+                               : order.status === 'delivered'
+                               ? isAr ? 'تم التسليم' : 'Delivered'
+                               : order.status}
+                           </span>
                             
-                            <div className="flex items-center gap-4">
-                              <div className="font-serif text-lg font-bold text-brown-900">{order.total} {isAr ? 'د.ك' : 'KD'}</div>
-                              <button className="text-brown-400 hover:text-brown-900 p-1">
-                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                              </button>
-                            </div>
+                           <div className="flex items-center gap-4">
+                             <div className="font-serif text-lg font-bold text-brown-900">{order.total} {isAr ? 'د.ك' : 'KD'}</div>
+                             <button className="text-brown-400 hover:text-brown-900 p-1">
+                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                             </button>
+                           </div>
                         </div>
                       </div>
 
@@ -1772,26 +1834,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               </div>
 
                               <div>
-                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">{isAr ? 'إدارة الطلب والشحن' : 'Order Fulfillment'}</h4>
+                                <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">
+                                  {isAr ? 'إدارة الطلب والدفع' : 'Order & Payment Management'}
+                                </h4>
                                 <div className="flex flex-col gap-3 bg-cream-50/50 p-4 rounded-xl border border-brown-100">
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="text-brown-500">{isAr ? 'الموقع المسؤول:' : 'Fulfillment Hub:'}</span>
                                     <span className="font-semibold text-brown-900">{order.artisan}</span>
                                   </div>
+                                  
                                   <div className="h-px bg-brown-200/50"></div>
+                                  
+                                  {/* Payment Status Dropdown (Admin Only) */}
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs text-brown-500">Update Status:</span>
+                                    <span className="text-xs font-semibold text-brown-700">
+                                      {isAr ? 'حالة الدفع:' : 'Payment Status:'}
+                                    </span>
                                     <select
-                                      value={order.status}
-                                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
-                                      className="flex-1 max-w-[140px] px-2 py-1.5 rounded-lg bg-white border border-brown-300 text-xs font-semibold text-brown-900 focus:outline-none focus:border-blush-400 cursor-pointer shadow-sm"
+                                      value={order.paymentStatus || 'unpaid'}
+                                      onChange={(e) => handleUpdatePaymentStatus(order.id, e.target.value as any)}
+                                      className={`flex-1 max-w-[150px] px-2.5 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer shadow-xs focus:outline-none transition-colors ${
+                                        (order.paymentStatus || 'unpaid') === 'paid'
+                                          ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                                          : (order.paymentStatus || 'unpaid') === 'contacting'
+                                          ? 'bg-sky-50 border-sky-300 text-sky-800'
+                                          : 'bg-amber-50 border-amber-300 text-amber-800'
+                                      }`}
                                     >
                                       <option value="unpaid">{isAr ? 'غير مدفوع' : 'Unpaid'}</option>
                                       <option value="contacting">{isAr ? 'جاري التواصل' : 'Contacting'}</option>
                                       <option value="paid">{isAr ? 'تم الدفع' : 'Paid'}</option>
+                                    </select>
+                                  </div>
+
+                                  {/* Order Fulfillment Status Dropdown (Admin Only) */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-brown-700">
+                                      {isAr ? 'حالة الطلب:' : 'Order Status:'}
+                                    </span>
+                                    <select
+                                      value={stages.includes(order.status) ? order.status : 'pending'}
+                                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
+                                      className="flex-1 max-w-[150px] px-2.5 py-1.5 rounded-lg bg-white border border-brown-300 text-xs font-semibold text-brown-900 focus:outline-none focus:border-blush-400 cursor-pointer shadow-xs"
+                                    >
                                       <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
-                                      <option value="hooking">{isAr ? 'قيد الحياكة' : 'Hooking'}</option>
-                                      <option value="finishing">{isAr ? 'تشطيب' : 'Finishing'}</option>
+                                      <option value="hooking">{isAr ? 'قيد الحياكة' : 'Hooking in Progress'}</option>
+                                      <option value="finishing">{isAr ? 'تشطيب وتغليف' : 'Finishing & Wrapping'}</option>
                                       <option value="shipped">{isAr ? 'تم الشحن' : 'Shipped'}</option>
                                       <option value="delivered">{isAr ? 'تم التسليم' : 'Delivered'}</option>
                                     </select>

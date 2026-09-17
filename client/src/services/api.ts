@@ -179,7 +179,16 @@ export const api = {
     return { ...data, id: data._id || data.id };
   },
 
-  async updateOrderStatus(id: string, payload: { status: string; statusArabic?: string; artisan?: string }) {
+  async updateOrderStatus(
+    id: string,
+    payload: {
+      status?: string;
+      statusArabic?: string;
+      paymentStatus?: 'unpaid' | 'contacting' | 'paid' | string;
+      paymentStatusArabic?: string;
+      artisan?: string;
+    }
+  ) {
     const res = await fetch(`${API_BASE}/orders/${id}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
