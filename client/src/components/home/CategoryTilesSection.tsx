@@ -18,7 +18,22 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const cat of categories) {
-      counts[cat.id] = products.filter((p) => p.category === cat.id).length;
+      const catKey = (cat.id || (cat as any).slug || '').toLowerCase();
+      const catName = (cat.name || '').toLowerCase();
+      const catNameAr = (cat.nameArabic || '').toLowerCase();
+
+      const matched = products.filter((p) => {
+        const pCat = (p.category || '').toLowerCase();
+        return (
+          pCat === catKey ||
+          pCat === cat.id ||
+          pCat === (cat as any).slug ||
+          pCat === catName ||
+          pCat === catNameAr
+        );
+      }).length;
+
+      counts[cat.id] = matched > 0 ? matched : (cat.count || 0);
     }
     return counts;
   }, [categories, products]);
@@ -86,14 +101,15 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
               {/* Stronger Gradient for Text Readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5 transition-opacity duration-500 group-hover:from-black/80" />
 
-              {/* Top Tag — only show when count > 0 */}
-              {liveCount > 0 && (
-                <div className="absolute top-3.5 sm:top-6 inset-x-4 sm:inset-x-6 flex justify-between items-center z-10">
-                  <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-cream-100/20 backdrop-blur-md border border-white/20 text-cream-100 text-[9px] sm:text-[11px] font-medium tracking-wider uppercase">
+              {/* Top Tag — Distinct Luxury Piece Counter Badge */}
+              <div className="absolute top-3.5 sm:top-5 inset-x-4 sm:inset-x-5 flex justify-between items-center z-10 pointer-events-none">
+                <span className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-cream-50/95 backdrop-blur-md text-brown-950 border border-brown-200/80 shadow-md text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-transform duration-300 group-hover:scale-105">
+                  <span className="w-1.5 h-1.5 rounded-full bg-burgundy-700 inline-block animate-pulse" />
+                  <span>
                     {liveCount} {isAr ? 'قطعة' : liveCount === 1 ? 'Piece' : 'Pieces'}
                   </span>
-                </div>
-              )}
+                </span>
+              </div>
 
               {/* Bottom Content — Larger Text for Visibility */}
               <div className="absolute bottom-3.5 sm:bottom-6 inset-x-4 sm:inset-x-6 z-10 flex items-end justify-between gap-3 sm:gap-4">
