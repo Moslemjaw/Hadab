@@ -88,65 +88,17 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     setIsLoadingOrders(true);
     try {
       const myOrders = await api.getMyOrders();
-      if (myOrders && myOrders.length > 0) {
+      if (myOrders && Array.isArray(myOrders) && myOrders.length > 0) {
         setOrders(myOrders);
         setExpandedOrderId(myOrders[0]._id || myOrders[0].orderNumber);
       } else {
-        // Fallback demo order
-        const demo = [
-          {
-            _id: 'demo-1',
-            orderNumber: 'HDB-2026-105',
-            createdAt: new Date().toISOString(),
-            status: 'unpaid',
-            statusArabic: 'غير مدفوع',
-            paymentStatus: 'unpaid',
-            paymentStatusArabic: 'غير مدفوع',
-            total: 135,
-            destination: 'Kuwait',
-            destinationArabic: 'الكويت',
-            address: `${area}, Block ${block}, St ${street}, House ${house}`,
-            items: [
-              {
-                name: 'The Trapillo Shoulder Tote',
-                nameArabic: 'حقيبة هَدَب المجدولة',
-                price: 135,
-                quantity: 1,
-                image: '/products/hadab-bag.jpg',
-              },
-            ],
-          },
-        ];
-        setOrders(demo);
-        setExpandedOrderId('demo-1');
+        setOrders([]);
+        setExpandedOrderId(null);
       }
-    } catch {
-      const demo = [
-        {
-          _id: 'demo-fallback',
-          orderNumber: 'HDB-2026-105',
-          createdAt: new Date().toISOString(),
-          status: 'unpaid',
-          statusArabic: 'غير مدفوع',
-          paymentStatus: 'unpaid',
-          paymentStatusArabic: 'غير مدفوع',
-          total: 135,
-          destination: 'Kuwait',
-          destinationArabic: 'الكويت',
-          address: `${area}, Block ${block}, St ${street}, House ${house}`,
-          items: [
-            {
-              name: 'The Trapillo Shoulder Tote',
-              nameArabic: 'حقيبة هَدَب المجدولة',
-              price: 135,
-              quantity: 1,
-              image: '/products/hadab-bag.jpg',
-            },
-          ],
-        },
-      ];
-      setOrders(demo);
-      setExpandedOrderId('demo-fallback');
+    } catch (err) {
+      console.error('Failed to load user orders:', err);
+      setOrders([]);
+      setExpandedOrderId(null);
     } finally {
       setIsLoadingOrders(false);
     }

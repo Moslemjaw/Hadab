@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { Order } from '../models/Order';
 import { User } from '../models/User';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
@@ -9,20 +10,28 @@ const router = Router();
 router.get('/my-orders', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userEmail = req.user?.email;
-    if (!userEmail) {
+    const userId = req.user?.id;
+    if (!userEmail && !userId) {
       res.status(401).json({ message: 'Authentication required' });
       return;
     }
 
-    const queryConditions: any[] = [
-      { customerEmail: userEmail.toLowerCase() },
-      { customerEmail: userEmail },
-    ];
+    const queryConditions: any[] = [];
+
+    if (userId) {
+      queryConditions.push({ userId });
+    }
+
+    if (userEmail) {
+      queryConditions.push(
+        { customerEmail: { $regex: new RegExp(`^${userEmail.trim()}$`, 'i') } }
+      );
+    }
 
     // If user has a phone number registered, also match orders placed with that phone
-    if (req.user?.id) {
+    if (userId) {
       try {
-        const userDoc = await User.findById(req.user.id);
+        const userDoc = await User.findById(userId);
         if (userDoc?.phone) {
           const rawPhone = userDoc.phone.trim();
           const digits = rawPhone.replace(/[^0-9]/g, '');
@@ -34,7 +43,9 @@ router.get('/my-orders', authenticateToken, async (req: AuthRequest, res: Respon
       } catch {}
     }
 
-    const orders = await Order.find({ $or: queryConditions }).sort({ createdAt: -1 });
+    const orders = queryConditions.length > 0
+      ? await Order.find({ $or: queryConditions }).sort({ createdAt: -1 })
+      : [];
 
     res.json(orders);
   } catch (error: any) {
@@ -52,14 +63,38 @@ router.get('/', authenticateToken, requireAdmin, async (_req: Request, res: Resp
   }
 });
 
-// CREATE new order (Public checkout)
+// CREATE new order (Public checkout & Logged-in customers)
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
+    // Check if token was provided in header
+    let authUserId: string | null = null;
+    let authUserEmail: string | null = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'hadab-secret-key-2026');
+        authUserId = decoded.id;
+        authUserEmail = decoded.email;
+      } catch {}
+    }
+
+    // Generate guaranteed collision-free order number
     const count = await Order.countDocuments();
-    const orderNumber = `HDB-2026-${String(count + 101).padStart(3, '0')}`;
+    let num = count + 101;
+    let orderNumber = `HDB-2026-${String(num).padStart(3, '0')}`;
+    while (await Order.exists({ orderNumber })) {
+      num += 1;
+      orderNumber = `HDB-2026-${String(num).padStart(3, '0')}`;
+    }
+
+    const resolvedUserId = req.body.userId || authUserId || null;
+    const resolvedEmail = req.body.customerEmail || authUserEmail || '';
 
     const order = await Order.create({
       ...req.body,
+      userId: resolvedUserId,
+      customerEmail: resolvedEmail,
       orderNumber,
       status: req.body.status || 'pending',
       statusArabic: req.body.statusArabic || 'قيد الانتظار',

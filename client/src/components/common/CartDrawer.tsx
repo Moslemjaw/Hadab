@@ -84,9 +84,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     setIsSubmitting(true);
     try {
       const orderPayload = {
+        userId: user?.id || (user as any)?._id || undefined,
         customerName,
         customerPhone,
-        customerEmail: user?.email || `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest`,
+        customerEmail: user?.email || (customerPhone ? `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest` : 'guest@hadab.kw'),
         destination: 'Kuwait',
         destinationArabic: 'الكويت',
         address: customerAddress,
@@ -99,6 +100,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           const colorPart = i.product.selectedColor ? ` [${i.product.selectedColor}]` : '';
           const sizePart = i.product.selectedSize ? ` - ${i.product.selectedSize}` : '';
           return {
+            productId: i.product.id || (i.product as any)._id,
             name: `${i.product.name}${colorPart}${sizePart}`,
             nameArabic: `${i.product.nameArabic || i.product.name}${colorPart}${sizePart}`,
             price: i.product.price,
@@ -110,7 +112,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       };
 
       const result = await api.createOrder(orderPayload);
-      setPlacedOrderNumber(result.orderNumber || 'HDB-2026-KW');
+      setPlacedOrderNumber(result.orderNumber);
       setOrderTotal(finalTotal);
       setStep('success');
       if (onClearBag) onClearBag();

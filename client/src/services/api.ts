@@ -159,19 +159,27 @@ export const api = {
   },
 
   async createOrder(orderData: {
+    userId?: string;
     customerName: string;
     customerEmail?: string;
     customerPhone: string;
     destination: string;
     destinationArabic?: string;
     address?: string;
-    items: { name: string; nameArabic?: string; price: number; quantity: number; image?: string }[];
+    items: { productId?: string; name: string; nameArabic?: string; price: number; quantity: number; image?: string }[];
     total: number;
     notes?: string;
+    status?: string;
+    statusArabic?: string;
+    paymentStatus?: string;
+    paymentStatusArabic?: string;
   }) {
     const res = await fetch(`${API_BASE}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
       body: JSON.stringify(orderData),
     });
     const data = await res.json();
