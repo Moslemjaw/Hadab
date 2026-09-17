@@ -34,11 +34,58 @@ router.get('/', authenticateToken, requireAdmin, async (_req: Request, res: Resp
         totalSpent,
         lastOrderDate,
         status,
+        isDisabled: Boolean(c.isDisabled),
         rating: 5,
       };
     });
 
     res.json(enriched);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
+
+// TOGGLE DISABLE customer (Admin only)
+router.patch('/:id/toggle-disable', authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).json({ message: 'Customer not found' });
+      return;
+    }
+    if (user.role === 'admin' || user.email === 'byhadab@gmail.com') {
+      res.status(400).json({ message: 'Cannot disable admin user' });
+      return;
+    }
+
+    user.isDisabled = !user.isDisabled;
+    await user.save();
+
+    res.json({
+      message: user.isDisabled ? 'Customer account disabled' : 'Customer account enabled',
+      id: user._id,
+      isDisabled: user.isDisabled,
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
+
+// DELETE customer (Admin only)
+router.delete('/:id', authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).json({ message: 'Customer not found' });
+      return;
+    }
+    if (user.role === 'admin' || user.email === 'byhadab@gmail.com') {
+      res.status(400).json({ message: 'Cannot delete admin user' });
+      return;
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Customer deleted successfully', id: req.params.id });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Server error' });
   }

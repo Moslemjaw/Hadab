@@ -407,6 +407,10 @@ export function App() {
         onRemoveItem={handleRemoveFromBag}
         onUpdateQuantity={handleUpdateQuantity}
         onClearBag={() => setBagItems([])}
+        onOpenAuth={(mode) => {
+          setAuthMode(mode);
+          setCurrentView('auth');
+        }}
       />
 
       {/* High-Resolution Product Inspector Modal */}

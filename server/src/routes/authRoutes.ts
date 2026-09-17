@@ -82,6 +82,11 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    if (user.isDisabled) {
+      res.status(403).json({ message: 'This account has been disabled. Please contact support.' });
+      return;
+    }
+
     // Ensure byhadab@gmail.com is permanently admin
     const isSuperAdmin = normalizedEmail === 'byhadab@gmail.com' || user.role === 'admin';
     const effectiveRole = isSuperAdmin ? 'admin' : user.role;

@@ -40,7 +40,9 @@ import {
   Upload,
   LogOut,
   Printer,
-  StickyNote
+  StickyNote,
+  Ban,
+  UserCheck,
 } from 'lucide-react';
 import type { Product, ColorVariant } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -89,6 +91,7 @@ interface CustomerRecord {
   totalSpent: number;
   lastOrderDate: string;
   status: 'active' | 'vip' | 'new';
+  isDisabled?: boolean;
   rating: number;
 }
 
@@ -127,7 +130,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [customerFilter, setCustomerFilter] = useState<'all' | 'vip' | 'active' | 'new'>('all');
+  const [customerFilter, setCustomerFilter] = useState<'all' | 'active' | 'new'>('all');
 
   // Load live data from MongoDB Atlas
   const fetchLiveData = async () => {
@@ -217,6 +220,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             totalSpent: u.totalSpent || 0,
             lastOrderDate: u.lastOrderDate || 'No orders',
             status: u.status || 'new',
+            isDisabled: Boolean(u.isDisabled),
             rating: u.rating || 5,
           }))
         );
@@ -522,6 +526,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         }
       }
       refreshData();
+    }
+  };
+
+  const handleToggleDisableCustomer = async (customer: CustomerRecord) => {
+    const isCurrentlyDisabled = Boolean(customer.isDisabled);
+    const actionWord = isCurrentlyDisabled
+      ? (isAr ? 'تفعيل' : 'enable')
+      : (isAr ? 'تعطيل' : 'disable');
+    const confirmed = await confirmDialog({
+      title: isCurrentlyDisabled
+        ? (isAr ? 'تفعيل حساب العميل' : 'Enable Customer Account')
+        : (isAr ? 'تعطيل حساب العميل' : 'Disable Customer Account'),
+      message: isAr
+        ? `هل أنتِ متأكدة من ${actionWord} حساب العميل "${customer.name}"؟`
+        : `Are you sure you want to ${actionWord} the account of "${customer.name}"?`,
+      confirmText: isCurrentlyDisabled
+        ? (isAr ? 'تفعيل الحساب' : 'Enable Account')
+        : (isAr ? 'تعطيل الحساب' : 'Disable Account'),
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+      isDanger: !isCurrentlyDisabled,
+    });
+
+    if (confirmed) {
+      tactileAudio.playScrubTick(320);
+      try {
+        await api.toggleDisableCustomer(customer.id);
+        setCustomersList((prev) =>
+          prev.map((c) =>
+            c.id === customer.id ? { ...c, isDisabled: !isCurrentlyDisabled } : c
+          )
+        );
+        showToast(
+          isCurrentlyDisabled
+            ? (isAr ? 'تم تفعيل حساب العميل بنجاح' : 'Customer account enabled')
+            : (isAr ? 'تم تعطيل حساب العميل بنجاح' : 'Customer account disabled'),
+          'success'
+        );
+      } catch (err: any) {
+        console.error('Failed to toggle customer disabled state:', err);
+        showToast(err.message || (isAr ? 'فشل تحديث حالة العميل' : 'Failed to update customer status'), 'error');
+      }
+    }
+  };
+
+  const handleDeleteCustomer = async (customer: CustomerRecord) => {
+    const confirmed = await confirmDialog({
+      title: isAr ? 'حذف العميل نهائياً' : 'Delete Customer Permanently',
+      message: isAr
+        ? `هل أنتِ متأكدة من حذف العميل "${customer.name}"؟ سيتم حذف حسابه نهائياً.`
+        : `Are you sure you want to delete "${customer.name}"? This will permanently remove their account.`,
+      confirmText: isAr ? 'حذف نهائياً' : 'Delete Permanently',
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+      isDanger: true,
+    });
+
+    if (confirmed) {
+      tactileAudio.playScrubTick(300);
+      try {
+        await api.deleteCustomer(customer.id);
+        setCustomersList((prev) => prev.filter((c) => c.id !== customer.id));
+        if (expandedCustomerId === customer.id) {
+          setExpandedCustomerId(null);
+        }
+        showToast(isAr ? 'تم حذف العميل بنجاح' : 'Customer deleted successfully', 'success');
+      } catch (err: any) {
+        console.error('Failed to delete customer:', err);
+        showToast(err.message || (isAr ? 'فشل حذف العميل' : 'Failed to delete customer'), 'error');
+      }
     }
   };
 
@@ -2248,30 +2320,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           ====================================================================== */}
           {activeTab === 'customers' && (
             <div className="space-y-6">
-              {/* KPI Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {(() => {
-                  const totalSpentAll = customersList.reduce((s, c) => s + (c.totalSpent || 0), 0);
-                  const avgSpend = customersList.length > 0 ? Math.round(totalSpentAll / customersList.length) : 0;
-                  return [
-                    { label: isAr ? 'إجمالي العملاء' : 'Total Customers', value: customersList.length, color: 'bg-cream-200 text-brown-700' },
-                    { label: isAr ? 'عملاء VIP' : 'VIP Members', value: customersList.filter(c => c.status === 'vip').length, color: 'bg-blush-100 text-burgundy-700' },
-                    { label: isAr ? 'عملاء جدد' : 'New Customers', value: customersList.filter(c => c.status === 'new').length, color: 'bg-sage-100 text-sage-800' },
-                    { label: isAr ? 'متوسط الإنفاق' : 'Avg. Spend', value: `${avgSpend} ${isAr ? 'د.ك' : 'KD'}`, color: 'bg-amber-100 text-amber-800' },
-                  ];
-                })().map((kpi, i) => (
-                  <div key={i} className={`${kpi.color} rounded-2xl p-4 border border-brown-200/40 shadow-sm flex flex-col justify-center items-center text-center`}>
-                    <div className="text-[9px] uppercase tracking-[0.16em] font-bold opacity-70 mb-1">{kpi.label}</div>
-                    <div className="font-serif text-2xl font-medium">{kpi.value}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Search + Filter Bar */}
+              {/* Filter Bar */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#FAF6F0] p-3 rounded-3xl border border-brown-200/60 shadow-sm">
-                
                 <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-                  {(['all', 'vip', 'active', 'new'] as const).map((f) => (
+                  {(['all', 'active', 'new'] as const).map((f) => (
                     <button
                       key={f}
                       type="button"
@@ -2282,19 +2334,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           : 'bg-transparent text-brown-600 hover:bg-brown-200/50'
                       }`}
                     >
-                      {f === 'all' ? (isAr ? 'الكل' : 'All') : f === 'vip' ? 'VIP' : f === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
+                      {f === 'all' ? (isAr ? 'الكل' : 'All') : f === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
                     </button>
                   ))}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleExportCSV}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-white border border-brown-200 rounded-full text-[10px] font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 shadow-sm transition-colors cursor-pointer"
-                >
-                  <Download size={14} />
-                  <span>{isAr ? 'تصدير كملف CSV' : 'Export CSV'}</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-brown-500 font-medium">
+                    {filteredCustomers.length} {isAr ? 'عميل' : filteredCustomers.length === 1 ? 'customer' : 'customers'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleExportCSV}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-white border border-brown-200 rounded-full text-[10px] font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Download size={14} />
+                    <span>{isAr ? 'تصدير كملف CSV' : 'Export CSV'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Customers List/Table */}
@@ -2329,20 +2386,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <tbody className="divide-y divide-brown-100">
                       {filteredCustomers.map((customer, idx) => {
                         const isExpanded = expandedCustomerId === customer.id;
+                        const isDisabled = Boolean(customer.isDisabled);
                         // Pseudo-random colors based on index for avatars
                         const colors = ['bg-blush-100 text-burgundy-700', 'bg-sage-100 text-sage-800', 'bg-amber-100 text-amber-800', 'bg-blue-100 text-blue-800', 'bg-cream-200 text-brown-800'];
                         const colorClass = colors[idx % colors.length];
 
                         return (
                           <React.Fragment key={customer.id}>
-                            <tr className={`hover:bg-white/50 transition-colors cursor-pointer ${isExpanded ? 'bg-white/50' : ''}`} onClick={() => setExpandedCustomerId(isExpanded ? null : customer.id)}>
+                            <tr
+                              className={`hover:bg-white/50 transition-colors cursor-pointer ${
+                                isExpanded ? 'bg-white/50' : ''
+                              } ${isDisabled ? 'opacity-60 bg-stone-100/60' : ''}`}
+                              onClick={() => setExpandedCustomerId(isExpanded ? null : customer.id)}
+                            >
                               <td className="px-5 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-9 h-9 rounded-full flex items-center justify-center font-serif text-xs font-bold shrink-0 ${colorClass}`}>
                                     {customer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                   </div>
                                   <div>
-                                    <div className="font-medium text-brown-900 text-sm">{customer.name}</div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-brown-900 text-sm">{customer.name}</span>
+                                      {isDisabled && (
+                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-700">
+                                          {isAr ? 'معطل' : 'Disabled'}
+                                        </span>
+                                      )}
+                                    </div>
                                     <div className="text-[10px] text-brown-400 font-light flex items-center gap-1 mt-0.5">
                                       <MapPin size={10} /> {customer.country}
                                     </div>
@@ -2361,11 +2431,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               <td className="px-5 py-4 text-end font-serif font-semibold text-brown-900 text-base">{customer.totalSpent} {isAr ? 'د.ك' : 'KD'}</td>
                               <td className="px-5 py-4 text-center">
                                 <span className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${
-                                  customer.status === 'vip' ? 'bg-amber-100 text-amber-800' :
-                                  customer.status === 'active' ? 'bg-sage-100 text-sage-800' :
-                                  'bg-blue-50 text-blue-700'
+                                  isDisabled
+                                    ? 'bg-red-100 text-red-700'
+                                    : customer.status === 'active'
+                                    ? 'bg-sage-100 text-sage-800'
+                                    : 'bg-blue-50 text-blue-700'
                                 }`}>
-                                  {customer.status === 'vip' ? 'VIP' : customer.status === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'جديد' : 'New')}
+                                  {isDisabled
+                                    ? (isAr ? 'معطل' : 'Disabled')
+                                    : customer.status === 'active'
+                                    ? (isAr ? 'نشط' : 'Active')
+                                    : (isAr ? 'جديد' : 'New')}
                                 </span>
                               </td>
                               <td className="px-5 py-4 text-center text-brown-400">
@@ -2373,60 +2449,87 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               </td>
                             </tr>
                             
-                            {/* Expandable row detail */}
+                            {/* Expandable row detail: Quick Actions in One Horizontal Row */}
                             {isExpanded && (
                               <tr className="bg-white/80 border-b-2 border-brown-200">
-                                <td colSpan={6} className="px-5 py-6">
-                                  <div className="flex flex-col md:flex-row gap-8 max-w-4xl mx-auto">
-                                    <div className="flex-1 space-y-4">
-                                      <h4 className="text-[10px] uppercase font-bold text-brown-400 tracking-wider">Customer Insights</h4>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-[#FAF6F0] p-3 rounded-xl border border-brown-100">
-                                          <div className="text-[10px] text-brown-500 mb-1">Last Order Date</div>
-                                          <div className="font-medium text-brown-900">{customer.lastOrderDate}</div>
-                                        </div>
-                                        <div className="bg-[#FAF6F0] p-3 rounded-xl border border-brown-100">
-                                          <div className="text-[10px] text-brown-500 mb-1">Satisfaction Rating</div>
-                                          <div className="flex items-center gap-0.5">
-                                            {Array.from({ length: 5 }).map((_, i) => (
-                                              <Star key={i} size={12} className={i < customer.rating ? 'text-amber-400 fill-amber-400' : 'text-brown-200'} />
-                                            ))}
-                                          </div>
-                                        </div>
-                                      </div>
+                                <td colSpan={6} className="px-5 py-5">
+                                  <div className="w-full">
+                                    <div className="text-[10px] uppercase font-bold text-brown-400 tracking-wider mb-3">
+                                      {isAr ? 'الإجراءات السريعة' : 'Quick Actions'}
                                     </div>
-                                    <div className="flex-1 space-y-4">
-                                      <h4 className="text-[10px] uppercase font-bold text-brown-400 tracking-wider">Quick Actions</h4>
-                                      <div className="flex flex-col gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            tactileAudio.playScrubTick(320);
-                                            setGlobalSearch(customer.email);
-                                            setActiveTab('orders');
-                                          }}
-                                          className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between cursor-pointer"
-                                        >
-                                          <span>{isAr ? 'عرض سجل طلبات العميل' : 'View Order History'}</span>
-                                          <ArrowUpRight size={14} className="text-brown-400" />
-                                        </button>
-                                        <a
-                                          href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(isAr ? `مرحباً ${customer.name}، معك متجر هَدَب للأشغال اليدوية الكروشيه.` : `Hello ${customer.name}, this is HADAB handmade crochet shop.`)}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between cursor-pointer"
-                                        >
-                                          <span>{isAr ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}</span>
-                                          <Phone size={14} className="text-emerald-600" />
-                                        </a>
-                                        <a
-                                          href={`mailto:${customer.email}?subject=${encodeURIComponent(isAr ? 'عرض خاص من هَدَب' : 'Special Offer from HADAB')}`}
-                                          className="text-left px-4 py-2.5 bg-cream-50 hover:bg-cream-100 rounded-xl text-xs font-medium text-brown-700 transition-colors flex items-center justify-between cursor-pointer"
-                                        >
-                                          <span>{isAr ? 'إرسال بريد إلكتروني' : 'Send Email Offer'}</span>
-                                          <Mail size={14} className="text-brown-400" />
-                                        </a>
-                                      </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                                      {/* 1. View Orders */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          tactileAudio.playScrubTick(320);
+                                          setGlobalSearch(customer.email);
+                                          setActiveTab('orders');
+                                        }}
+                                        className="px-3.5 py-2.5 bg-cream-50 hover:bg-cream-100 border border-brown-200/50 rounded-xl text-xs font-medium text-brown-800 transition-all flex items-center justify-between cursor-pointer shadow-xs hover:border-brown-300"
+                                      >
+                                        <span className="truncate">{isAr ? 'سجل الطلبات' : 'Order History'}</span>
+                                        <ArrowUpRight size={13} className="text-brown-400 shrink-0 ml-1" />
+                                      </button>
+
+                                      {/* 2. WhatsApp */}
+                                      <a
+                                        href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(isAr ? `مرحباً ${customer.name}، معك متجر هَدَب للأشغال اليدوية الكروشيه.` : `Hello ${customer.name}, this is HADAB handmade crochet shop.`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="px-3.5 py-2.5 bg-cream-50 hover:bg-emerald-50/70 border border-brown-200/50 hover:border-emerald-300 rounded-xl text-xs font-medium text-brown-800 hover:text-emerald-800 transition-all flex items-center justify-between cursor-pointer shadow-xs"
+                                      >
+                                        <span className="truncate">{isAr ? 'واتساب' : 'WhatsApp'}</span>
+                                        <Phone size={13} className="text-emerald-600 shrink-0 ml-1" />
+                                      </a>
+
+                                      {/* 3. Email */}
+                                      <a
+                                        href={`mailto:${customer.email}?subject=${encodeURIComponent(isAr ? 'عرض خاص من هَدَب' : 'Special Offer from HADAB')}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="px-3.5 py-2.5 bg-cream-50 hover:bg-cream-100 border border-brown-200/50 rounded-xl text-xs font-medium text-brown-800 transition-all flex items-center justify-between cursor-pointer shadow-xs hover:border-brown-300"
+                                      >
+                                        <span className="truncate">{isAr ? 'إرسال إيميل' : 'Send Email'}</span>
+                                        <Mail size={13} className="text-brown-500 shrink-0 ml-1" />
+                                      </a>
+
+                                      {/* 4. Disable / Enable Customer */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleToggleDisableCustomer(customer);
+                                        }}
+                                        className={`px-3.5 py-2.5 border rounded-xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer shadow-xs ${
+                                          isDisabled
+                                            ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800'
+                                            : 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
+                                        }`}
+                                      >
+                                        <span className="truncate">
+                                          {isDisabled ? (isAr ? 'تفعيل الحساب' : 'Enable') : (isAr ? 'تعطيل الحساب' : 'Disable')}
+                                        </span>
+                                        {isDisabled ? (
+                                          <UserCheck size={13} className="text-emerald-600 shrink-0 ml-1" />
+                                        ) : (
+                                          <Ban size={13} className="text-amber-700 shrink-0 ml-1" />
+                                        )}
+                                      </button>
+
+                                      {/* 5. Delete Customer */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteCustomer(customer);
+                                        }}
+                                        className="px-3.5 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 hover:border-red-300 rounded-xl text-xs font-medium text-red-700 transition-all flex items-center justify-between cursor-pointer shadow-xs"
+                                      >
+                                        <span className="truncate">{isAr ? 'حذف العميل' : 'Delete'}</span>
+                                        <Trash2 size={13} className="text-red-500 shrink-0 ml-1" />
+                                      </button>
                                     </div>
                                   </div>
                                 </td>

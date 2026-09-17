@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Product } from '../../types';
-import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2, Search, ChevronDown } from 'lucide-react';
+import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, MapPin, User, MessageCircle, Loader2, Search, ChevronDown, LogIn, UserPlus } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { COUNTRY_CODES } from '../../constants/countryCodes';
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../../constants/countryCodes';
+import type { CountryCode } from '../../constants/countryCodes';
 import { api } from '../../services/api';
 
 interface CartDrawerProps {
@@ -14,6 +15,7 @@ interface CartDrawerProps {
   onRemoveItem: (id: string, color?: string, size?: string) => void;
   onUpdateQuantity?: (id: string, quantity: number, color?: string, size?: string) => void;
   onClearBag?: () => void;
+  onOpenAuth?: (mode: 'signin' | 'signup') => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -23,6 +25,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onUpdateQuantity,
   onClearBag,
+  onOpenAuth,
 }) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
@@ -38,7 +41,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     return cleaned || '96599000000';
   }, [storePhone]);
 
-  const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
+  const [step, setStep] = useState<'cart' | 'guest-prompt' | 'checkout' | 'success'>('cart');
   const [selectedCountry, setSelectedCountry] = useState<string>(() => {
     return localStorage.getItem('hadab_customer_country') || 'KW';
   });
@@ -56,6 +59,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderNumber, setPlacedOrderNumber] = useState('');
   const [orderTotal, setOrderTotal] = useState(0);
+
+  // Phone country code dropdown state
+  const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>(() => {
+    const saved = localStorage.getItem('hadab_phone_country_code');
+    if (saved) {
+      const found = COUNTRY_CODES.find((c) => c.code === saved);
+      if (found) return found;
+    }
+    return DEFAULT_COUNTRY;
+  });
+  const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
+  const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
+  const phoneCodeRef = useRef<HTMLDivElement>(null);
+  const phoneCodeSearchRef = useRef<HTMLInputElement>(null);
 
   const addressSummary = useMemo(() => {
     const parts = [
@@ -88,12 +105,35 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
         setIsCountryDropdownOpen(false);
       }
+      if (phoneCodeRef.current && !phoneCodeRef.current.contains(e.target as Node)) {
+        setIsPhoneCodeOpen(false);
+      }
     };
-    if (isCountryDropdownOpen) {
+    if (isCountryDropdownOpen || isPhoneCodeOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isCountryDropdownOpen]);
+  }, [isCountryDropdownOpen, isPhoneCodeOpen]);
+
+  // Auto-focus phone code search
+  useEffect(() => {
+    if (isPhoneCodeOpen) {
+      setTimeout(() => phoneCodeSearchRef.current?.focus(), 50);
+    }
+  }, [isPhoneCodeOpen]);
+
+  // Filtered phone country codes
+  const filteredPhoneCodes = useMemo(() => {
+    const q = phoneCodeSearch.trim().toLowerCase().replace(/^\+/, '');
+    if (!q) return COUNTRY_CODES;
+    return COUNTRY_CODES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.nameAr.includes(q) ||
+        c.dialCode.replace(/^\+/, '').includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [phoneCodeSearch]);
 
   // Filter available countries by search
   const filteredAvailableCountries = useMemo(() => {
@@ -156,6 +196,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const shippingCost = getShippingFee(selectedCountry);
   const finalTotal = subtotal + shippingCost;
 
+  const fullCustomerPhone = useMemo(() => {
+    const p = customerPhone.trim();
+    if (!p) return '';
+    if (p.startsWith('+') || p.startsWith('00')) return p;
+    return `${phoneCountryCode.dialCode} ${p}`;
+  }, [customerPhone, phoneCountryCode]);
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim() || !customerPhone.trim() || !customerArea.trim() || !customerStreet.trim() || !customerHouse.trim()) return;
@@ -165,7 +212,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       const orderPayload = {
         userId: user?.id || (user as any)?._id || undefined,
         customerName,
-        customerPhone,
+        customerPhone: fullCustomerPhone,
         customerEmail: user?.email || (customerPhone ? `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest` : 'guest@hadab.kw'),
         destination: currentCountryObj.name,
         destinationArabic: currentCountryObj.nameAr,
@@ -209,8 +256,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const whatsappMessage = encodeURIComponent(
     isAr
-      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nدولة التوصيل: ${currentCountryObj.nameAr}\nالعنوان: ${addressSummary}`
-      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nCountry: ${currentCountryObj.name}\nDelivery Address: ${addressSummary}`
+      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nالهاتف: ${fullCustomerPhone}\nدولة التوصيل: ${currentCountryObj.nameAr}\nالعنوان: ${addressSummary}`
+      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nPhone: ${fullCustomerPhone}\nCountry: ${currentCountryObj.name}\nDelivery Address: ${addressSummary}`
   );
 
   return (
@@ -228,7 +275,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           <div className="px-4 py-3.5 sm:p-6 border-b border-brown-200/80 safe-top">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {step === 'checkout' && (
+                {(step === 'checkout' || step === 'guest-prompt') && (
                   <button
                     type="button"
                     onClick={() => setStep('cart')}
@@ -241,6 +288,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <h3 className="font-serif text-lg sm:text-xl text-brown-800 font-medium">
                   {step === 'cart'
                     ? t.yourBag
+                    : step === 'guest-prompt'
+                    ? (isAr ? 'تسجيل الدخول' : 'Account')
                     : step === 'checkout'
                     ? (isAr ? 'بيانات التوصيل' : 'Delivery Details')
                     : (isAr ? 'تم استلام طلبك!' : 'Order Confirmed!')}
@@ -359,6 +408,76 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             )}
 
+            {/* GUEST PROMPT: Create Account or Continue as Guest */}
+            {step === 'guest-prompt' && (
+              <div className="flex flex-col items-center justify-center py-8 px-2 space-y-6">
+                <div className="w-14 h-14 rounded-2xl bg-[#2C221E] flex items-center justify-center shadow-md">
+                  <User size={24} className="text-cream-100" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <h3 className="font-serif text-xl text-brown-900 font-medium">
+                    {isAr ? 'كيف تريد المتابعة؟' : 'How would you like to continue?'}
+                  </h3>
+                  <p className="text-xs text-brown-500 font-light max-w-xs mx-auto leading-relaxed">
+                    {isAr
+                      ? 'أنشئ حسابًا لتتبع طلباتك وحفظ عنوانك، أو تابع كضيف.'
+                      : 'Create an account to track your orders and save your address, or continue as a guest.'}
+                  </p>
+                </div>
+
+                <div className="w-full max-w-xs space-y-3">
+                  {/* Create Account */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenAuth) {
+                        onClose();
+                        onOpenAuth('signup');
+                      }
+                    }}
+                    className="w-full py-3.5 rounded-full bg-brown-900 hover:bg-brown-950 text-cream-100 text-xs uppercase tracking-wider font-semibold shadow-warm transition-all flex items-center justify-center gap-2.5 min-h-[48px] active:scale-[0.98] cursor-pointer"
+                  >
+                    <UserPlus size={16} />
+                    <span>{isAr ? 'إنشاء حساب' : 'Create Account'}</span>
+                  </button>
+
+                  {/* Sign In */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenAuth) {
+                        onClose();
+                        onOpenAuth('signin');
+                      }
+                    }}
+                    className="w-full py-3.5 rounded-full border-2 border-brown-300 hover:border-brown-400 bg-white hover:bg-cream-200/60 text-brown-800 text-xs uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2.5 min-h-[48px] active:scale-[0.98] cursor-pointer"
+                  >
+                    <LogIn size={16} />
+                    <span>{isAr ? 'تسجيل الدخول' : 'Sign In'}</span>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="flex-1 h-px bg-brown-200/70" />
+                    <span className="text-[10px] uppercase tracking-widest text-brown-400 font-medium">
+                      {isAr ? 'أو' : 'or'}
+                    </span>
+                    <div className="flex-1 h-px bg-brown-200/70" />
+                  </div>
+
+                  {/* Continue as Guest */}
+                  <button
+                    type="button"
+                    onClick={() => setStep('checkout')}
+                    className="w-full py-3 rounded-full border border-brown-200 hover:border-brown-300 bg-cream-100 hover:bg-cream-200/50 text-brown-700 text-xs font-medium transition-all flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.98] cursor-pointer"
+                  >
+                    <ArrowRight size={14} className={isAr ? 'rotate-180' : ''} />
+                    <span>{isAr ? 'متابعة كضيف' : 'Continue as Guest'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* STEP 2: CHECKOUT FORM */}
             {step === 'checkout' && (
               <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-3.5 text-xs">
@@ -469,6 +588,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                   setSelectedCountry(c.code);
                                   localStorage.setItem('hadab_customer_country', c.code);
                                   setIsCountryDropdownOpen(false);
+                                  const matchingPhoneCode = COUNTRY_CODES.find((pc) => pc.code === c.code);
+                                  if (matchingPhoneCode) {
+                                    setPhoneCountryCode(matchingPhoneCode);
+                                    localStorage.setItem('hadab_phone_country_code', matchingPhoneCode.code);
+                                  }
                                 }}
                                 className={`px-3 py-2 flex items-center justify-between cursor-pointer transition-colors text-xs ${
                                   isSelected
@@ -513,22 +637,105 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </div>
                 </div>
 
-                {/* Phone / WhatsApp (No Kuwait in label) */}
-                <div>
+                {/* Phone / WhatsApp with Country Code Dropdown */}
+                <div className="relative" ref={phoneCodeRef}>
                   <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
                     {isAr ? 'رقم الهاتف / الواتساب *' : 'Phone / WhatsApp *'}
                   </label>
-                  <div className="relative">
-                    <Phone size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-brown-400`} />
+                  <div className="flex rounded-xl bg-white border border-brown-200 overflow-hidden focus-within:border-brown-400 focus-within:ring-1 focus-within:ring-brown-400 transition-all">
+                    {/* Country Code Trigger */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPhoneCodeOpen(!isPhoneCodeOpen);
+                        setPhoneCodeSearch('');
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-2.5 hover:bg-cream-200/60 transition-colors cursor-pointer shrink-0 ${isAr ? 'border-l border-brown-200/60' : 'border-r border-brown-200/60'}`}
+                    >
+                      <span className="text-sm leading-none">{phoneCountryCode.flag}</span>
+                      <span className="text-[11px] font-medium text-brown-700 font-mono dir-ltr">{phoneCountryCode.dialCode}</span>
+                      <ChevronDown size={11} className={`text-brown-400 transition-transform duration-200 ${isPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {/* Phone Input */}
                     <input
                       type="tel"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder={currentCountryObj.sample || '+965 9912 3456'}
-                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400`}
+                      placeholder={phoneCountryCode.sample || '9912 3456'}
+                      className="flex-1 py-2.5 px-3 bg-transparent text-brown-900 text-xs focus:outline-none min-w-0"
                     />
                   </div>
+
+                  {/* Phone Code Dropdown Popover */}
+                  {isPhoneCodeOpen && (
+                    <div className={`absolute top-full mt-1.5 ${isAr ? 'right-0' : 'left-0'} w-72 sm:w-80 z-50 bg-[#FAF7F2] rounded-2xl border border-brown-200/70 shadow-2xl overflow-hidden animate-in fade-in duration-150`}>
+                      {/* Search */}
+                      <div className="p-2 border-b border-brown-200/40 bg-white/70">
+                        <div className="relative flex items-center">
+                          <Search size={13} className={`absolute ${isAr ? 'right-2.5' : 'left-2.5'} text-brown-400 pointer-events-none`} />
+                          <input
+                            ref={phoneCodeSearchRef}
+                            type="text"
+                            autoFocus
+                            value={phoneCodeSearch}
+                            onChange={(e) => setPhoneCodeSearch(e.target.value)}
+                            placeholder={isAr ? 'ابحث عن الدولة أو الرمز...' : 'Search country or code...'}
+                            className={`w-full ${isAr ? 'pr-8 pl-8' : 'pl-8 pr-8'} py-1.5 rounded-lg bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400`}
+                          />
+                          {phoneCodeSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setPhoneCodeSearch('')}
+                              className={`absolute ${isAr ? 'left-2' : 'right-2'} text-brown-400 hover:text-brown-700 p-0.5`}
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {/* List */}
+                      <div className="max-h-52 overflow-y-auto divide-y divide-brown-100/60">
+                        {filteredPhoneCodes.length === 0 ? (
+                          <div className="p-4 text-center text-brown-400 text-xs">
+                            {isAr ? 'لا توجد نتائج' : 'No results found'}
+                          </div>
+                        ) : (
+                          filteredPhoneCodes.map((c) => {
+                            const isSelected = c.code === phoneCountryCode.code;
+                            return (
+                              <button
+                                key={`${c.code}-${c.dialCode}`}
+                                type="button"
+                                onClick={() => {
+                                  setPhoneCountryCode(c);
+                                  localStorage.setItem('hadab_phone_country_code', c.code);
+                                  setIsPhoneCodeOpen(false);
+                                  setPhoneCodeSearch('');
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors cursor-pointer text-xs ${
+                                  isSelected
+                                    ? 'bg-cream-200 text-brown-950 font-semibold'
+                                    : 'hover:bg-brown-100/40 text-brown-800'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="text-base leading-none">{c.flag}</span>
+                                  <span className="truncate">{isAr ? c.nameAr : c.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="dir-ltr font-mono text-[11px] font-medium text-brown-600 bg-brown-200/40 px-1.5 py-0.5 rounded-full">
+                                    {c.dialCode}
+                                  </span>
+                                  {isSelected && <Check size={13} className="text-burgundy-700" />}
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Split Delivery Address: Area, Street, House, Apartment */}
@@ -747,7 +954,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           </div>
 
           {/* Footer for Cart and Checkout */}
-          {step !== 'success' && (
+          {step !== 'success' && step !== 'guest-prompt' && (
             <div className="p-4 sm:p-6 border-t border-brown-200/80 bg-cream-100/95 backdrop-blur-sm safe-bottom">
               {step === 'cart' ? (
                 <>
@@ -758,7 +965,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <button
                     type="button"
                     disabled={items.length === 0}
-                    onClick={() => setStep('checkout')}
+                    onClick={() => {
+                      if (user) {
+                        setStep('checkout');
+                      } else {
+                        setStep('guest-prompt');
+                      }
+                    }}
                     className="w-full py-3.5 rounded-full bg-brown-900 hover:bg-brown-950 disabled:opacity-50 text-cream-100 text-xs uppercase tracking-wider font-semibold shadow-warm transition-all flex items-center justify-center gap-2 min-h-[48px] active:scale-[0.98] cursor-pointer"
                   >
                     <span>{t.checkoutSecurely}</span>

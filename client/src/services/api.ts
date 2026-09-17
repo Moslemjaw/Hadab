@@ -217,6 +217,26 @@ export const api = {
     return data.map((c: any) => ({ ...c, id: c._id || c.id }));
   },
 
+  async toggleDisableCustomer(id: string) {
+    const res = await fetch(`${API_BASE}/customers/${id}/toggle-disable`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to toggle customer status');
+    return data;
+  },
+
+  async deleteCustomer(id: string) {
+    const res = await fetch(`${API_BASE}/customers/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete customer');
+    return data;
+  },
+
   // Cloudinary Upload
   async uploadImage(file: File): Promise<{ url: string; public_id: string }> {
     const token = localStorage.getItem('hadab_token');

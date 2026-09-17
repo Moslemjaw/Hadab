@@ -1,4 +1,4 @@
-﻿import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
   name: string;
@@ -7,6 +7,7 @@ export interface IUser extends Document {
   phone?: string;
   role: 'admin' | 'customer';
   status: 'active' | 'vip' | 'new';
+  isDisabled?: boolean;
   country?: string;
   rating?: number;
   totalOrders: number;
@@ -24,6 +25,7 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String, default: '' },
     role: { type: String, enum: ['admin', 'customer'], default: 'customer' },
     status: { type: String, enum: ['active', 'vip', 'new'], default: 'new' },
+    isDisabled: { type: Boolean, default: false },
     country: { type: String, default: 'Kuwait' },
     rating: { type: Number, default: 5 },
     totalOrders: { type: Number, default: 0 },
