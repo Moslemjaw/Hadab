@@ -39,15 +39,24 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const [customerName, setCustomerName] = useState(user?.name || '');
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
-  const [customerAddress, setCustomerAddress] = useState(
-    localStorage.getItem('hadab_customer_area')
-      ? `${localStorage.getItem('hadab_customer_area')}, Block ${localStorage.getItem('hadab_customer_block') || ''}, Street ${localStorage.getItem('hadab_customer_street') || ''}, House ${localStorage.getItem('hadab_customer_house') || ''}`
-      : ''
-  );
+  const [customerArea, setCustomerArea] = useState(() => localStorage.getItem('hadab_customer_area') || '');
+  const [customerStreet, setCustomerStreet] = useState(() => localStorage.getItem('hadab_customer_street') || '');
+  const [customerHouse, setCustomerHouse] = useState(() => localStorage.getItem('hadab_customer_house') || '');
+  const [customerApartment, setCustomerApartment] = useState(() => localStorage.getItem('hadab_customer_apartment') || '');
   const [customerNotes, setCustomerNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderNumber, setPlacedOrderNumber] = useState('');
   const [orderTotal, setOrderTotal] = useState(0);
+
+  const addressSummary = useMemo(() => {
+    const parts = [
+      customerArea.trim() ? `${isAr ? 'المنطقة:' : 'Area:'} ${customerArea.trim()}` : '',
+      customerStreet.trim() ? `${isAr ? 'الشارع:' : 'Street:'} ${customerStreet.trim()}` : '',
+      customerHouse.trim() ? `${isAr ? 'المنزل/المبنى:' : 'House:'} ${customerHouse.trim()}` : '',
+      customerApartment.trim() ? `${isAr ? 'الشقة:' : 'Apt:'} ${customerApartment.trim()}` : '',
+    ].filter(Boolean);
+    return parts.join(', ');
+  }, [customerArea, customerStreet, customerHouse, customerApartment, isAr]);
 
   // Filter countries strictly according to admin shipping rules
   const availableCountries = useMemo(() => {
@@ -142,7 +151,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName || !customerPhone || !customerAddress) return;
+    if (!customerName.trim() || !customerPhone.trim() || !customerArea.trim() || !customerStreet.trim() || !customerHouse.trim()) return;
 
     setIsSubmitting(true);
     try {
@@ -153,7 +162,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         customerEmail: user?.email || (customerPhone ? `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest` : 'guest@hadab.kw'),
         destination: currentCountryObj.name,
         destinationArabic: currentCountryObj.nameAr,
-        address: `${currentCountryObj.name} - ${customerAddress}`,
+        address: `${currentCountryObj.name} - ${addressSummary}`,
         notes: customerNotes,
         status: 'pending',
         statusArabic: 'قيد الانتظار',
@@ -193,40 +202,40 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const whatsappMessage = encodeURIComponent(
     isAr
-      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nدولة التوصيل: ${currentCountryObj.nameAr}\nالعنوان: ${customerAddress}`
-      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nCountry: ${currentCountryObj.name}\nDelivery Address: ${customerAddress}`
+      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nدولة التوصيل: ${currentCountryObj.nameAr}\nالعنوان: ${addressSummary}`
+      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nCountry: ${currentCountryObj.name}\nDelivery Address: ${addressSummary}`
   );
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-brown-900/50 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-brown-950/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      <div className={`fixed inset-y-0 ${isAr ? 'left-0 sm:pr-10' : 'right-0 sm:pl-10'} max-w-full flex`}>
-        <div className={`w-screen max-w-full sm:max-w-md bg-cream-100 ${isAr ? 'sm:border-r' : 'sm:border-l'} border-brown-200 shadow-warm-lg flex flex-col justify-between h-full`}>
+      <div className={`fixed inset-y-0 ${isAr ? 'left-0' : 'right-0'} max-w-full flex`}>
+        <div className={`w-screen max-w-[100vw] sm:max-w-md bg-cream-100 ${isAr ? 'sm:border-r' : 'sm:border-l'} border-brown-200 shadow-warm-lg flex flex-col justify-between h-full max-h-[100dvh]`}>
           
           {/* Header */}
-          <div className="p-5 sm:p-6 border-b border-brown-200/80 safe-top">
+          <div className="px-4 py-3.5 sm:p-6 border-b border-brown-200/80 safe-top">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {step === 'checkout' && (
                   <button
                     type="button"
                     onClick={() => setStep('cart')}
-                    className="p-1 rounded-full hover:bg-cream-200 text-brown-600 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-cream-200 text-brown-600 transition-colors"
                     aria-label="Back to bag"
                   >
                     <ArrowLeft size={18} className={isAr ? 'rotate-180' : ''} />
                   </button>
                 )}
-                <h3 className="font-serif text-xl text-brown-800 font-medium">
+                <h3 className="font-serif text-lg sm:text-xl text-brown-800 font-medium">
                   {step === 'cart'
                     ? t.yourBag
                     : step === 'checkout'
-                    ? (isAr ? 'إتمام الطلب للكويت' : 'Delivery to Kuwait')
+                    ? (isAr ? 'بيانات التوصيل' : 'Delivery Details')
                     : (isAr ? 'تم استلام طلبك!' : 'Order Confirmed!')}
                 </h3>
                 {step === 'cart' && (
@@ -345,14 +354,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
             {/* STEP 2: CHECKOUT FORM */}
             {step === 'checkout' && (
-              <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-4 text-xs">
-                <div className="p-3.5 rounded-2xl bg-cream-200/60 border border-brown-200 text-brown-800 space-y-1">
-                  <div className="flex items-center gap-1.5 font-medium text-brown-900">
-                    <Sparkles size={14} className="text-burgundy-600" />
+              <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-3.5 text-xs">
+                <div className="p-3 sm:p-3.5 rounded-2xl bg-cream-200/60 border border-brown-200 text-brown-800 space-y-1">
+                  <div className="flex items-center gap-1.5 font-medium text-brown-900 text-xs">
+                    <Sparkles size={14} className="text-burgundy-600 shrink-0" />
                     <span>
-                      {isAr
-                        ? `شحن من الأردن إلى ${currentCountryObj.nameAr}`
-                        : `Shipped from Jordan to ${currentCountryObj.name}`}
+                      {selectedCountry === 'JO'
+                        ? (isAr ? 'توصيل محلي داخل الأردن' : 'Local Delivery within Jordan')
+                        : (isAr
+                            ? `شحن من الأردن إلى ${currentCountryObj.nameAr}`
+                            : `Shipped from Jordan to ${currentCountryObj.name}`)}
                     </span>
                   </div>
                   <p className="text-[11px] text-brown-500 font-light leading-relaxed">
@@ -477,6 +488,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   )}
                 </div>
 
+                {/* Full Name */}
                 <div>
                   <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
                     {isAr ? 'الاسم الكامل *' : 'Full Name *'}
@@ -489,14 +501,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder={isAr ? 'مثال: ليلى الصباح' : 'e.g. Layla Al-Sabah'}
-                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300`}
+                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400`}
                     />
                   </div>
                 </div>
 
+                {/* Phone / WhatsApp (No Kuwait in label) */}
                 <div>
                   <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
-                    {isAr ? `رقم الهاتف / الواتساب (${currentCountryObj.nameAr}) *` : `Phone / WhatsApp (${currentCountryObj.name}) *`}
+                    {isAr ? 'رقم الهاتف / الواتساب *' : 'Phone / WhatsApp *'}
                   </label>
                   <div className="relative">
                     <Phone size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-brown-400`} />
@@ -506,28 +519,93 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder={currentCountryObj.sample || '+965 9912 3456'}
-                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300`}
+                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400`}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
-                    {isAr ? `عنوان التوصيل في ${currentCountryObj.nameAr} (المدينة، المنطقة، الشارع) *` : `Delivery Address in ${currentCountryObj.name} (City, Area, Street) *`}
-                  </label>
-                  <div className="relative">
-                    <MapPin size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-3 text-brown-400`} />
-                    <textarea
-                      rows={2}
+                {/* Split Delivery Address: Area, Street, House, Apartment */}
+                <div className="space-y-2.5 pt-0.5">
+                  <div className="flex items-center gap-1.5 text-brown-800 font-semibold text-[11px]">
+                    <MapPin size={13} className="text-brown-600 shrink-0" />
+                    <span>{isAr ? 'عنوان التوصيل *' : 'Delivery Address *'}</span>
+                  </div>
+
+                  {/* Area */}
+                  <div>
+                    <label className="block text-brown-600 font-medium mb-1 text-[10.5px]">
+                      {isAr ? 'المنطقة / الحي *' : 'Area / District *'}
+                    </label>
+                    <input
+                      type="text"
                       required
-                      value={customerAddress}
-                      onChange={(e) => setCustomerAddress(e.target.value)}
-                      placeholder={isAr ? 'المدينة، الحي/المنطقة، الشارع، رقم المبنى' : 'City, Area, Street, Building number'}
-                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 resize-none`}
+                      value={customerArea}
+                      onChange={(e) => {
+                        setCustomerArea(e.target.value);
+                        localStorage.setItem('hadab_customer_area', e.target.value);
+                      }}
+                      placeholder={isAr ? 'مثال: السالمية، الصديق، ديسكفري...' : 'e.g. Salmiya, Al-Siddiq, Downtown...'}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400"
                     />
+                  </div>
+
+                  {/* Street */}
+                  <div>
+                    <label className="block text-brown-600 font-medium mb-1 text-[10.5px]">
+                      {isAr ? 'الشارع *' : 'Street *'}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={customerStreet}
+                      onChange={(e) => {
+                        setCustomerStreet(e.target.value);
+                        localStorage.setItem('hadab_customer_street', e.target.value);
+                      }}
+                      placeholder={isAr ? 'اسم أو رقم الشارع' : 'Street name or number'}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400"
+                    />
+                  </div>
+
+                  {/* House & Apartment in 2-Column Grid */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-brown-600 font-medium mb-1 text-[10.5px]">
+                        {isAr ? 'المنزل / المبنى *' : 'House / Building *'}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={customerHouse}
+                        onChange={(e) => {
+                          setCustomerHouse(e.target.value);
+                          localStorage.setItem('hadab_customer_house', e.target.value);
+                        }}
+                        placeholder={isAr ? 'رقم المنزل أو القسيمة' : 'House or Bldg No.'}
+                        className="w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-brown-600 font-medium mb-1 text-[10.5px]">
+                        {isAr ? 'الشقة / الطابق' : 'Apartment / Floor'}
+                        <span className="text-[10px] text-brown-400 font-normal ml-1">({isAr ? 'اختياري' : 'Optional'})</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={customerApartment}
+                        onChange={(e) => {
+                          setCustomerApartment(e.target.value);
+                          localStorage.setItem('hadab_customer_apartment', e.target.value);
+                        }}
+                        placeholder={isAr ? 'شقة ٢، طابق ١' : 'Apt 2, Floor 1'}
+                        className="w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400"
+                      />
+                    </div>
                   </div>
                 </div>
 
+                {/* Notes */}
                 <div>
                   <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
                     {isAr ? 'ملاحظات خاصة (اختياري)' : 'Special Notes (Optional)'}
@@ -537,7 +615,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     value={customerNotes}
                     onChange={(e) => setCustomerNotes(e.target.value)}
                     placeholder={isAr ? 'تغليف هدية، موعد محدد للتسليم…' : 'Gift wrapping, delivery notes…'}
-                    className="w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300"
+                    className="w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400 focus:ring-1 focus:ring-brown-400"
                   />
                 </div>
 
@@ -663,7 +741,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {/* Footer for Cart and Checkout */}
           {step !== 'success' && (
-            <div className="p-5 sm:p-6 border-t border-brown-200/80 bg-cream-100 safe-bottom">
+            <div className="p-4 sm:p-6 border-t border-brown-200/80 bg-cream-100/95 backdrop-blur-sm safe-bottom">
               {step === 'cart' ? (
                 <>
                   <div className="flex justify-between text-sm text-brown-800 font-medium mb-3 sm:mb-4">
@@ -674,7 +752,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="button"
                     disabled={items.length === 0}
                     onClick={() => setStep('checkout')}
-                    className="w-full py-3.5 rounded-full bg-burgundy-500 hover:bg-burgundy-600 disabled:opacity-50 text-cream-100 text-xs uppercase tracking-wider font-semibold shadow-warm transition-all flex items-center justify-center gap-2 min-h-[46px] active:scale-[0.98] cursor-pointer"
+                    className="w-full py-3.5 rounded-full bg-brown-900 hover:bg-brown-950 disabled:opacity-50 text-cream-100 text-xs uppercase tracking-wider font-semibold shadow-warm transition-all flex items-center justify-center gap-2 min-h-[48px] active:scale-[0.98] cursor-pointer"
                   >
                     <span>{t.checkoutSecurely}</span>
                     <ArrowRight size={14} className={isAr ? 'rotate-180' : ''} />
@@ -685,7 +763,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   type="submit"
                   form="checkout-form"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 rounded-full bg-burgundy-500 hover:bg-burgundy-600 disabled:opacity-60 text-cream-100 text-xs uppercase tracking-wider font-semibold shadow-warm transition-all flex items-center justify-center gap-2 min-h-[46px] active:scale-[0.98] cursor-pointer"
+                  className="w-full py-3.5 rounded-full bg-brown-900 hover:bg-brown-950 disabled:opacity-60 text-cream-100 text-xs uppercase tracking-wider font-semibold shadow-warm transition-all flex items-center justify-center gap-2 min-h-[48px] active:scale-[0.98] cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
