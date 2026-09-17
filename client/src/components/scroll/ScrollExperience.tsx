@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useScrollScrubber } from '../../hooks/useScrollScrubber';
+import { useLanguage } from '../../context/LanguageContext';
 import { FrameCanvas } from './FrameCanvas';
 import { ScrollNarrativeOverlay } from './ScrollNarrativeOverlay';
 import type { Product } from '../../types';
@@ -18,6 +19,7 @@ export const ScrollExperience: React.FC<ScrollExperienceProps> = ({
   onSelectCategory,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { language } = useLanguage();
   const { frameIndex, floatFrame, activeBeat } = useScrollScrubber(containerRef);
 
   return (
@@ -29,7 +31,7 @@ export const ScrollExperience: React.FC<ScrollExperienceProps> = ({
       {/* Sticky Cinematic Viewport */}
       <div className="sticky top-0 w-full h-screen h-[100dvh] overflow-hidden flex items-center justify-center">
         {/* The 19-Frame Canvas: optical 60fps/120fps subframe cross-fading to the bag frame */}
-        <FrameCanvas currentFrame={floatFrame} />
+        <FrameCanvas currentFrame={floatFrame} isAr={language === 'ar'} />
 
         {/* Narrative & Micro-Interaction Overlay: continuous liquid interpolation */}
         <ScrollNarrativeOverlay

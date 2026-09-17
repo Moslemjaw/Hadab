@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 interface FrameCanvasProps {
-  currentFrame: number; // continuous float 0.0 to 35.0
+  currentFrame: number; // continuous float 0.0 to 18.0
   onLoaded?: () => void;
+  isAr?: boolean;
 }
 
 const TOTAL_FRAMES = 19;
 
-export const FrameCanvas: React.FC<FrameCanvasProps> = ({ currentFrame, onLoaded }) => {
+export const FrameCanvas: React.FC<FrameCanvasProps> = ({ currentFrame, onLoaded, isAr = false }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const [loadProgress, setLoadProgress] = useState(0);
@@ -97,81 +98,54 @@ export const FrameCanvas: React.FC<FrameCanvasProps> = ({ currentFrame, onLoaded
     const isMobile = width < 768;
     const navBarHeight = 78;
 
-    // Base uniform scale for Hero & 3D Bag (frames 0 - 20)
-    const standardScale = Math.min(width / imgW, height / imgH) * 0.90;
+    // Elegant luxury scale - comfortably sized so it never collides with side text
+    const standardScale = Math.min(width / imgW, height / imgH) * (isMobile ? 0.75 : 0.66);
     const baseW = Math.round(imgW * standardScale);
     const baseH = Math.round(imgH * standardScale);
     const baseX = Math.round((width - baseW) / 2);
     const baseY = Math.round(((height - navBarHeight) - baseH) / 2) - Math.round(navBarHeight * 0.35);
 
-    if (frameFloat <= 20) {
-      if (isMobile && frameFloat < 12) {
-        // On mobile for Beat 0 (Hero): position logo UP in the upper section
-        const mobileHeroScale = Math.min((width * 0.65) / imgW, (height * 0.30) / imgH);
-        const heroW = Math.round(imgW * mobileHeroScale);
-        const heroH = Math.round(imgH * mobileHeroScale);
-        const heroX = Math.round((width - heroW) / 2);
-        // Positioned in the upper region below the navbar
-        const heroY = navBarHeight + Math.round(height * 0.025);
+    if (isMobile) {
+      // On mobile for Beat 0 (Hero): position logo in the upper section
+      const mobileHeroScale = Math.min((width * 0.58) / imgW, (height * 0.28) / imgH);
+      const heroW = Math.round(imgW * mobileHeroScale);
+      const heroH = Math.round(imgH * mobileHeroScale);
+      const heroX = Math.round((width - heroW) / 2);
+      const heroY = navBarHeight + Math.round(height * 0.03);
 
-        if (frameFloat <= 10) {
-          return { drawX: heroX, drawY: heroY, drawW: heroW, drawH: heroH };
-        }
-        // Smoothly lerp from upper position to centered position as it unfolds into Beat 1 bag
-        const t = (frameFloat - 10) / 2;
-        return {
-          drawX: Math.round(heroX + (baseX - heroX) * t),
-          drawY: Math.round(heroY + (baseY - heroY) * t),
-          drawW: Math.round(heroW + (baseW - heroW) * t),
-          drawH: Math.round(heroH + (baseH - heroH) * t),
-        };
+      if (frameFloat <= 7) {
+        return { drawX: heroX, drawY: heroY, drawW: heroW, drawH: heroH };
       }
-      return { drawX: baseX, drawY: baseY, drawW: baseW, drawH: baseH };
+      // Smoothly lerp from upper position to centered position as it unfolds into Beat 1 bag
+      const t = Math.min(1, Math.max(0, (frameFloat - 7) / 4));
+      const smoothT = t * t * (3 - 2 * t);
+      return {
+        drawX: Math.round(heroX + (baseX - heroX) * smoothT),
+        drawY: Math.round(heroY + (baseY - heroY) * smoothT),
+        drawW: Math.round(heroW + (baseW - heroW) * smoothT),
+        drawH: Math.round(heroH + (baseH - heroH) * smoothT),
+      };
     }
 
-    // For Sections 3 & 4 (Frames 21 - 36):
-    // Align the thread cord frame precisely with the navbar bounds:
-    // In raw frames:
-    // Left cord border: x = 126 (0.0984 * 1280)
-    // Right cord border: x = 1159 (0.9055 * 1280)
-    // Cord width = 1033 (0.8070 * 1280)
-    // Top cord border: y = 130 (0.1016 * 1280)
-    // Bottom cord border: y = 1146 (0.8953 * 1280)
-    // Cord height = 1016 (0.7938 * 1280)
+    // On Desktop: In Beat 0 (frames 0 to 7), offset logo away from text column
+    // English text is on the left -> logo is offset right (+13% screen width)
+    // Arabic text is on the right -> logo is offset left (-13% screen width)
+    const shiftDirection = isAr ? -1 : 1;
+    const desktopHeroX = Math.round(baseX + width * 0.13 * shiftDirection);
 
-    const navMaxW = Math.min(width - 48, 1280);
-    const navLeft = Math.round((width - navMaxW) / 2);
-    const navRight = navLeft + navMaxW;
+    if (frameFloat <= 7) {
+      return { drawX: desktopHeroX, drawY: baseY, drawW: baseW, drawH: baseH };
+    }
 
-    // Target cord coordinates on screen to match navbar start and end
-    const targetCordLeft = navLeft;
-    const targetCordRight = navRight;
-    const targetCordWidth = targetCordRight - targetCordLeft;
-
-    // Vertically: cord fits comfortably between top sticky navbar (~85px) and bottom status bar (~height - 85px)
-    const targetCordTop = Math.max(75, Math.min(95, height * 0.09));
-    const targetCordBottom = height - Math.max(80, Math.min(105, height * 0.11));
-    const targetCordHeight = targetCordBottom - targetCordTop;
-
-    const targetScaleX = targetCordWidth / 1033;
-    const targetScaleY = targetCordHeight / 1016;
-
-    const targetW = Math.round(imgW * targetScaleX);
-    const targetH = Math.round(imgH * targetScaleY);
-    const targetX = Math.round(targetCordLeft - 126 * targetScaleX);
-    const targetY = Math.round(targetCordTop - 130 * targetScaleY);
-
-    // Smooth transition between frame 20 and 26
-    const t = Math.min(1, Math.max(0, (frameFloat - 20) / 6));
+    // Smoothly glide to center as it morphs into the bag (frames 7 to 12)
+    const t = Math.min(1, Math.max(0, (frameFloat - 7) / 4.5));
     const smoothT = t * t * (3 - 2 * t);
+    const drawX = Math.round(desktopHeroX + (baseX - desktopHeroX) * smoothT);
 
-    const drawW = Math.round(baseW + (targetW - baseW) * smoothT);
-    const drawH = Math.round(baseH + (targetH - baseH) * smoothT);
-    const drawX = Math.round(baseX + (targetX - baseX) * smoothT);
-    const drawY = Math.round(baseY + (targetY - baseY) * smoothT);
+    return { drawX, drawY: baseY, drawW: baseW, drawH: baseH };
+  }, [isAr]);
 
-    return { drawX, drawY, drawW, drawH };
-  }, []);
+
 
   // Draw frame with High-DPI clarity, zero ghosting, and high image smoothing
   const drawFrame = useCallback(
