@@ -509,17 +509,17 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                         
                         {/* Payment & Order Status Strip (Managed by Admin) */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-white rounded-xl border border-brown-200/60 shadow-xs">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${paymentBadge.bg}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${paymentBadge.dot}`} />
                               <span>{isAr ? 'حالة الدفع:' : 'Payment:'} {paymentBadge.label}</span>
                             </span>
-                            <span className="text-[11px] text-brown-500 font-light hidden sm:inline">
+                            <span className="text-[11px] text-brown-500 font-light">
                               {paymentBadge.key === 'paid'
                                 ? isAr ? 'تم تأكيد الدفع بنجاح' : 'Payment confirmed'
                                 : paymentBadge.key === 'contacting'
                                 ? isAr ? 'فريقنا يتواصل معك لإتمام الدفع' : 'Our team is coordinating with you'
-                                : isAr ? 'بانتظار إتمام الدفع عبر كي نت' : 'Awaiting payment via KNET'}
+                                : isAr ? 'سيتواصل معك فريقنا لإتمام الدفع' : 'Our team will contact you for the payment'}
                             </span>
                           </div>
 
@@ -570,45 +570,12 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                           </div>
                         </div>
 
-                        {/* Delivery Address & Status Action */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                        {/* Delivery Address */}
+                        <div className="pt-1">
                           <div className="text-[11px] text-brown-600 font-light">
                             <span className="font-semibold text-brown-800">{isAr ? 'العنوان: ' : 'Address: '}</span>
                             <span>{order.address || `${area}, Block ${block}, Street ${street}, House ${house}, Kuwait`}</span>
                           </div>
-
-                          {/* WhatsApp Action Tailored to Status */}
-                          <a
-                            href={`https://wa.me/96599000000?text=${encodeURIComponent(
-                              isAr
-                                ? `مرحباً هَدَب! أستفسر عن طلبي #${order.orderNumber} (الحالة: ${paymentBadge.label}) بقيمة ${order.total} د.ك.`
-                                : `Hello HADAB! Inquiring about order #${order.orderNumber} (Status: ${paymentBadge.label}) for ${order.total} KWD.`
-                            )}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`px-3.5 py-2 rounded-xl text-white text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors self-start sm:self-auto ${
-                              paymentBadge.key === 'unpaid'
-                                ? 'bg-amber-800 hover:bg-amber-900'
-                                : paymentBadge.key === 'contacting'
-                                ? 'bg-sky-800 hover:bg-sky-900'
-                                : 'bg-[#2A201B] hover:bg-emerald-800'
-                            }`}
-                          >
-                            <MessageCircle size={13} />
-                            <span>
-                              {paymentBadge.key === 'unpaid'
-                                ? isAr
-                                  ? 'إتمام الدفع عبر الواتساب (KNET)'
-                                  : 'Pay via WhatsApp (KNET Link)'
-                                : paymentBadge.key === 'contacting'
-                                ? isAr
-                                  ? 'محادثة خدمة العملاء'
-                                  : 'Chat with Concierge'
-                                : isAr
-                                ? 'مراسلة خدمة العملاء'
-                                : 'WhatsApp Support'}
-                            </span>
-                          </a>
                         </div>
 
                         {/* Minimal 4-Step Progress Line */}
