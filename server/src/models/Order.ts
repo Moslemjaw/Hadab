@@ -18,8 +18,10 @@ export interface IOrderItem extends Document {
   total: number;
   address?: string;
   notes?: string;
-  status: 'pending' | 'hooking' | 'finishing' | 'shipped' | 'delivered';
+  status: 'unpaid' | 'contacting' | 'paid' | 'pending' | 'hooking' | 'finishing' | 'shipped' | 'delivered';
   statusArabic: string;
+  paymentStatus?: 'unpaid' | 'contacting' | 'paid';
+  paymentStatusArabic?: string;
   artisan: string;
   createdAt: Date;
   updatedAt: Date;
@@ -52,10 +54,16 @@ const OrderSchema = new Schema<IOrderItem>(
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['pending', 'hooking', 'finishing', 'shipped', 'delivered'],
-      default: 'pending',
+      enum: ['unpaid', 'contacting', 'paid', 'pending', 'hooking', 'finishing', 'shipped', 'delivered'],
+      default: 'unpaid',
     },
-    statusArabic: { type: String, default: 'قيد الانتظار' },
+    statusArabic: { type: String, default: 'غير مدفوع' },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'contacting', 'paid'],
+      default: 'unpaid',
+    },
+    paymentStatusArabic: { type: String, default: 'غير مدفوع' },
     artisan: { type: String, default: 'Hadab Team (Amman)' },
   },
   {

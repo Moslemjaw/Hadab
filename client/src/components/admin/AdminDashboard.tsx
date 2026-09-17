@@ -57,8 +57,9 @@ interface OrderItem {
   destinationArabic: string;
   items: { product: Product; quantity: number }[];
   total: number;
-  status: 'pending' | 'hooking' | 'finishing' | 'shipped' | 'delivered';
+  status: 'unpaid' | 'contacting' | 'paid' | 'pending' | 'hooking' | 'finishing' | 'shipped' | 'delivered';
   statusArabic: string;
+  paymentStatus?: 'unpaid' | 'contacting' | 'paid';
   artisan: string;
   createdAt: string;
 }
@@ -339,6 +340,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const handleUpdateOrderStatus = async (orderId: string, nextStatus: OrderItem['status']) => {
     tactileAudio.playScrubTick(340);
     const statusLabels: Record<OrderItem['status'], string> = {
+      unpaid: isAr ? 'غير مدفوع' : 'Unpaid',
+      contacting: isAr ? 'جاري التواصل' : 'Contacting Customer',
+      paid: isAr ? 'تم الدفع' : 'Paid',
       pending: isAr ? 'قيد الانتظار' : 'Pending',
       hooking: isAr ? 'قيد الحياكة اليدوية' : 'Hooking in Progress',
       finishing: isAr ? 'تشطيب الأطراف والأرشيف' : 'Finishing & Wrapping',
@@ -346,9 +350,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       delivered: isAr ? 'تم التسليم' : 'Delivered',
     };
 
+    const isPaymentStatus = ['unpaid', 'contacting', 'paid'].includes(nextStatus);
+
     setOrdersList((prev) =>
       prev.map((o) =>
-        o.id === orderId ? { ...o, status: nextStatus, statusArabic: statusLabels[nextStatus] } : o
+        o.id === orderId
+          ? {
+              ...o,
+              status: nextStatus,
+              statusArabic: statusLabels[nextStatus],
+              paymentStatus: isPaymentStatus ? (nextStatus as any) : o.paymentStatus,
+            }
+          : o
       )
     );
 
@@ -356,6 +369,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       await api.updateOrderStatus(orderId, {
         status: nextStatus,
         statusArabic: statusLabels[nextStatus],
+        ...(isPaymentStatus ? { paymentStatus: nextStatus, paymentStatusArabic: statusLabels[nextStatus] } : {}),
       });
     } catch (err) {
       console.error('Failed to sync order status to database:', err);
@@ -1772,11 +1786,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                                       onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
                                       className="flex-1 max-w-[140px] px-2 py-1.5 rounded-lg bg-white border border-brown-300 text-xs font-semibold text-brown-900 focus:outline-none focus:border-blush-400 cursor-pointer shadow-sm"
                                     >
-                                      <option value="pending">Pending</option>
-                                      <option value="hooking">Hooking</option>
-                                      <option value="finishing">Finishing</option>
-                                      <option value="shipped">Shipped</option>
-                                      <option value="delivered">Delivered</option>
+                                      <option value="unpaid">{isAr ? 'غير مدفوع' : 'Unpaid'}</option>
+                                      <option value="contacting">{isAr ? 'جاري التواصل' : 'Contacting'}</option>
+                                      <option value="paid">{isAr ? 'تم الدفع' : 'Paid'}</option>
+                                      <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
+                                      <option value="hooking">{isAr ? 'قيد الحياكة' : 'Hooking'}</option>
+                                      <option value="finishing">{isAr ? 'تشطيب' : 'Finishing'}</option>
+                                      <option value="shipped">{isAr ? 'تم الشحن' : 'Shipped'}</option>
+                                      <option value="delivered">{isAr ? 'تم التسليم' : 'Delivered'}</option>
                                     </select>
                                   </div>
                                 </div>

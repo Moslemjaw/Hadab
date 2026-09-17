@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Product } from '../../types';
 import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 
 interface CartDrawerProps {
@@ -20,17 +21,27 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onClearBag,
 }) => {
   const { language, t } = useLanguage();
+  const { user } = useAuth();
   const isAr = language === 'ar';
   const curr = isAr ? 'د.ك' : 'KWD';
 
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerName, setCustomerName] = useState(user?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
+  const [customerAddress, setCustomerAddress] = useState(
+    localStorage.getItem('hadab_customer_area')
+      ? `${localStorage.getItem('hadab_customer_area')}, Block ${localStorage.getItem('hadab_customer_block') || ''}, Street ${localStorage.getItem('hadab_customer_street') || ''}, House ${localStorage.getItem('hadab_customer_house') || ''}`
+      : ''
+  );
   const [customerNotes, setCustomerNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderNumber, setPlacedOrderNumber] = useState('');
   const [orderTotal, setOrderTotal] = useState(0);
+
+  useEffect(() => {
+    if (user?.name && !customerName) setCustomerName(user.name);
+    if (user?.phone && !customerPhone) setCustomerPhone(user.phone);
+  }, [user]);
 
   // Lock body scroll on open
   useEffect(() => {
@@ -75,11 +86,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       const orderPayload = {
         customerName,
         customerPhone,
-        customerEmail: `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest`,
+        customerEmail: user?.email || `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest`,
         destination: 'Kuwait',
         destinationArabic: 'الكويت',
         address: customerAddress,
         notes: customerNotes,
+        status: 'unpaid',
+        statusArabic: 'غير مدفوع',
+        paymentStatus: 'unpaid',
+        paymentStatusArabic: 'غير مدفوع',
         items: items.map((i) => {
           const colorPart = i.product.selectedColor ? ` [${i.product.selectedColor}]` : '';
           const sizePart = i.product.selectedSize ? ` - ${i.product.selectedSize}` : '';

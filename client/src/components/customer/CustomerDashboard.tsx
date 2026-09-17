@@ -17,17 +17,19 @@ import {
   Truck,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   Mail,
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  Check,
 } from 'lucide-react';
 
 interface CustomerDashboardProps {
   onBackToStore: () => void;
   onOpenCollection: () => void;
 }
+
+type OrderPaymentStatus = 'unpaid' | 'contacting' | 'paid';
 
 export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   onBackToStore,
@@ -50,7 +52,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   const [house, setHouse] = useState(localStorage.getItem('hadab_customer_house') || '5');
   const [addressSaved, setAddressSaved] = useState(false);
 
-  // Parse country & phone for Address tab
+  // Country & phone state
   const [addressCountry, setAddressCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [addressPhoneDigits, setAddressPhoneDigits] = useState('9912 3456');
 
@@ -61,7 +63,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
-  // Sync phone on user load
+  // Initialize phone from user
   useEffect(() => {
     const rawPhone = user?.phone || localStorage.getItem('hadab_customer_phone') || '';
     if (rawPhone) {
@@ -88,17 +90,18 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
       const myOrders = await api.getMyOrders();
       if (myOrders && myOrders.length > 0) {
         setOrders(myOrders);
-        // Expand first order by default if available
         setExpandedOrderId(myOrders[0]._id || myOrders[0].orderNumber);
       } else {
-        // Fallback demo order for immediate visual polish if no orders in db yet
+        // Fallback demo order
         const demo = [
           {
             _id: 'demo-1',
             orderNumber: 'HDB-2026-105',
             createdAt: new Date().toISOString(),
-            status: 'hooking',
-            statusArabic: 'قيد الحياكة في الأردن',
+            status: 'unpaid',
+            statusArabic: 'غير مدفوع',
+            paymentStatus: 'unpaid',
+            paymentStatusArabic: 'غير مدفوع',
             total: 135,
             destination: 'Kuwait',
             destinationArabic: 'الكويت',
@@ -118,14 +121,15 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
         setExpandedOrderId('demo-1');
       }
     } catch {
-      // Fallback in case of auth error or offline
       const demo = [
         {
           _id: 'demo-fallback',
           orderNumber: 'HDB-2026-105',
           createdAt: new Date().toISOString(),
-          status: 'pending',
-          statusArabic: 'قيد الانتظار وتأكيد الدفع',
+          status: 'unpaid',
+          statusArabic: 'غير مدفوع',
+          paymentStatus: 'unpaid',
+          paymentStatusArabic: 'غير مدفوع',
           total: 135,
           destination: 'Kuwait',
           destinationArabic: 'الكويت',
@@ -145,6 +149,43 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
       setExpandedOrderId('demo-fallback');
     } finally {
       setIsLoadingOrders(false);
+    }
+  };
+
+  // Dynamic status update handler for orders
+  const handleUpdatePaymentStatus = async (orderId: string, nextStatus: OrderPaymentStatus) => {
+    tactileAudio.playScrubTick(380);
+
+    const labels: Record<OrderPaymentStatus, { en: string; ar: string }> = {
+      unpaid: { en: 'Unpaid', ar: 'غير مدفوع' },
+      contacting: { en: 'Contacting', ar: 'جاري التواصل' },
+      paid: { en: 'Paid', ar: 'تم الدفع' },
+    };
+
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o._id === orderId || o.orderNumber === orderId) {
+          return {
+            ...o,
+            paymentStatus: nextStatus,
+            paymentStatusArabic: labels[nextStatus].ar,
+            status: ['hooking', 'shipped', 'delivered'].includes(o.status) ? o.status : nextStatus,
+            statusArabic: ['hooking', 'shipped', 'delivered'].includes(o.status)
+              ? o.statusArabic
+              : labels[nextStatus].ar,
+          };
+        }
+        return o;
+      })
+    );
+
+    try {
+      await api.updateOrderStatus(orderId, {
+        status: nextStatus,
+        statusArabic: labels[nextStatus].ar,
+      });
+    } catch {
+      // Optimistic update retained
     }
   };
 
@@ -191,74 +232,91 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     [orders]
   );
 
-  const getStatusBadge = (status: string, statusArabic?: string) => {
+  // Status Badge Helper: paid, contacting, unpaid
+  const getOrderPaymentBadge = (order: any) => {
+    const raw = (order.paymentStatus || order.status || 'unpaid').toLowerCase();
+
+    if (raw === 'paid') {
+      return {
+        key: 'paid' as OrderPaymentStatus,
+        label: isAr ? 'تم الدفع' : 'Paid',
+        bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+        dot: 'bg-emerald-500',
+        icon: CheckCircle2,
+      };
+    }
+    if (raw === 'contacting') {
+      return {
+        key: 'contacting' as OrderPaymentStatus,
+        label: isAr ? 'جاري التواصل' : 'Contacting',
+        bg: 'bg-sky-50 text-sky-800 border-sky-200/80',
+        dot: 'bg-sky-500',
+        icon: Clock,
+      };
+    }
+    return {
+      key: 'unpaid' as OrderPaymentStatus,
+      label: isAr ? 'غير مدفوع' : 'Unpaid',
+      bg: 'bg-amber-50 text-amber-800 border-amber-200/80',
+      dot: 'bg-amber-500',
+      icon: AlertCircle,
+    };
+  };
+
+  // Fulfillment badge (if order is also in production/transit)
+  const getFulfillmentPill = (status: string, statusArabic?: string) => {
     switch (status) {
       case 'delivered':
         return {
-          bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-          dot: 'bg-emerald-500',
+          label: isAr ? 'تم التسليم' : 'Delivered',
           icon: CheckCircle2,
-          label: isAr ? 'تم التسليم بنجاح' : 'Delivered',
+          color: 'text-emerald-700 bg-emerald-100/50',
         };
       case 'shipped':
         return {
-          bg: 'bg-sky-50 text-sky-800 border-sky-200/80',
-          dot: 'bg-sky-500',
+          label: isAr ? 'تم الشحن' : 'Shipped',
           icon: Truck,
-          label: isAr ? 'تم الشحن للكويت' : 'Shipped to Kuwait',
+          color: 'text-sky-700 bg-sky-100/50',
         };
       case 'hooking':
       case 'finishing':
         return {
-          bg: 'bg-amber-50 text-amber-800 border-amber-200/80',
-          dot: 'bg-amber-500',
+          label: isAr ? (statusArabic || 'قيد الحياكة') : 'Handcrafting',
           icon: Clock,
-          label: isAr ? (statusArabic || 'قيد الحياكة بالأردن') : 'Handcrafting in Jordan',
+          color: 'text-amber-700 bg-amber-100/50',
         };
       default:
-        return {
-          bg: 'bg-cream-100 text-brown-800 border-brown-200/80',
-          dot: 'bg-brown-400',
-          icon: AlertCircle,
-          label: isAr ? (statusArabic || 'بانتظار تأكيد الدفع') : 'Awaiting Payment',
-        };
+        return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF8F4] text-brown-800 font-sans pb-24 selection:bg-blush-200 selection:text-brown-900">
-      {/* Top Header Bar - Warm, Airy & Brand-Aligned */}
-      <header className="sticky top-0 z-40 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-brown-200/60 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onBackToStore}
-              className="px-3 py-1.5 rounded-xl hover:bg-brown-100/60 text-brown-700 hover:text-brown-950 transition-colors flex items-center gap-2 text-xs uppercase tracking-wider font-semibold cursor-pointer"
-            >
-              <ArrowLeft size={15} className={isAr ? 'rotate-180' : ''} />
-              <span>{isAr ? 'العودة للمتجر' : 'Back to Store'}</span>
-            </button>
-            <div className="h-4 w-px bg-brown-200/70 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <span className="font-serif text-base sm:text-lg font-normal tracking-wide text-brown-950">
-                HADAB
-              </span>
-              <span className="text-[10px] bg-brown-100 text-brown-600 px-2 py-0.5 rounded-full border border-brown-200/60 font-medium tracking-wider uppercase">
-                {isAr ? 'بوابة العميل' : 'Customer Sanctuary'}
-              </span>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#FAF7F2] text-brown-800 font-sans pb-24 selection:bg-blush-200 selection:text-brown-900">
+      
+      {/* Top Header Bar - Minimal & Airy */}
+      <header className="sticky top-0 z-30 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-brown-200/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBackToStore}
+            className="flex items-center gap-1.5 text-xs text-brown-600 hover:text-brown-950 transition-colors font-medium cursor-pointer"
+          >
+            <ArrowLeft size={14} className={isAr ? 'rotate-180' : ''} />
+            <span>{isAr ? 'المتجر' : 'Store'}</span>
+          </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <span className="font-serif text-lg tracking-wide text-brown-950 font-normal">
+            HADAB
+          </span>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onOpenCollection}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium transition-colors shadow-xs"
+              className="px-3 py-1.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <ShoppingBag size={13} />
-              <span className="hidden sm:inline">{isAr ? 'تصفح القطع' : 'Explore Pieces'}</span>
-              <span className="sm:hidden">{isAr ? 'المتجر' : 'Shop'}</span>
+              <ShoppingBag size={12} />
+              <span className="hidden sm:inline">{isAr ? 'المتجر' : 'Collection'}</span>
             </button>
             <button
               type="button"
@@ -266,79 +324,56 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                 logout();
                 onBackToStore();
               }}
-              className="p-2 rounded-xl hover:bg-brown-100/60 text-brown-500 hover:text-burgundy-700 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-brown-400 hover:text-burgundy-700 transition-colors cursor-pointer"
               title={isAr ? 'تسجيل الخروج' : 'Log Out'}
             >
-              <LogOut size={16} />
+              <LogOut size={15} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8 space-y-6">
-        
-        {/* Patron Greeting & Clean Metric Strip */}
-        <div className="bg-[#FAF7F2] rounded-3xl p-5 sm:p-7 border border-brown-200/70 shadow-warm-sm">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex items-center gap-3.5 sm:gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#2A201B] text-cream-100 flex items-center justify-center font-serif text-xl sm:text-2xl font-normal shadow-xs shrink-0">
-                {(user?.name || 'H').charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-burgundy-600 mb-0.5">
-                  <Sparkles size={11} />
-                  <span>{isAr ? 'عميل هَدَب • الكويت' : 'HADAB Patron • Kuwait'}</span>
-                </div>
-                <h1 className="font-serif text-xl sm:text-2xl text-brown-950 font-normal truncate">
-                  {isAr ? `أهلاً بك، ${user?.name || 'ضيفنا الكريم'}` : `Welcome, ${user?.name || 'Dear Patron'}`}
-                </h1>
-                <p className="text-[11px] sm:text-xs text-brown-500 font-light mt-0.5 flex items-center gap-2 truncate">
-                  <span className="truncate">{user?.email || 'Customer'}</span>
-                  <span>•</span>
-                  <span className="shrink-0">{isAr ? 'الشحن إلى الكويت' : 'Kuwait Delivery'}</span>
-                </p>
-              </div>
-            </div>
+      {/* Main Content Area */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
 
-            {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 bg-[#F2ECE4]/70 p-2 sm:p-3 rounded-2xl border border-brown-200/50">
-              <div className="px-2 sm:px-4 py-1.5 text-center">
-                <div className="text-[10px] uppercase font-semibold tracking-wider text-brown-500">
-                  {isAr ? 'الطلبات' : 'Orders'}
-                </div>
-                <div className="font-serif text-lg sm:text-xl font-medium text-brown-900 mt-0.5">
-                  {orders.length}
-                </div>
-              </div>
+        {/* Clean, Uncluttered Greeting Header */}
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-brown-200/60 pb-4">
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl text-brown-950 font-normal">
+              {isAr ? `أهلاً بك، ${user?.name || 'ضيفنا الكريم'}` : `Welcome, ${user?.name || 'Dear Patron'}`}
+            </h1>
+            <p className="text-xs text-brown-500 font-light mt-1 flex items-center gap-2 flex-wrap">
+              <span>{user?.email || 'customer@hadab.craft'}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <MapPin size={11} className="text-burgundy-600" />
+                <span>{isAr ? 'الكويت' : 'Kuwait'}</span>
+              </span>
+            </p>
+          </div>
 
-              <div className="px-2 sm:px-4 py-1.5 text-center border-x border-brown-200/60">
-                <div className="text-[10px] uppercase font-semibold tracking-wider text-brown-500">
-                  {isAr ? 'قيد التجهيز' : 'Active'}
-                </div>
-                <div className="font-serif text-lg sm:text-xl font-medium text-burgundy-600 mt-0.5">
-                  {activeOrdersCount}
-                </div>
-              </div>
-
-              <div className="px-2 sm:px-4 py-1.5 text-center">
-                <div className="text-[10px] uppercase font-semibold tracking-wider text-brown-500">
-                  {isAr ? 'المجموع' : 'Total'}
-                </div>
-                <div className="font-serif text-lg sm:text-xl font-medium text-brown-900 mt-0.5">
-                  {totalSpent} <span className="text-[10px] font-normal text-brown-600">{curr}</span>
-                </div>
-              </div>
-            </div>
+          {/* Inline Quick Summary Numbers */}
+          <div className="flex items-center gap-4 text-xs text-brown-600 font-light pt-1 sm:pt-0">
+            <span>
+              <strong className="font-medium text-brown-900">{orders.length}</strong> {isAr ? 'طلب' : 'Orders'}
+            </span>
+            <span>•</span>
+            <span>
+              <strong className="font-medium text-brown-900">{activeOrdersCount}</strong> {isAr ? 'قيد التجهيز' : 'Active'}
+            </span>
+            <span>•</span>
+            <span>
+              <strong className="font-medium text-brown-900">{totalSpent}</strong> {curr}
+            </span>
           </div>
         </div>
 
-        {/* Sleek Segmented Navigation Tabs */}
-        <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-[#F2ECE4]/80 rounded-2xl border border-brown-200/60 overflow-x-auto custom-scrollbar">
+        {/* Breathable Tabs Navigation */}
+        <div className="flex items-center gap-1 border-b border-brown-200/50 pb-px overflow-x-auto custom-scrollbar">
           {[
-            { id: 'orders', label: isAr ? 'سجل الطلبات' : 'Orders & Tracking', icon: Package, count: orders.length },
+            { id: 'orders', label: isAr ? 'الطلبات والمتابعة' : 'Orders & Tracking', icon: Package, count: orders.length },
             { id: 'address', label: isAr ? 'عنوان التوصيل' : 'Delivery Address', icon: MapPin },
-            { id: 'support', label: isAr ? 'خدمة العملاء والدفع' : 'Concierge & Payment', icon: MessageCircle },
+            { id: 'support', label: isAr ? 'خدمة العملاء' : 'Concierge & Payment', icon: MessageCircle },
             { id: 'profile', label: isAr ? 'الملف الشخصي' : 'Account Profile', icon: User },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -349,20 +384,20 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                 type="button"
                 onClick={() => {
                   setActiveTab(tab.id as any);
-                  tactileAudio.playScrubTick(360);
+                  tactileAudio.playScrubTick(340);
                 }}
-                className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex-1 ${
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-medium transition-all whitespace-nowrap cursor-pointer border-b-2 -mb-px ${
                   isActive
-                    ? 'bg-[#2A201B] text-cream-100 shadow-sm'
-                    : 'text-brown-600 hover:text-brown-950 hover:bg-brown-100/40'
+                    ? 'border-[#2A201B] text-brown-950 font-semibold'
+                    : 'border-transparent text-brown-500 hover:text-brown-800'
                 }`}
               >
-                <Icon size={14} className="shrink-0" />
-                <span className="text-[11px] sm:text-xs">{tab.label}</span>
-                {tab.count !== undefined && (
+                <Icon size={14} />
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
                   <span
-                    className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-brown-200/60 text-brown-700'
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isActive ? 'bg-[#2A201B] text-cream-100' : 'bg-brown-200/60 text-brown-700'
                     }`}
                   >
                     {tab.count}
@@ -373,263 +408,258 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
           })}
         </div>
 
-        {/* TAB 1: ORDER HISTORY & TRACKING */}
+        {/* ============================================================ */}
+        {/* TAB 1: ORDERS & TRACKING (Restructured, Spacious, Dynamic) */}
+        {/* ============================================================ */}
         {activeTab === 'orders' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="font-serif text-lg sm:text-xl text-brown-900 font-normal">
-                {isAr ? 'متابعة الطلبات' : 'Your Orders'}
+          <div className="space-y-4 pt-1">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs uppercase tracking-wider font-semibold text-brown-500">
+                {isAr ? 'قائمة الطلبات' : 'Order History'}
               </h2>
               <button
                 type="button"
                 onClick={fetchOrders}
-                className="inline-flex items-center gap-1.5 text-xs text-brown-500 hover:text-burgundy-700 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs text-brown-500 hover:text-brown-900 transition-colors cursor-pointer"
               >
-                <RefreshCw size={12} className={isLoadingOrders ? 'animate-spin' : ''} />
+                <RefreshCw size={11} className={isLoadingOrders ? 'animate-spin' : ''} />
                 <span>{isAr ? 'تحديث' : 'Refresh'}</span>
               </button>
             </div>
 
-            {/* Subtle Concierge Payment Notice Banner */}
-            <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-brown-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200/60">
-                  <MessageCircle size={16} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-brown-900">
-                    {isAr ? 'تأكيد الدفع عبر الواتساب' : 'WhatsApp Concierge & KNET Payment'}
-                  </h4>
-                  <p className="text-[11px] text-brown-600 font-light mt-0.5">
-                    {isAr
-                      ? 'سيتواصل معك فريق خدمة العملاء لإرسال رابط الدفع وتأكيد الحياكة والشحن للكويت.'
-                      : 'Our team contacts you on WhatsApp for payment link, order updates, and delivery.'}
-                  </p>
-                </div>
-              </div>
-              <a
-                href="https://wa.me/96599000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%87%D9%8E%D8%AF%D9%8E%D8%A8%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D9%85%D8%AA%D8%A7%D8%A8%D8%B9%D8%A9%20%D8%B7%D9%84%D8%A8%D9%8A%20%D9%88%D8%A7%D9%84%D8%AF%D9%81%D8%B9"
-                target="_blank"
-                rel="noreferrer"
-                className="px-3.5 py-1.5 rounded-xl bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium flex items-center justify-center gap-1.5 shadow-xs shrink-0 transition-colors self-start sm:self-auto"
-              >
-                <MessageCircle size={13} />
-                <span>{isAr ? 'محادثة الواتساب' : 'Chat Concierge'}</span>
-              </a>
-            </div>
-
             {/* Empty State */}
             {orders.length === 0 ? (
-              <div className="bg-[#FAF7F2] rounded-3xl p-10 sm:p-14 text-center border border-brown-200/70 space-y-4">
-                <Package size={42} className="mx-auto text-brown-300 stroke-1" />
-                <div>
-                  <h3 className="font-serif text-lg text-brown-900">
-                    {isAr ? 'لا توجد طلبات مسجلة بعد' : 'No orders yet'}
-                  </h3>
-                  <p className="text-xs text-brown-500 font-light mt-1 max-w-sm mx-auto">
-                    {isAr
-                      ? 'تصفح مجموعتنا الفريدة واطلب أول قطعة كروشيه محبوكة يدوياً خصيصاً لك.'
-                      : 'Explore our handmade collection and discover intentional, hand-crocheted pieces.'}
-                  </p>
-                </div>
+              <div className="bg-white/60 rounded-2xl p-10 text-center border border-brown-200/50 space-y-3">
+                <Package size={36} className="mx-auto text-brown-300 stroke-1" />
+                <h3 className="font-serif text-base text-brown-900">
+                  {isAr ? 'لا توجد طلبات بعد' : 'No orders yet'}
+                </h3>
                 <button
                   type="button"
                   onClick={onOpenCollection}
-                  className="px-6 py-2.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-full bg-[#2A201B] text-cream-100 text-xs font-medium cursor-pointer"
                 >
-                  {isAr ? 'تصفح المتجر' : 'Shop Collection'}
+                  {isAr ? 'تصفح المجموعة' : 'Explore Collection'}
                 </button>
               </div>
             ) : (
               orders.map((order) => {
                 const isExpanded = expandedOrderId === (order._id || order.orderNumber);
-                const badge = getStatusBadge(order.status, order.statusArabic);
-                const BadgeIcon = badge.icon;
+                const paymentBadge = getOrderPaymentBadge(order);
+                const fulfillmentPill = getFulfillmentPill(order.status, order.statusArabic);
 
                 return (
                   <div
                     key={order._id || order.orderNumber}
-                    className="bg-[#FAF7F2] rounded-3xl border border-brown-200/70 shadow-xs overflow-hidden transition-all"
+                    className="bg-white/80 rounded-2xl border border-brown-200/70 shadow-xs overflow-hidden transition-all"
                   >
-                    {/* Compact Order Summary Header */}
+                    {/* Compact, Clean Card Header */}
                     <div
                       onClick={() => {
                         tactileAudio.playScrubTick(320);
                         setExpandedOrderId(isExpanded ? null : (order._id || order.orderNumber));
                       }}
-                      className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 cursor-pointer hover:bg-brown-100/30 transition-colors"
+                      className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-brown-50/40 transition-colors"
                     >
+                      {/* Left: Order Number, Date & Status Badges */}
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-brown-100/60 border border-brown-200/60 flex items-center justify-center shrink-0">
-                          <Package size={18} className="text-brown-700" />
+                        <div className="w-9 h-9 rounded-xl bg-cream-200/70 border border-brown-200/70 flex items-center justify-center shrink-0">
+                          <Package size={17} className="text-brown-700" />
                         </div>
-                        <div className="min-w-0">
+                        <div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-mono text-xs sm:text-sm font-bold text-brown-950">
                               {order.orderNumber}
                             </span>
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${badge.bg}`}>
-                              <BadgeIcon size={12} className="shrink-0" />
-                              <span>{badge.label}</span>
+
+                            {/* Payment Status Badge: paid, contacting, unpaid */}
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-medium border ${paymentBadge.bg}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${paymentBadge.dot}`} />
+                              <span>{paymentBadge.label}</span>
                             </span>
+
+                            {/* Fulfillment status if active */}
+                            {fulfillmentPill && (
+                              <span
+                                className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${fulfillmentPill.color}`}
+                              >
+                                <span>{fulfillmentPill.label}</span>
+                              </span>
+                            )}
                           </div>
-                          <div className="text-[11px] text-brown-500 font-light mt-0.5 flex items-center gap-1.5 flex-wrap">
-                            <span>
-                              {new Date(order.createdAt).toLocaleDateString(isAr ? 'ar-KW' : 'en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </span>
-                            <span>•</span>
-                            <span>{order.items?.length || 1} {isAr ? 'قطع' : 'items'}</span>
-                            <span>•</span>
-                            <span className="text-brown-700 font-medium">
-                              {isAr ? 'الكويت' : 'Kuwait'}
-                            </span>
+
+                          <div className="text-[11px] text-brown-500 font-light mt-0.5">
+                            {new Date(order.createdAt).toLocaleDateString(isAr ? 'ar-KW' : 'en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}{' '}
+                            • {order.items?.length || 1} {isAr ? 'قطع' : 'items'}
                           </div>
                         </div>
                       </div>
 
-                      {/* Right: Item Thumbnails Preview, Price & Expand Arrow */}
-                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-brown-200/40">
-                        {/* Thumbnail Peek */}
+                      {/* Right: Total Price & Toggle */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-brown-100">
                         {order.items && order.items.length > 0 && (
-                          <div className="flex items-center -space-x-2 rtl:space-x-reverse">
+                          <div className="flex items-center -space-x-1.5 rtl:space-x-reverse">
                             {order.items.slice(0, 2).map((it: any, i: number) => (
                               <img
                                 key={i}
                                 src={it.image || '/products/hadab-bag.jpg'}
                                 alt={it.name}
-                                className="w-8 h-8 rounded-lg object-cover border border-brown-200/80 bg-white"
+                                className="w-7 h-7 rounded-lg object-cover border border-brown-200 bg-white"
                               />
                             ))}
                           </div>
                         )}
 
                         <div className="text-end">
-                          <div className="text-[10px] uppercase font-semibold text-brown-400">
-                            {isAr ? 'المجموع' : 'Total'}
-                          </div>
-                          <div className="font-serif text-base sm:text-lg font-medium text-brown-950">
+                          <span className="font-serif text-sm sm:text-base font-semibold text-brown-950">
                             {order.total} <span className="text-xs font-normal text-brown-600">{curr}</span>
-                          </div>
+                          </span>
                         </div>
 
-                        <div className="p-1 rounded-lg text-brown-400 hover:text-brown-900 transition-colors">
+                        <div className="text-brown-400">
                           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </div>
                       </div>
                     </div>
 
-                    {/* Expanded View: Clean Stepper & Details */}
+                    {/* Expanded Clean Section (NO nested boxes!) */}
                     {isExpanded && (
-                      <div className="border-t border-brown-200/60 bg-[#F5EFEB]/50 p-4 sm:p-6 space-y-5 animate-fade-in">
+                      <div className="border-t border-brown-200/50 bg-[#FAF7F2]/50 p-4 sm:p-5 space-y-4 animate-fade-in text-xs">
                         
-                        {/* Clean Milestone Stepper */}
-                        <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-brown-200/60">
-                          <div className="text-[10px] uppercase tracking-wider font-semibold text-brown-500 mb-3 text-center sm:text-left rtl:sm:text-right">
-                            {isAr ? 'مراحل الطلب والتسليم' : 'Order Journey & Delivery'}
-                          </div>
-                          <div className="grid grid-cols-4 gap-1 sm:gap-2 text-center">
+                        {/* Dynamic Status Switcher (Paid, Contacting, Unpaid) */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-brown-200/60">
+                          <span className="text-[11px] font-semibold text-brown-600">
+                            {isAr ? 'تغيير حالة الطلب:' : 'Order Status:'}
+                          </span>
+                          <div className="flex items-center gap-1.5">
                             {[
-                              { title: isAr ? 'استلام الطلب' : 'Received', desc: isAr ? 'تم التأكيد' : 'Confirmed', active: true },
-                              { title: isAr ? 'حياكة بالأردن' : 'Handmade', desc: isAr ? 'مشغل هَدَب' : 'Workshop', active: order.status !== 'pending' },
-                              { title: isAr ? 'شحن للكويت' : 'Shipping', desc: isAr ? 'شحن جوي' : 'Express Air', active: order.status === 'shipped' || order.status === 'delivered' },
-                              { title: isAr ? 'تم التسليم' : 'Delivered', desc: isAr ? 'باب المنزل' : 'To Doorstep', active: order.status === 'delivered' },
-                            ].map((step, idx) => (
-                              <div key={idx} className="flex flex-col items-center">
-                                <div
-                                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center font-bold text-[11px] sm:text-xs mb-1 transition-all ${
-                                    step.active
-                                      ? 'bg-[#2A201B] text-cream-100 shadow-xs'
-                                      : 'bg-brown-200/60 text-brown-500'
+                              { id: 'unpaid' as OrderPaymentStatus, label: isAr ? 'غير مدفوع' : 'Unpaid', color: 'hover:bg-amber-100/60' },
+                              { id: 'contacting' as OrderPaymentStatus, label: isAr ? 'جاري التواصل' : 'Contacting', color: 'hover:bg-sky-100/60' },
+                              { id: 'paid' as OrderPaymentStatus, label: isAr ? 'تم الدفع' : 'Paid', color: 'hover:bg-emerald-100/60' },
+                            ].map((st) => {
+                              const isCur = paymentBadge.key === st.id;
+                              return (
+                                <button
+                                  key={st.id}
+                                  type="button"
+                                  onClick={() => handleUpdatePaymentStatus(order._id || order.orderNumber, st.id)}
+                                  className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                                    isCur
+                                      ? st.id === 'paid'
+                                        ? 'bg-emerald-700 text-white shadow-xs'
+                                        : st.id === 'contacting'
+                                        ? 'bg-sky-700 text-white shadow-xs'
+                                        : 'bg-amber-700 text-white shadow-xs'
+                                      : `bg-cream-100 text-brown-700 border border-brown-200/60 ${st.color}`
                                   }`}
                                 >
-                                  {idx + 1}
-                                </div>
-                                <div className="font-medium text-brown-950 text-[10.5px] sm:text-xs">
-                                  {step.title}
-                                </div>
-                                <div className="text-[9px] sm:text-[10px] text-brown-400 font-light hidden sm:block">
-                                  {step.desc}
-                                </div>
-                              </div>
-                            ))}
+                                  {st.label}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
 
-                        {/* Items in Order */}
-                        <div>
-                          <h4 className="text-[11px] uppercase font-semibold text-brown-500 tracking-wider mb-2">
-                            {isAr ? 'القطع المطلوبة' : 'Items in Order'}
-                          </h4>
-                          <div className="divide-y divide-brown-200/40 bg-[#FAF7F2] rounded-2xl border border-brown-200/60 px-3.5">
+                        {/* Ordered Items List */}
+                        <div className="space-y-2">
+                          <div className="text-[10px] uppercase tracking-wider font-semibold text-brown-400">
+                            {isAr ? 'القطع' : 'Items'}
+                          </div>
+                          <div className="divide-y divide-brown-100 bg-white rounded-xl border border-brown-200/50 px-3">
                             {order.items?.map((item: any, i: number) => (
                               <div key={i} className="py-2.5 flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex items-center gap-2.5 min-w-0">
                                   <img
                                     src={item.image || '/products/hadab-bag.jpg'}
                                     alt={item.name}
-                                    className="w-12 h-12 object-cover rounded-xl border border-brown-200/70 bg-white shrink-0"
+                                    className="w-10 h-10 object-cover rounded-lg border border-brown-200 shrink-0"
                                   />
                                   <div className="min-w-0 truncate">
-                                    <div className="font-serif font-medium text-xs sm:text-sm text-brown-950 truncate">
+                                    <div className="font-serif text-xs sm:text-sm text-brown-900 truncate">
                                       {isAr && item.nameArabic ? item.nameArabic : item.name}
                                     </div>
-                                    <div className="text-[11px] text-brown-500 font-light">
+                                    <div className="text-[10.5px] text-brown-500 font-light">
                                       {isAr ? 'الكمية' : 'Qty'}: {item.quantity}
                                     </div>
                                   </div>
                                 </div>
-                                <div className="font-serif font-medium text-xs sm:text-sm text-brown-950 shrink-0">
+                                <span className="font-serif font-medium text-brown-900 shrink-0">
                                   {item.price * item.quantity} {curr}
-                                </div>
+                                </span>
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        {/* Delivery Address & WhatsApp Button */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                          <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-brown-200/60 space-y-1">
-                            <div className="font-semibold text-brown-900 flex items-center gap-1.5">
-                              <MapPin size={13} className="text-burgundy-600" />
-                              <span>{isAr ? 'عنوان التوصيل' : 'Delivery Address'}</span>
-                            </div>
-                            <p className="text-brown-700 font-light text-[11px] leading-relaxed">
-                              {order.address || `${area}, Block ${block}, Street ${street}, House ${house}, Kuwait`}
-                            </p>
-                            <p className="text-brown-500 text-[10.5px]">
-                              {order.customerPhone || `${addressCountry.dialCode} ${addressPhoneDigits}`}
-                            </p>
+                        {/* Delivery Address & Status Action */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                          <div className="text-[11px] text-brown-600 font-light">
+                            <span className="font-semibold text-brown-800">{isAr ? 'العنوان: ' : 'Address: '}</span>
+                            <span>{order.address || `${area}, Block ${block}, Street ${street}, House ${house}, Kuwait`}</span>
                           </div>
 
-                          <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-brown-200/60 flex flex-col justify-between gap-2">
-                            <div>
-                              <div className="font-semibold text-brown-900 flex items-center gap-1.5">
-                                <MessageCircle size={13} className="text-emerald-700" />
-                                <span>{isAr ? 'خدمة العملاء' : 'Personal Concierge'}</span>
+                          {/* WhatsApp Action Tailored to Status */}
+                          <a
+                            href={`https://wa.me/96599000000?text=${encodeURIComponent(
+                              isAr
+                                ? `مرحباً هَدَب! أستفسر عن طلبي #${order.orderNumber} (الحالة: ${paymentBadge.label}) بقيمة ${order.total} د.ك.`
+                                : `Hello HADAB! Inquiring about order #${order.orderNumber} (Status: ${paymentBadge.label}) for ${order.total} KWD.`
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`px-3.5 py-2 rounded-xl text-white text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors self-start sm:self-auto ${
+                              paymentBadge.key === 'unpaid'
+                                ? 'bg-amber-800 hover:bg-amber-900'
+                                : paymentBadge.key === 'contacting'
+                                ? 'bg-sky-800 hover:bg-sky-900'
+                                : 'bg-[#2A201B] hover:bg-emerald-800'
+                            }`}
+                          >
+                            <MessageCircle size={13} />
+                            <span>
+                              {paymentBadge.key === 'unpaid'
+                                ? isAr
+                                  ? 'إتمام الدفع عبر الواتساب (KNET)'
+                                  : 'Pay via WhatsApp (KNET Link)'
+                                : paymentBadge.key === 'contacting'
+                                ? isAr
+                                  ? 'محادثة خدمة العملاء'
+                                  : 'Chat with Concierge'
+                                : isAr
+                                ? 'مراسلة خدمة العملاء'
+                                : 'WhatsApp Support'}
+                            </span>
+                          </a>
+                        </div>
+
+                        {/* Minimal 4-Step Progress Line */}
+                        <div className="pt-2 border-t border-brown-200/50">
+                          <div className="grid grid-cols-4 gap-1 text-center">
+                            {[
+                              { title: isAr ? 'تأكيد الحجز' : 'Confirmed', active: true },
+                              { title: isAr ? 'حياكة بالأردن' : 'Handmade', active: order.status !== 'unpaid' && order.status !== 'pending' },
+                              { title: isAr ? 'شحن للكويت' : 'Shipping', active: order.status === 'shipped' || order.status === 'delivered' },
+                              { title: isAr ? 'تم التسليم' : 'Delivered', active: order.status === 'delivered' },
+                            ].map((step, idx) => (
+                              <div key={idx} className="flex flex-col items-center">
+                                <div
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mb-0.5 ${
+                                    step.active ? 'bg-[#2A201B] text-white' : 'bg-brown-200 text-brown-400'
+                                  }`}
+                                >
+                                  {step.active ? <Check size={10} /> : idx + 1}
+                                </div>
+                                <span className="text-[10px] text-brown-700 font-medium">
+                                  {step.title}
+                                </span>
                               </div>
-                              <p className="text-brown-600 text-[11px] font-light mt-0.5">
-                                {isAr
-                                  ? 'تواصل مباشرة عبر الواتساب للاستفسار عن موعد التوصيل أو رابط الدفع.'
-                                  : 'Connect directly on WhatsApp for delivery timing or KNET link.'}
-                              </p>
-                            </div>
-                            <a
-                              href={`https://wa.me/96599000000?text=${encodeURIComponent(
-                                isAr
-                                  ? `مرحباً هَدَب! أستفسر عن طلبي رقم ${order.orderNumber} بقيمة ${order.total} د.ك.`
-                                  : `Hello HADAB! Inquiring about order #${order.orderNumber} for ${order.total} KWD.`
-                              )}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-3 py-1.5 rounded-xl bg-[#2A201B] hover:bg-emerald-800 text-cream-100 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors self-start w-full sm:w-auto"
-                            >
-                              <MessageCircle size={12} />
-                              <span>{isAr ? 'متابعة الطلب على واتساب' : 'WhatsApp for this Order'}</span>
-                            </a>
+                            ))}
                           </div>
                         </div>
 
@@ -642,45 +672,46 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
           </div>
         )}
 
+        {/* ============================================================ */}
         {/* TAB 2: KUWAIT DELIVERY ADDRESS */}
+        {/* ============================================================ */}
         {activeTab === 'address' && (
-          <div className="max-w-xl mx-auto bg-[#FAF7F2] rounded-3xl p-5 sm:p-8 border border-brown-200/70 shadow-warm-sm space-y-5">
+          <div className="bg-white/80 rounded-2xl p-5 sm:p-7 border border-brown-200/70 shadow-xs space-y-4">
             <div>
-              <h2 className="font-serif text-lg sm:text-xl text-brown-900 font-normal">
+              <h2 className="font-serif text-lg text-brown-950 font-normal">
                 {isAr ? 'عنوان التوصيل في الكويت' : 'Kuwait Delivery Address'}
               </h2>
               <p className="text-xs text-brown-500 font-light mt-0.5">
                 {isAr
-                  ? 'يتم حفظ هذا العنوان لتسليم جميع طلبات الكروشيه المحبوكة المشحونة من الأردن.'
-                  : 'Saved for seamless delivery of all your handmade pieces shipped directly to Kuwait.'}
+                  ? 'يتم استخدام هذا العنوان لتسليم جميع طلباتك المشحونة من مشغلنا بالأردن.'
+                  : 'Used for direct doorstep delivery of all your handcrafted pieces across Kuwait.'}
               </p>
             </div>
 
             {addressSaved && (
-              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200/70 text-emerald-800 text-xs font-medium flex items-center gap-2">
-                <CheckCircle2 size={15} />
-                <span>{isAr ? 'تم حفظ عنوان التوصيل بنجاح!' : 'Delivery address updated successfully!'}</span>
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+                <CheckCircle2 size={14} />
+                <span>{isAr ? 'تم حفظ العنوان بنجاح!' : 'Address saved successfully!'}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveAddress} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <form onSubmit={handleSaveAddress} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
-                    {isAr ? 'المنطقة *' : 'Area / Region *'}
+                  <label className="block font-medium text-brown-700 text-[11px] mb-1">
+                    {isAr ? 'المنطقة *' : 'Area *'}
                   </label>
                   <input
                     type="text"
                     required
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
-                    placeholder="e.g. Salmiya, Rawda, Kaifan..."
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-[#F5EFEB] border border-brown-200/60 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500/60 transition-all"
+                    placeholder="e.g. Salmiya, Rawda..."
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
-
                 <div>
-                  <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
+                  <label className="block font-medium text-brown-700 text-[11px] mb-1">
                     {isAr ? 'القطعة *' : 'Block *'}
                   </label>
                   <input
@@ -689,14 +720,14 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     value={block}
                     onChange={(e) => setBlock(e.target.value)}
                     placeholder="e.g. 4"
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-[#F5EFEB] border border-brown-200/60 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500/60 transition-all"
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
+                  <label className="block font-medium text-brown-700 text-[11px] mb-1">
                     {isAr ? 'الشارع *' : 'Street *'}
                   </label>
                   <input
@@ -704,14 +735,13 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     required
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    placeholder="e.g. Street 12 / Salem Al Mubarak"
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-[#F5EFEB] border border-brown-200/60 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500/60 transition-all"
+                    placeholder="e.g. Salem Al Mubarak"
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
-
                 <div>
-                  <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
-                    {isAr ? 'المنزل / العمارة *' : 'House / Villa / Building *'}
+                  <label className="block font-medium text-brown-700 text-[11px] mb-1">
+                    {isAr ? 'المنزل / العمارة *' : 'House / Building *'}
                   </label>
                   <input
                     type="text"
@@ -719,17 +749,16 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     value={house}
                     onChange={(e) => setHouse(e.target.value)}
                     placeholder="e.g. House 5"
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-[#F5EFEB] border border-brown-200/60 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500/60 transition-all"
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
               </div>
 
-              {/* Phone with Country Code Selector */}
               <div>
-                <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
-                  {isAr ? 'رقم الهاتف / الواتساب *' : 'Mobile / WhatsApp Number *'}
+                <label className="block font-medium text-brown-700 text-[11px] mb-1">
+                  {isAr ? 'رقم الهاتف / الواتساب *' : 'WhatsApp Phone *'}
                 </label>
-                <div className="relative flex items-center rounded-xl bg-[#F5EFEB] border border-brown-200/60 focus-within:ring-1 focus-within:ring-burgundy-500/60 transition-all">
+                <div className="relative flex items-center rounded-xl bg-[#FAF7F2] border border-brown-200/70 focus-within:ring-1 focus-within:ring-burgundy-500">
                   <CountryCodeDropdown
                     selectedCountry={addressCountry}
                     onSelectCountry={setAddressCountry}
@@ -742,8 +771,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     onChange={(e) => setAddressPhoneDigits(e.target.value.replace(/[^\d\s-]/g, ''))}
                     placeholder={addressCountry.sample || '9912 3456'}
                     className={`w-full py-2.5 ${
-                      isAr ? 'pr-3 pl-3.5' : 'pl-3 pr-3.5'
-                    } bg-transparent text-brown-900 placeholder:text-brown-400 text-xs font-light focus:outline-none`}
+                      isAr ? 'pr-3 pl-3' : 'pl-3 pr-3'
+                    } bg-transparent text-brown-900 text-xs font-light focus:outline-none`}
                   />
                 </div>
               </div>
@@ -751,7 +780,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
               <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium uppercase tracking-wider shadow-xs hover:-translate-y-0.5 transition-all cursor-pointer"
+                  className="px-5 py-2.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium cursor-pointer transition-colors"
                 >
                   {isAr ? 'حفظ العنوان' : 'Save Address'}
                 </button>
@@ -760,106 +789,87 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
           </div>
         )}
 
-        {/* TAB 3: CONCIERGE & PAYMENT */}
+        {/* ============================================================ */}
+        {/* TAB 3: CONCIERGE & PAYMENT FAQ */}
+        {/* ============================================================ */}
         {activeTab === 'support' && (
-          <div className="max-w-2xl mx-auto space-y-5">
-            {/* Primary Concierge Card */}
-            <div className="bg-[#2A201B] text-cream-100 rounded-3xl p-6 sm:p-8 shadow-warm-sm space-y-4">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-cream-200 text-[10px] font-semibold uppercase tracking-wider">
-                <MessageCircle size={13} />
-                <span>{isAr ? 'خدمة عملاء هَدَب الخاصة' : 'HADAB Personal Concierge'}</span>
-              </div>
-              
-              <h3 className="font-serif text-xl sm:text-2xl font-normal leading-snug">
-                {isAr
-                  ? 'خدمة شخصية متكاملة لكل طلب'
-                  : 'Attentive, personal care for every piece'}
+          <div className="space-y-4">
+            <div className="bg-[#2A201B] text-cream-100 rounded-2xl p-6 sm:p-7 space-y-3 shadow-xs">
+              <h3 className="font-serif text-xl sm:text-2xl font-normal">
+                {isAr ? 'خدمة العملاء والدفع عبر الواتساب' : 'HADAB Personal Concierge'}
               </h3>
-
-              <p className="text-xs text-cream-200/80 font-light leading-relaxed">
+              <p className="text-xs text-cream-200/80 font-light leading-relaxed max-w-xl">
                 {isAr
-                  ? 'نحرص على التواصل المباشر معك عبر الواتساب لتأكيد خيارات الألوان وتفاصيل الحياكة، وتزويدك برابط KNET الآمن لإتمام الدفع بسهولة وراحة.'
-                  : 'We connect directly on WhatsApp to confirm your color preferences, custom details, and provide a secure KNET payment link.'}
+                  ? 'يتم التواصل معك عبر الواتساب لتأكيد خيارات الألوان وإرسال رابط KNET الرسمي والآمن.'
+                  : 'Our team connects with you directly on WhatsApp to confirm custom details and send your official KNET payment link.'}
               </p>
-
-              <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+              <div className="pt-1 flex flex-wrap gap-2.5">
                 <a
                   href="https://wa.me/96599000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%87%D9%8E%D8%AF%D9%8E%D8%A8%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D9%85%D8%B9%20%D8%AE%D8%AF%D9%85%D8%A9%20%D8%A7%D9%84%D8%B9%D9%85%D9%84%D8%A7%D8%A1"
                   target="_blank"
                   rel="noreferrer"
-                  className="px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-colors"
+                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
                 >
-                  <MessageCircle size={15} />
-                  <span>{isAr ? 'محادثة واتساب فورية' : 'Instant WhatsApp Chat'}</span>
+                  <MessageCircle size={14} />
+                  <span>{isAr ? 'محادثة الواتساب' : 'WhatsApp Concierge'}</span>
                 </a>
-
                 <a
                   href="mailto:Byhadab@gmail.com"
-                  className="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-cream-100 text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-cream-100 text-xs font-medium flex items-center gap-1.5 transition-colors"
                 >
-                  <Mail size={15} />
+                  <Mail size={14} />
                   <span>Byhadab@gmail.com</span>
                 </a>
               </div>
             </div>
 
-            {/* 3 Steps Guide */}
-            <div className="bg-[#FAF7F2] rounded-3xl p-5 sm:p-7 border border-brown-200/70 space-y-3.5 text-xs">
-              <h4 className="font-serif text-base text-brown-900 font-normal">
-                {isAr ? 'رحلة قطعتك المصنوعة يدوياً' : 'How Your Order Is Fulfilled'}
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-brown-700">
-                <div className="p-3.5 rounded-2xl bg-[#F5EFEB] border border-brown-200/60 space-y-1">
-                  <div className="w-6 h-6 rounded-lg bg-burgundy-100 text-burgundy-800 flex items-center justify-center font-bold text-xs">1</div>
-                  <div className="font-medium text-brown-950 text-xs">{isAr ? 'حياكة يدوية بالأردن' : 'Handmade in Jordan'}</div>
-                  <p className="text-[10.5px] text-brown-500 font-light">
-                    {isAr ? 'تُحاك كل قطعة بصبر وعناية فائقة بخيوط قطنية نقية.' : 'Crocheted with intentional stitchcraft using natural cotton ribbon.'}
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-[#F5EFEB] border border-brown-200/60 space-y-1">
-                  <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">2</div>
-                  <div className="font-medium text-brown-950 text-xs">{isAr ? 'دفع آمن عبر KNET' : 'Secure KNET Payment'}</div>
-                  <p className="text-[10.5px] text-brown-500 font-light">
-                    {isAr ? 'رابط دفع رسمي ومباشر يُرسل لك عبر محادثة الواتساب.' : 'Official payment link sent directly through your WhatsApp conversation.'}
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-[#F5EFEB] border border-brown-200/60 space-y-1">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">3</div>
-                  <div className="font-medium text-brown-950 text-xs">{isAr ? 'توصيل لبابك بالكويت' : 'Doorstep Kuwait Delivery'}</div>
-                  <p className="text-[10.5px] text-brown-500 font-light">
-                    {isAr ? 'شحن جوي سريع وتوصيل مباشر خلال أيام معدودة.' : 'Express air shipment straight to your address across Kuwait.'}
-                  </p>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">
+                <div className="font-semibold text-brown-900">{isAr ? '1. حياكة يدوية' : '1. Handmade'}</div>
+                <p className="text-[11px] text-brown-500 font-light">
+                  {isAr ? 'تُحاك كل قطعة بعناية في مشغلنا بالأردن.' : 'Crafted with care in our Jordan workshop.'}
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">
+                <div className="font-semibold text-brown-900">{isAr ? '2. دفع آمن' : '2. Secure Payment'}</div>
+                <p className="text-[11px] text-brown-500 font-light">
+                  {isAr ? 'رابط KNET معتمد يُرسل لك بالواتساب.' : 'Official KNET link sent via WhatsApp.'}
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">
+                <div className="font-semibold text-brown-900">{isAr ? '3. توصيل للكويت' : '3. Kuwait Delivery'}</div>
+                <p className="text-[11px] text-brown-500 font-light">
+                  {isAr ? 'شحن جوي سريع وتوصيل لباب منزلك.' : 'Express air shipping straight to your door.'}
+                </p>
               </div>
             </div>
           </div>
         )}
 
+        {/* ============================================================ */}
         {/* TAB 4: ACCOUNT PROFILE */}
+        {/* ============================================================ */}
         {activeTab === 'profile' && (
-          <div className="max-w-xl mx-auto bg-[#FAF7F2] rounded-3xl p-5 sm:p-8 border border-brown-200/70 shadow-warm-sm space-y-5">
+          <div className="bg-white/80 rounded-2xl p-5 sm:p-7 border border-brown-200/70 shadow-xs space-y-4">
             <div>
-              <h2 className="font-serif text-lg sm:text-xl text-brown-900 font-normal">
-                {isAr ? 'البيانات الشخصية' : 'Account Details'}
+              <h2 className="font-serif text-lg text-brown-950 font-normal">
+                {isAr ? 'الملف الشخصي' : 'Account Details'}
               </h2>
               <p className="text-xs text-brown-500 font-light mt-0.5">
-                {isAr ? 'تعديل اسمك ورقم الهاتف المسجل لدينا.' : 'Update your personal name and contact information.'}
+                {isAr ? 'تحديث الاسم ورقم الهاتف المسجل.' : 'Update your personal name and contact details.'}
               </p>
             </div>
 
             {profileSaved && (
-              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200/70 text-emerald-800 text-xs font-medium flex items-center gap-2">
-                <CheckCircle2 size={15} />
-                <span>{isAr ? 'تم تحديث البيانات بنجاح!' : 'Profile updated successfully!'}</span>
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+                <CheckCircle2 size={14} />
+                <span>{isAr ? 'تم حفظ التعديلات بنجاح!' : 'Profile updated successfully!'}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
+                <label className="block font-medium text-brown-700 text-[11px] mb-1">
                   {isAr ? 'الاسم الكامل *' : 'Full Name *'}
                 </label>
                 <input
@@ -867,28 +877,27 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                   required
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-[#F5EFEB] border border-brown-200/60 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500/60 transition-all"
+                  className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
+                <label className="block font-medium text-brown-700 text-[11px] mb-1">
                   {isAr ? 'البريد الإلكتروني' : 'Email Address'}
                 </label>
                 <input
                   type="email"
                   disabled
                   value={user?.email || 'customer@hadab.craft'}
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-brown-100/40 border border-brown-200/50 text-brown-500 cursor-not-allowed text-xs"
+                  className="w-full py-2.5 px-3 rounded-xl bg-brown-100/50 border border-brown-200/50 text-brown-500 cursor-not-allowed text-xs"
                 />
               </div>
 
-              {/* Profile Phone with Country Code */}
               <div>
-                <label className="block font-semibold text-brown-700 uppercase tracking-wider text-[10px] mb-1">
+                <label className="block font-medium text-brown-700 text-[11px] mb-1">
                   {isAr ? 'رقم الهاتف / الواتساب' : 'Phone / WhatsApp'}
                 </label>
-                <div className="relative flex items-center rounded-xl bg-[#F5EFEB] border border-brown-200/60 focus-within:ring-1 focus-within:ring-burgundy-500/60 transition-all">
+                <div className="relative flex items-center rounded-xl bg-[#FAF7F2] border border-brown-200/70 focus-within:ring-1 focus-within:ring-burgundy-500">
                   <CountryCodeDropdown
                     selectedCountry={profileCountry}
                     onSelectCountry={setProfileCountry}
@@ -900,29 +909,29 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     onChange={(e) => setProfilePhoneDigits(e.target.value.replace(/[^\d\s-]/g, ''))}
                     placeholder={profileCountry.sample || '9912 3456'}
                     className={`w-full py-2.5 ${
-                      isAr ? 'pr-3 pl-3.5' : 'pl-3 pr-3.5'
-                    } bg-transparent text-brown-900 placeholder:text-brown-400 text-xs font-light focus:outline-none`}
+                      isAr ? 'pr-3 pl-3' : 'pl-3 pr-3'
+                    } bg-transparent text-brown-900 text-xs font-light focus:outline-none`}
                   />
                 </div>
               </div>
 
-              <div className="pt-3 flex justify-between items-center border-t border-brown-200/50 mt-4">
+              <div className="pt-2 flex justify-between items-center border-t border-brown-100">
                 <button
                   type="button"
                   onClick={() => {
                     logout();
                     onBackToStore();
                   }}
-                  className="text-burgundy-700 hover:text-burgundy-900 font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
+                  className="text-burgundy-700 hover:text-burgundy-900 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <LogOut size={14} />
+                  <LogOut size={13} />
                   <span>{isAr ? 'تسجيل الخروج' : 'Log Out'}</span>
                 </button>
 
                 <button
                   type="submit"
                   disabled={profileSaving}
-                  className="px-6 py-2.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium uppercase tracking-wider shadow-xs transition-all cursor-pointer"
+                  className="px-5 py-2.5 rounded-full bg-[#2A201B] hover:bg-[#3D2D25] text-cream-100 text-xs font-medium cursor-pointer transition-colors"
                 >
                   {profileSaving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ التعديلات' : 'Save Changes')}
                 </button>

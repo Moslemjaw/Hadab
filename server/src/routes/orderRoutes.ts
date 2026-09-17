@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Order } from '../models/Order';
+import { User } from '../models/User';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 
 const router = Router();
@@ -13,12 +14,27 @@ router.get('/my-orders', authenticateToken, async (req: AuthRequest, res: Respon
       return;
     }
 
-    const orders = await Order.find({
-      $or: [
-        { customerEmail: userEmail.toLowerCase() },
-        { customerEmail: userEmail },
-      ],
-    }).sort({ createdAt: -1 });
+    const queryConditions: any[] = [
+      { customerEmail: userEmail.toLowerCase() },
+      { customerEmail: userEmail },
+    ];
+
+    // If user has a phone number registered, also match orders placed with that phone
+    if (req.user?.id) {
+      try {
+        const userDoc = await User.findById(req.user.id);
+        if (userDoc?.phone) {
+          const rawPhone = userDoc.phone.trim();
+          const digits = rawPhone.replace(/[^0-9]/g, '');
+          queryConditions.push({ customerPhone: rawPhone });
+          if (digits.length >= 7) {
+            queryConditions.push({ customerPhone: { $regex: digits.slice(-7) } });
+          }
+        }
+      } catch {}
+    }
+
+    const orders = await Order.find({ $or: queryConditions }).sort({ createdAt: -1 });
 
     res.json(orders);
   } catch (error: any) {
@@ -45,8 +61,10 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const order = await Order.create({
       ...req.body,
       orderNumber,
-      status: 'pending',
-      statusArabic: 'قيد الانتظار',
+      status: req.body.status || 'unpaid',
+      statusArabic: req.body.statusArabic || 'غير مدفوع',
+      paymentStatus: req.body.paymentStatus || 'unpaid',
+      paymentStatusArabic: req.body.paymentStatusArabic || 'غير مدفوع',
     });
 
     res.status(201).json(order);
@@ -58,10 +76,12 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 // UPDATE order status (Admin only)
 router.patch('/:id/status', authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { status, statusArabic, artisan } = req.body;
+    const { status, statusArabic, paymentStatus, paymentStatusArabic, artisan } = req.body;
     const updatePayload: any = {};
     if (status) updatePayload.status = status;
     if (statusArabic) updatePayload.statusArabic = statusArabic;
+    if (paymentStatus) updatePayload.paymentStatus = paymentStatus;
+    if (paymentStatusArabic) updatePayload.paymentStatusArabic = paymentStatusArabic;
     if (artisan) updatePayload.artisan = artisan;
 
     const updated = await Order.findByIdAndUpdate(req.params.id, updatePayload, { new: true });
