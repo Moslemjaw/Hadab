@@ -235,7 +235,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   });
 
   const [settingsCurrency, setSettingsCurrency] = useState(baseCurrency || 'KWD');
-  const [settingsThreshold, setSettingsThreshold] = useState(() => Number(localStorage.getItem('hadab_threshold')) || 25);
+  const [settingsPhone, setSettingsPhone] = useState(() => localStorage.getItem('hadab_store_phone') || '+965 9900 0000');
   const [settingsEmail, setSettingsEmail] = useState(() => localStorage.getItem('hadab_email') || 'Byhadab@gmail.com');
   const [shippingRatesState, setShippingRatesState] = useState<CountryShippingRate[]>(
     () => shippingConfig?.rates || DEFAULT_SHIPPING_CONFIG.rates
@@ -249,7 +249,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   useEffect(() => {
     api.getSettings().then((s) => {
       if (s.baseCurrency) setSettingsCurrency(s.baseCurrency);
-      if (s.freeShippingThreshold) setSettingsThreshold(Number(s.freeShippingThreshold));
+      if (s.storePhone) setSettingsPhone(s.storePhone);
       if (s.storeEmail) setSettingsEmail(s.storeEmail);
       if (s.shippingConfig) {
         if (Array.isArray(s.shippingConfig.rates)) setShippingRatesState(s.shippingConfig.rates);
@@ -738,7 +738,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     try {
       await api.updateSettings({
         baseCurrency: settingsCurrency,
-        freeShippingThreshold: settingsThreshold,
+        storePhone: settingsPhone,
         storeEmail: settingsEmail,
         shippingConfig: shippingPayload,
       });
@@ -748,7 +748,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       await refreshSettings();
       // Also keep localStorage in sync
       localStorage.setItem('hadab_currency', settingsCurrency);
-      localStorage.setItem('hadab_threshold', String(settingsThreshold));
+      localStorage.setItem('hadab_store_phone', settingsPhone);
       localStorage.setItem('hadab_email', settingsEmail);
       localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
       localStorage.setItem('hadab_shipping_config', JSON.stringify(shippingPayload));
@@ -757,7 +757,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     } catch (err) {
       // Fallback to localStorage only
       localStorage.setItem('hadab_currency', settingsCurrency);
-      localStorage.setItem('hadab_threshold', String(settingsThreshold));
+      localStorage.setItem('hadab_store_phone', settingsPhone);
       localStorage.setItem('hadab_email', settingsEmail);
       localStorage.setItem('hadab_shipping_config', JSON.stringify(shippingPayload));
       setBaseCurrency(settingsCurrency as CurrencyCode);
@@ -2276,16 +2276,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       <p className="text-[9px] text-brown-400 mt-1">{isAr ? 'جميع الأسعار في المتجر ستُعرض بهذه العملة كأساس' : 'All product prices are stored in this currency'}</p>
                     </div>
                     <div>
-                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'حد الشحن المجاني للكويت' : 'Free Shipping Threshold to Kuwait'}</label>
+                      <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'رقم هاتف هَدَب / واتساب المتجر' : 'HADAB Phone Number'}</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-500 font-bold text-xs">{settingsCurrency}</span>
+                        <Phone size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-brown-400`} />
                         <input
-                          type="number"
-                          value={settingsThreshold}
-                          onChange={(e) => setSettingsThreshold(Number(e.target.value))}
-                          className="w-full py-2.5 pl-9 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300"
+                          type="tel"
+                          value={settingsPhone}
+                          onChange={(e) => setSettingsPhone(e.target.value)}
+                          placeholder="+965 9900 0000"
+                          className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3.5' : 'pl-9 pr-3.5'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300`}
                         />
                       </div>
+                      <p className="text-[9px] text-brown-400 mt-1">{isAr ? 'رقم التواصل المعتمد للطلبات والاستفسارات' : 'Official contact & WhatsApp number for customer orders'}</p>
                     </div>
                   </div>
 

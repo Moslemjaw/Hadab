@@ -10,7 +10,7 @@ router.get('/', async (_req, res) => {
     const settingsList = await Setting.find({});
     const settingsMap: Record<string, any> = {
       baseCurrency: 'KWD',
-      freeShippingThreshold: 25,
+      storePhone: '+965 9900 0000',
       storeEmail: 'Byhadab@gmail.com',
       shippingConfig: {
         enabled: true,
