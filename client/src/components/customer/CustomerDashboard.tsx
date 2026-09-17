@@ -442,14 +442,18 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                       <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-brown-100">
                         {order.items && order.items.length > 0 && (
                           <div className="flex items-center -space-x-1.5 rtl:space-x-reverse">
-                            {order.items.slice(0, 2).map((it: any, i: number) => (
-                              <img
-                                key={i}
-                                src={it.image || '/products/hadab-bag.jpg'}
-                                alt={it.name}
-                                className="w-7 h-7 rounded-lg object-cover border border-brown-200 bg-white"
-                              />
-                            ))}
+                            {order.items.slice(0, 2).map((it: any, i: number) => {
+                              const img = it.image || it.product?.image || '/products/hadab-bag.jpg';
+                              const name = it.name || it.product?.name || 'Item';
+                              return (
+                                <img
+                                  key={i}
+                                  src={img}
+                                  alt={name}
+                                  className="w-7 h-7 rounded-lg object-cover border border-brown-200 bg-white"
+                                />
+                              );
+                            })}
                           </div>
                         )}
 
@@ -507,28 +511,36 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                             {isAr ? 'القطع' : 'Items'}
                           </div>
                           <div className="divide-y divide-brown-100 bg-white rounded-xl border border-brown-200/50 px-3">
-                            {order.items?.map((item: any, i: number) => (
-                              <div key={i} className="py-2.5 flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <img
-                                    src={item.image || '/products/hadab-bag.jpg'}
-                                    alt={item.name}
-                                    className="w-10 h-10 object-cover rounded-lg border border-brown-200 shrink-0"
-                                  />
-                                  <div className="min-w-0 truncate">
-                                    <div className="font-serif text-xs sm:text-sm text-brown-900 truncate">
-                                      {isAr && item.nameArabic ? item.nameArabic : item.name}
-                                    </div>
-                                    <div className="text-[10.5px] text-brown-500 font-light">
-                                      {isAr ? 'الكمية' : 'Qty'}: {item.quantity}
+                            {order.items?.map((item: any, i: number) => {
+                              const img = item.image || item.product?.image || '/products/hadab-bag.jpg';
+                              const name = item.name || item.product?.name || 'Handmade Piece';
+                              const nameAr = item.nameArabic || item.product?.nameArabic || name;
+                              const qty = item.quantity || 1;
+                              const price = item.price ?? item.product?.price ?? 0;
+
+                              return (
+                                <div key={i} className="py-2.5 flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <img
+                                      src={img}
+                                      alt={name}
+                                      className="w-10 h-10 object-cover rounded-lg border border-brown-200 shrink-0"
+                                    />
+                                    <div className="min-w-0 truncate">
+                                      <div className="font-serif text-xs sm:text-sm text-brown-900 truncate">
+                                        {isAr && nameAr ? nameAr : name}
+                                      </div>
+                                      <div className="text-[10.5px] text-brown-500 font-light">
+                                        {isAr ? 'الكمية' : 'Qty'}: {qty}
+                                      </div>
                                     </div>
                                   </div>
+                                  <span className="font-serif font-medium text-brown-900 shrink-0">
+                                    {format(price * qty, isAr)}
+                                  </span>
                                 </div>
-                                <span className="font-serif font-medium text-brown-900 shrink-0">
-                                  {format(item.price * item.quantity, isAr)}
-                                </span>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
 

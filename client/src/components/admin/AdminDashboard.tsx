@@ -150,8 +150,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             customerPhone: o.customerPhone || '',
             destination: o.destination || 'Kuwait',
             destinationArabic: o.destinationArabic || 'الكويت',
-            items: o.items || [],
             total: o.total || 0,
+            items: Array.isArray(o.items)
+              ? o.items.map((it: any) => ({
+                  product: it.product || {
+                    id: it.productId || it.id || '',
+                    name: it.name || 'Handmade Item',
+                    nameArabic: it.nameArabic || it.name || 'قطعة يدوية',
+                    price: it.price || 0,
+                    image: it.image || '/products/hadab-bag.jpg',
+                    category: it.category || 'Handmade',
+                  },
+                  quantity: it.quantity || 1,
+                  // Also keep flat properties for direct access
+                  name: it.name,
+                  image: it.image,
+                  price: it.price,
+                }))
+              : [],
             status: o.status || 'pending',
             statusArabic: o.statusArabic || '',
             paymentStatus: o.paymentStatus || 'unpaid',
@@ -1919,16 +1935,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             <div>
                               <h4 className="text-[10px] uppercase tracking-wider font-bold text-brown-500 mb-3">Order Details</h4>
                               <div className="space-y-3">
-                                {order.items.map((it, idx) => (
-                                  <div key={idx} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-brown-100 shadow-sm">
-                                    <img src={it.product.image} alt={it.product.name} className="w-12 h-12 rounded-lg object-cover" />
-                                    <div className="flex-1 text-xs">
-                                      <div className="font-semibold text-brown-900">{it.product.name}</div>
-                                      <div className="text-[10px] text-brown-500 mt-0.5">Category: {it.product.category}</div>
+                                {order.items.map((it: any, idx: number) => {
+                                  const prod = it.product || it;
+                                  const prodName = prod.name || it.name || 'Custom Piece';
+                                  const prodImage = prod.image || it.image || '/products/hadab-bag.jpg';
+                                  const prodCategory = prod.category || it.category || 'Handmade';
+                                  const prodQty = it.quantity || 1;
+
+                                  return (
+                                    <div key={idx} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-brown-100 shadow-sm">
+                                      <img src={prodImage} alt={prodName} className="w-12 h-12 rounded-lg object-cover" />
+                                      <div className="flex-1 text-xs">
+                                        <div className="font-semibold text-brown-900">{prodName}</div>
+                                        <div className="text-[10px] text-brown-500 mt-0.5">{isAr ? 'التصنيف:' : 'Category:'} {prodCategory}</div>
+                                      </div>
+                                      <div className="text-xs font-medium text-brown-900 bg-cream-50 px-2 py-1 rounded">
+                                        {isAr ? 'الكمية:' : 'Qty:'} {prodQty}
+                                      </div>
                                     </div>
-                                    <div className="text-xs font-medium text-brown-900 bg-cream-50 px-2 py-1 rounded">Qty: {it.quantity}</div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
 
