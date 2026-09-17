@@ -43,6 +43,7 @@ import {
 import type { Product } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useShopData } from '../../context/ShopDataContext';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 
@@ -94,6 +95,7 @@ interface CategoryRecord {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { language, toggleLanguage } = useLanguage();
   const { user, logout } = useAuth();
+  const { refreshData } = useShopData();
   const isAr = language === 'ar';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
@@ -362,6 +364,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
       try {
         await api.deleteProduct(id);
+        refreshData();
       } catch (err) {
         console.error('Failed to delete product from database:', err);
       }
@@ -383,6 +386,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           console.error(`Failed to delete product ${id}:`, err);
         }
       }
+      refreshData();
     }
   };
 
@@ -443,12 +447,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       stockCount: 10,
     };
 
+    const token = localStorage.getItem('hadab_token');
+    if (!token) {
+      alert(isAr ? 'يرجى تسجيل الدخول كمسؤول أولاً لحفظ القطعة في قاعدة البيانات' : 'Admin sign-in required to save products to the database.');
+      return;
+    }
+
     if (editingProduct) {
       try {
         const updated = await api.updateProduct(editingProduct.id, productPayload);
         setProductsList((prev) =>
           prev.map((p) => (p.id === editingProduct.id ? updated : p))
         );
+        refreshData();
         alert(isAr ? 'تم تحديث القطعة في قاعدة البيانات بنجاح ✓' : 'Product updated in database successfully ✓');
       } catch (err: any) {
         console.error('Failed to update product in database:', err);
@@ -462,6 +473,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       try {
         const created = await api.createProduct(productPayload);
         setProductsList((prev) => [created, ...prev]);
+        refreshData();
         alert(isAr ? 'تمت إضافة القطعة إلى قاعدة البيانات بنجاح ✓' : 'Product saved to database successfully ✓');
       } catch (err: any) {
         console.error('Failed to create product in database:', err);
@@ -600,6 +612,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       setCategoryList((prev) => prev.filter((c) => c.id !== catId));
       try {
         await api.deleteCategory(catId);
+        refreshData();
       } catch (err) {
         console.error('Failed to delete category from database:', err);
       }
@@ -2293,6 +2306,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   );
                   try {
                     await api.updateCategory(editingCategory.id, catPayload);
+                    refreshData();
                     alert(isAr ? 'تم تحديث التصنيف بنجاح ✓' : 'Category updated successfully ✓');
                   } catch (err: any) {
                     console.error('Failed to update category in DB:', err);
@@ -2315,6 +2329,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         image: created.image || catImage || '/products/hadab-bag.jpg',
                       },
                     ]);
+                    refreshData();
                     alert(isAr ? 'تمت إضافة التصنيف بنجاح ✓' : 'Category created successfully ✓');
                   } catch (err: any) {
                     console.error('Failed to create category in DB, saving locally:', err);

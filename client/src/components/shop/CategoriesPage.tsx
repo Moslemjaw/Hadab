@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { CATEGORIES } from '../../constants/mockData';
 import { ArrowLeft, ArrowRight, Sparkles, Layers } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
+import { useShopData } from '../../context/ShopDataContext';
 import { api } from '../../services/api';
 
 interface CategoriesPageProps {
@@ -15,7 +15,14 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   onBackToHome,
 }) => {
   const { language, t } = useLanguage();
-  const [categoriesList, setCategoriesList] = useState(CATEGORIES);
+  const { categories: contextCategories } = useShopData();
+  const [categoriesList, setCategoriesList] = useState(contextCategories);
+
+  useEffect(() => {
+    if (contextCategories.length > 0) {
+      setCategoriesList(contextCategories);
+    }
+  }, [contextCategories]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

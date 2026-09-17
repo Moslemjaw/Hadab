@@ -1,11 +1,16 @@
 import React from 'react';
-import { CATEGORIES } from '../../constants/mockData';
+import { useShopData } from '../../context/ShopDataContext';
 import { ThreadKnot } from '../common/ThreadSpine';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
-export const CategoryTilesSection: React.FC = () => {
+interface CategoryTilesSectionProps {
+  onSelectCategory?: (categoryId: string) => void;
+}
+
+export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSelectCategory }) => {
   const { language } = useLanguage();
+  const { categories } = useShopData();
 
   return (
     <section id="categories" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -26,11 +31,17 @@ export const CategoryTilesSection: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <a
             key={cat.id}
-            href={`#${cat.id}`}
-            className={`group relative flex flex-col justify-between p-6 sm:p-8 rounded-3xl border ${cat.accentBorder} ${cat.accentBg} transition-all duration-300 hover:shadow-warm-lg hover:-translate-y-1 overflow-hidden`}
+            href={`#collection`}
+            onClick={(e) => {
+              if (onSelectCategory) {
+                e.preventDefault();
+                onSelectCategory(cat.id);
+              }
+            }}
+            className={`group relative flex flex-col justify-between p-6 sm:p-8 rounded-3xl border ${cat.accentBorder || 'border-brown-200'} ${cat.accentBg || 'bg-cream-100'} transition-all duration-300 hover:shadow-warm-lg hover:-translate-y-1 overflow-hidden`}
           >
             {/* Header info */}
             <div className="relative z-10 mb-6">

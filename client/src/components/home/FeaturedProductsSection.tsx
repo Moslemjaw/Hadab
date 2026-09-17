@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FEATURED_PRODUCTS } from '../../constants/mockData';
+import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
 import { ThreadKnot } from '../common/ThreadSpine';
 import { Eye, ShoppingBag, Check } from 'lucide-react';
@@ -13,8 +13,11 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
   onAddToBag,
 }) => {
   const { language, t } = useLanguage();
+  const { featuredProducts, products } = useShopData();
   const [activeTextureId, setActiveTextureId] = useState<string | null>(null);
   const [addedIds, setAddedIds] = useState<string[]>([]);
+
+  const displayProducts = featuredProducts.length > 0 ? featuredProducts.slice(0, 4) : products.slice(0, 4);
 
   const handleAdd = (product: Product) => {
     setAddedIds((prev) => [...prev, product.id]);
@@ -45,7 +48,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {FEATURED_PRODUCTS.map((product) => {
+        {displayProducts.map((product) => {
           const isTextureView = activeTextureId === product.id;
           const isAdded = addedIds.includes(product.id);
 

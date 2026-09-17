@@ -12,10 +12,10 @@ import {
   Grid2X2,
   Square,
 } from 'lucide-react';
-import { CATEGORIES } from '../../constants/mockData';
 import type { Product } from '../../types';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
+import { useShopData } from '../../context/ShopDataContext';
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name-asc';
 export type PriceBracket = 'all' | 'under-75' | '75-120' | 'over-120';
@@ -66,9 +66,10 @@ export const CollectionFilters: React.FC<CollectionFiltersProps> = ({
   onResetFilters,
 }) => {
   const { language, t } = useLanguage();
+  const { categories: shopCategories } = useShopData();
   const activeCategories = useMemo(() => {
-    return categories && categories.length > 0 ? categories : CATEGORIES;
-  }, [categories]);
+    return categories && categories.length > 0 ? categories : shopCategories;
+  }, [categories, shopCategories]);
   // Popover state: 'price' | 'material' | 'color' | 'sort' | null
   const [activePopover, setActivePopover] = useState<string | null>(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);

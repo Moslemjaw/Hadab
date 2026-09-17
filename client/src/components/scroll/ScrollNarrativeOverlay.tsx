@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowDown, ChevronRight, ShoppingBag, Eye, Heart } from 'lucide-react';
 import type { Product } from '../../types';
-import { FEATURED_PRODUCTS, CATEGORIES } from '../../constants/mockData';
+import { useShopData } from '../../context/ShopDataContext';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -25,9 +25,12 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
   onSelectCategory,
 }) => {
   const { language, t } = useLanguage();
+  const { featuredProducts, products, categories } = useShopData();
   const isAr = language === 'ar';
   const [categorySlide, setCategorySlide] = useState(0);
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
+
+  const displayFeatured = featuredProducts.length > 0 ? featuredProducts : products;
 
   const toggleWishlist = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -255,7 +258,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
 
             {/* 1 Row of Product Cards: 2 cols on mobile, 4 cols on desktop */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-3 sm:gap-5">
-              {FEATURED_PRODUCTS.slice(0, 4).map((prod) => {
+              {displayFeatured.slice(0, 4).map((prod) => {
                 const prodName = isAr && prod.nameArabic ? prod.nameArabic : prod.name;
                 const prodStitch = isAr && prod.stitchDetailArabic ? prod.stitchDetailArabic : prod.stitchDetail;
                 return (
@@ -413,7 +416,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
                   key={categorySlide}
                   className="flex flex-col gap-2.5 sm:gap-3.5 animate-slide-swap"
                 >
-                  {(categorySlide === 0 ? CATEGORIES.slice(0, 2) : CATEGORIES.slice(2, 4)).map((cat, idx) => {
+                  {(categorySlide === 0 ? categories.slice(0, 2) : (categories.length > 2 ? categories.slice(2, 4) : categories.slice(0, 2))).map((cat, idx) => {
                     const familyNum = categorySlide * 2 + idx + 1;
                     const catName = isAr && cat.nameArabic ? cat.nameArabic : cat.name;
                     const catDesc = isAr && cat.descriptionArabic ? cat.descriptionArabic : cat.description;

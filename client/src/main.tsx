@@ -4,12 +4,15 @@ import './index.css'
 import App from './App.tsx'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
+import { ShopDataProvider } from './context/ShopDataContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <LanguageProvider>
-        <App />
+        <ShopDataProvider>
+          <App />
+        </ShopDataProvider>
       </LanguageProvider>
     </AuthProvider>
   </StrictMode>,

@@ -11,7 +11,6 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { CustomerDashboard } from './components/customer/CustomerDashboard';
 import { ProductModal } from './components/shop/ProductModal';
 import type { Product } from './types';
-import { FEATURED_PRODUCTS } from './constants/mockData';
 import { useAuth } from './context/AuthContext';
 
 export function App() {
@@ -19,9 +18,7 @@ export function App() {
   const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin' | 'customer'>('home');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
-  const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([
-    { product: FEATURED_PRODUCTS[0], quantity: 1 },
-  ]);
+  const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 

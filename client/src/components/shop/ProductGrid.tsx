@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FEATURED_PRODUCTS, SALE_PRODUCTS } from '../../constants/mockData';
+import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
 import { Eye, ShoppingBag, Sparkles } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
@@ -15,22 +15,21 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onSelectProduct,
 }) => {
   const { language, t } = useLanguage();
+  const { products, categories } = useShopData();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeTextureId, setActiveTextureId] = useState<string | null>(null);
 
-  const allProducts: Product[] = [...FEATURED_PRODUCTS, ...SALE_PRODUCTS];
-
-  const filteredProducts = allProducts.filter((item) => {
+  const filteredProducts = products.filter((item) => {
     if (selectedCategory === 'all') return true;
     return item.category === selectedCategory;
   });
 
   const categoryTabs = [
     { id: 'all', label: language === 'ar' ? 'جميع القطع' : 'All Pieces' },
-    { id: 'bags', label: language === 'ar' ? 'الحقائب والتوت' : 'Bags & Totes' },
-    { id: 'clothing', label: language === 'ar' ? 'الملابس المحبوكة' : 'Wearables' },
-    { id: 'headwear', label: language === 'ar' ? 'أغطية الرأس' : 'Hats & Headwear' },
-    { id: 'pouches', label: language === 'ar' ? 'الإكسسوارات' : 'Accessories' },
+    ...categories.map((c) => ({
+      id: c.id,
+      label: language === 'ar' ? (c.nameArabic || c.name) : c.name,
+    })),
   ];
 
   return (

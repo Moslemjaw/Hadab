@@ -1,5 +1,5 @@
 import React from 'react';
-import { SALE_PRODUCTS } from '../../constants/mockData';
+import { useShopData } from '../../context/ShopDataContext';
 import { ThreadKnot } from '../common/ThreadSpine';
 import type { Product } from '../../types';
 import { ShoppingBag } from 'lucide-react';
@@ -11,6 +11,8 @@ interface SpotlightSectionProps {
 
 export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag }) => {
   const { language, t } = useLanguage();
+  const { saleProducts, products } = useShopData();
+  const displayItems = saleProducts.length > 0 ? saleProducts.slice(0, 3) : products.slice(0, 3);
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-cream-100/80 border-y border-brown-200/60">
@@ -32,7 +34,7 @@ export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag }
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {SALE_PRODUCTS.map((item) => (
+          {displayItems.map((item) => (
             <div
               key={item.id}
               className="bg-cream-200/80 rounded-2xl overflow-hidden border border-brown-200/70 p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-warm"
