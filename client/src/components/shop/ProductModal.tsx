@@ -3,6 +3,7 @@ import type { Product, ColorVariant } from '../../types';
 import { X, ShoppingBag, Sparkles, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface ProductModalProps {
   product: Product | null;
@@ -16,6 +17,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onAddToBag,
 }) => {
   const { language, t } = useLanguage();
+  const { format } = useCurrency();
   const isAr = language === 'ar';
   const [added, setAdded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -364,17 +366,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 {/* Price */}
                 <div className="mt-3 flex items-baseline gap-3">
                   <span className="font-serif text-2xl font-bold text-brown-900">
-                    {product.price} {isAr ? 'د.ك' : 'KWD'}
+                    {format(product.price, isAr)}
                   </span>
                   {product.originalPrice && product.originalPrice > product.price && (
                     <>
                       <span className="text-sm text-brown-400 line-through">
-                        {product.originalPrice} {isAr ? 'د.ك' : 'KWD'}
+                        {format(product.originalPrice, isAr)}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-burgundy-600 text-cream-100 text-[10px] font-bold uppercase tracking-wider shadow-sm">
                         {isAr
-                          ? `وفر ${product.originalPrice - product.price} د.ك`
-                          : `Save ${product.originalPrice - product.price} KWD`}
+                          ? `وفر ${format(product.originalPrice - product.price, true)}`
+                          : `Save ${format(product.originalPrice - product.price, false)}`}
                       </span>
                     </>
                   )}
@@ -529,7 +531,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   <>
                     <ShoppingBag size={18} />
                     <span>
-                      {t.addToBag} • {product.price} {isAr ? 'د.ك' : 'KWD'}
+                      {t.addToBag} • {format(product.price, isAr)}
                     </span>
                   </>
                 )}

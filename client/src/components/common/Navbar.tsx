@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Search, Menu, X, Globe, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingBag, Search, Menu, X, Globe, User, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface NavbarProps {
   cartCount?: number;
@@ -24,8 +25,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentPage = 'home',
 }) => {
   const { language, toggleLanguage, t } = useLanguage();
+  const { currency, setCurrency, supportedCurrencies } = useCurrency();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
+  const currencyMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close currency dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (currencyMenuRef.current && !currencyMenuRef.current.contains(event.target as Node)) {
+        setIsCurrencyDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -158,9 +173,53 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Controls: Currency, Desktop Language Toggle, Search, Bag, Profile */}
           <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-4 text-cream-100 z-20">
-            {/* Currency Selector */}
-            <div className="hidden lg:flex items-center text-[11.5px] uppercase tracking-[0.22em] font-semibold text-cream-100/90 hover:text-cream-100 transition-colors">
-              <span className="cursor-default">{language === 'ar' ? 'د.ك (KWD)' : 'KWD (د.ك)'}</span>
+            {/* Currency Selector (Desktop) */}
+            <div className="relative hidden lg:block" ref={currencyMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1 min-h-[34px] rounded-full border border-cream-200/35 hover:border-blush-300 text-cream-100 hover:text-blush-200 text-[10.5px] uppercase tracking-[0.18em] font-semibold transition-all bg-cream-100/10 hover:bg-cream-100/15 active:scale-95"
+                title={language === 'ar' ? 'تغيير العملة' : 'Change Currency'}
+              >
+                <span>{currency}</span>
+                <ChevronDown size={12} className={`transition-transform duration-200 ${isCurrencyDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isCurrencyDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-cream-100/95 backdrop-blur-md rounded-2xl border border-brown-200/80 shadow-2xl text-brown-900 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 border-b border-brown-200/40 text-[9px] uppercase tracking-wider text-brown-400 font-semibold">
+                    {language === 'ar' ? 'اختر العملة' : 'Select Currency'}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-brown-100/40">
+                    {supportedCurrencies.map((c) => {
+                      const isSelected = c.code === currency;
+                      return (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => {
+                            setCurrency(c.code);
+                            setIsCurrencyDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left transition-colors ${
+                            isSelected
+                              ? 'bg-blush-100/60 text-brown-900 font-bold'
+                              : 'hover:bg-cream-200/60 text-brown-800'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-base leading-none">{c.flag}</span>
+                            <span className="font-mono text-[11px] uppercase tracking-wider">{c.code}</span>
+                          </span>
+                          <span className="text-[10px] text-brown-500 font-medium">
+                            {language === 'ar' ? c.symbolAr : c.symbol}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Desktop Language Switcher (hidden on mobile, visible md+) */}
@@ -307,15 +366,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ))}
 
-          {/* Mobile Drawer Language Switcher & Studio Location */}
+          {/* Mobile Drawer Language & Currency Switcher */}
           <div
-            className={`absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 px-8 transition-all duration-500 ${
+            className={`absolute bottom-6 left-0 right-0 flex flex-col items-center gap-3 px-6 transition-all duration-500 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-4'
             }`}
             style={{ transitionDelay: isMobileMenuOpen ? '420ms' : '0ms' }}
           >
+            {/* Currency horizontal pills */}
+            <div className="w-full max-w-xs">
+              <label className="block text-[9px] uppercase tracking-widest text-cream-300/70 text-center mb-1.5 font-medium">
+                {language === 'ar' ? 'عملة العرض' : 'Display Currency'}
+              </label>
+              <div className="flex items-center justify-center gap-1 flex-wrap">
+                {supportedCurrencies.map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setCurrency(c.code)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-mono transition-all ${
+                      c.code === currency
+                        ? 'bg-cream-100 text-brown-900 font-bold shadow-sm'
+                        : 'bg-cream-100/10 text-cream-200/80 hover:bg-cream-100/20'
+                    }`}
+                  >
+                    {c.flag} {c.code}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Dual Language Segment Toggle */}
             <div className="inline-flex p-1 rounded-full bg-cream-100/10 border border-cream-200/20 backdrop-blur-md shadow-warm-sm">
               <button

@@ -3,6 +3,7 @@ import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
 import { ShoppingBag, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 interface FeaturedProductsSectionProps {
@@ -17,6 +18,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
   onExploreCatalog,
 }) => {
   const { isArabic: isAr, t } = useLanguage();
+  const { format } = useCurrency();
   const { featuredProducts, products } = useShopData();
   const [addedIds, setAddedIds] = useState<string[]>([]);
   const { ref: headerRef, isRevealed: headerRevealed } = useScrollReveal({ threshold: 0.2 });
@@ -132,11 +134,11 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                 <div className="flex items-baseline gap-1 shrink-0 pt-0.5">
                   {product.originalPrice && product.originalPrice > product.price && (
                     <span className="text-[10px] sm:text-[11px] text-brown-400 line-through">
-                      {product.originalPrice}
+                      {format(product.originalPrice, isAr)}
                     </span>
                   )}
                   <span className="font-medium text-xs sm:text-sm lg:text-base text-brown-900">
-                    {product.price} <span className="text-[9px] sm:text-[10px] uppercase text-brown-500 font-normal">{isAr ? 'د.ك' : 'KWD'}</span>
+                    {format(product.price, isAr)}
                   </span>
                 </div>
               </div>

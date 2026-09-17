@@ -4,6 +4,7 @@ import type { Product } from '../../types';
 import { Eye, ShoppingBag, Sparkles } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface ProductGridProps {
   onAddToBag: (product: Product) => void;
@@ -15,6 +16,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onSelectProduct,
 }) => {
   const { language, t } = useLanguage();
+  const { format } = useCurrency();
+  const isAr = language === 'ar';
   const { products, categories } = useShopData();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeTextureId, setActiveTextureId] = useState<string | null>(null);
@@ -126,11 +129,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     <div className="flex items-center gap-1.5">
                       {product.originalPrice && (
                         <span className="text-xs text-brown-400 line-through">
-                          {product.originalPrice} {language === 'ar' ? 'د.ك' : 'KWD'}
+                          {format(product.originalPrice, isAr)}
                         </span>
                       )}
                       <span className="text-base font-semibold text-brown-800">
-                        {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
+                        {format(product.price, isAr)}
                       </span>
                     </div>
                   </div>

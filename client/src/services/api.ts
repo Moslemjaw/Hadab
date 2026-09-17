@@ -245,4 +245,26 @@ export const api = {
     if (!res.ok) throw new Error(data.message || 'Failed to erase data');
     return data;
   },
+
+  // Settings
+  async getSettings(): Promise<Record<string, any>> {
+    try {
+      const res = await fetch(`${API_BASE}/settings`);
+      if (!res.ok) return { baseCurrency: 'KWD', freeShippingThreshold: 25, storeEmail: 'Byhadab@gmail.com' };
+      return await res.json();
+    } catch {
+      return { baseCurrency: 'KWD', freeShippingThreshold: 25, storeEmail: 'Byhadab@gmail.com' };
+    }
+  },
+
+  async updateSettings(settings: Record<string, any>): Promise<any> {
+    const res = await fetch(`${API_BASE}/settings`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(settings),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update settings');
+    return data;
+  },
 };

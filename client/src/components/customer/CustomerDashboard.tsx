@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 import { CountryCodeDropdown } from '../common/CountryCodeDropdown';
@@ -37,8 +38,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const { language } = useLanguage();
+  const { format } = useCurrency();
   const isAr = language === 'ar';
-  const curr = isAr ? 'د.ك' : 'KWD';
 
   const [activeTab, setActiveTab] = useState<'orders' | 'address' | 'support' | 'profile'>('orders');
   const [orders, setOrders] = useState<any[]>([]);
@@ -290,13 +291,13 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
             </span>
             <span>•</span>
             <span>
-              <strong className="font-medium text-brown-900">{totalSpent}</strong> {curr}
+              <strong className="font-medium text-brown-900">{format(totalSpent, isAr)}</strong>
             </span>
           </div>
         </div>
 
         {/* Breathable Tabs Navigation */}
-        <div className="flex items-center gap-1 border-b border-brown-200/50 pb-px overflow-x-auto custom-scrollbar">
+        <div className="flex items-center justify-between w-full border-b border-brown-200/50 pb-px overflow-x-auto custom-scrollbar gap-1 sm:gap-2">
           {[
             { id: 'orders', label: isAr ? 'الطلبات والمتابعة' : 'Orders & Tracking', icon: Package, count: orders.length },
             { id: 'address', label: isAr ? 'عنوان التوصيل' : 'Delivery Address', icon: MapPin },
@@ -313,17 +314,17 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                   setActiveTab(tab.id as any);
                   tactileAudio.playScrubTick(340);
                 }}
-                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-medium transition-all whitespace-nowrap cursor-pointer border-b-2 -mb-px ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-pointer border-b-2 -mb-px ${
                   isActive
                     ? 'border-[#2A201B] text-brown-950 font-semibold'
-                    : 'border-transparent text-brown-500 hover:text-brown-800'
+                    : 'border-transparent text-brown-500 hover:text-brown-800 hover:border-brown-300/60'
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={15} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-sans ${
                       isActive ? 'bg-[#2A201B] text-cream-100' : 'bg-brown-200/60 text-brown-700'
                     }`}
                   >
@@ -445,7 +446,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 
                         <div className="text-end">
                           <span className="font-serif text-sm sm:text-base font-semibold text-brown-950">
-                            {order.total} <span className="text-xs font-normal text-brown-600">{curr}</span>
+                            {format(order.total, isAr)}
                           </span>
                         </div>
 
@@ -515,7 +516,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                                   </div>
                                 </div>
                                 <span className="font-serif font-medium text-brown-900 shrink-0">
-                                  {item.price * item.quantity} {curr}
+                                  {format(item.price * item.quantity, isAr)}
                                 </span>
                               </div>
                             ))}

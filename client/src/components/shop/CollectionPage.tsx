@@ -14,6 +14,7 @@ import { tactileAudio } from '../../utils/audio';
 import { CollectionFilters, type FilterState } from './CollectionFilters';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { api } from '../../services/api';
 
 interface CollectionPageProps {
@@ -33,6 +34,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { isAdmin } = useAuth();
+  const { format } = useCurrency();
+  const isAr = language === 'ar';
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string; nameArabic?: string; slug?: string }[]>([]);
@@ -402,7 +405,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                                     {pName}
                                   </span>
                                   <span className="font-serif text-xs font-semibold text-brown-900 shrink-0">
-                                    {p.price} {language === 'ar' ? 'د.ك' : 'KWD'}
+                                    {format(p.price, isAr)}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-[10px] text-brown-500">
@@ -646,11 +649,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
                       {/* Price */}
                       <div className="flex items-baseline gap-1.5 mt-0.5 sm:mt-1">
                         <span className={`font-serif text-xs sm:text-base font-semibold ${hasDiscount ? 'text-burgundy-600' : 'text-brown-900'}`}>
-                          {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
+                          {format(product.price, isAr)}
                         </span>
                         {hasDiscount && (
                           <span className="font-serif text-[10px] sm:text-xs text-brown-400 line-through">
-                            {product.originalPrice} {language === 'ar' ? 'د.ك' : 'KWD'}
+                            {format(product.originalPrice!, isAr)}
                           </span>
                         )}
                       </div>

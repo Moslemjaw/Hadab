@@ -3,6 +3,7 @@ import type { Product } from '../../types';
 import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { api } from '../../services/api';
 
 interface CartDrawerProps {
@@ -22,8 +23,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
+  const { format } = useCurrency();
   const isAr = language === 'ar';
-  const curr = isAr ? 'د.ك' : 'KWD';
 
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [customerName, setCustomerName] = useState(user?.name || '');
@@ -72,10 +73,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const freeShippingThreshold = 25;
   const shippingCost = subtotal >= freeShippingThreshold ? 0 : 2.5;
   const finalTotal = subtotal + shippingCost;
-  const progressToFreeShipping = Math.min(
-    100,
-    (subtotal / freeShippingThreshold) * 100
-  );
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,8 +127,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const whatsappMessage = encodeURIComponent(
     isAr
-      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${orderTotal} د.ك.\nالاسم: ${customerName}\nالعنوان: ${customerAddress}`
-      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${orderTotal} KWD.\nName: ${customerName}\nDelivery Address: ${customerAddress}`
+      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nالعنوان: ${customerAddress}`
+      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nDelivery Address: ${customerAddress}`
   );
 
   return (
@@ -181,32 +178,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <X size={20} />
               </button>
             </div>
-
-            {/* Free Shipping Meter (in cart view) */}
-            {step === 'cart' && (
-              <div className="mt-4 p-3 rounded-xl bg-cream-200/60 border border-brown-200 text-xs text-brown-700">
-                <div className="flex justify-between font-medium mb-1.5">
-                  <span>
-                    {subtotal >= freeShippingThreshold ? (
-                      <span className="text-sage-600 font-semibold flex items-center gap-1">
-                        <Sparkles size={12} /> {t.complimentaryShippingUnlocked}
-                      </span>
-                    ) : (
-                      <span>
-                        {t.addForFreeDelivery.replace('{amount}', (freeShippingThreshold - subtotal).toFixed(0))}
-                      </span>
-                    )}
-                  </span>
-                  <span>{progressToFreeShipping.toFixed(0)}%</span>
-                </div>
-                <div className="w-full h-1.5 bg-cream-300 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-burgundy-500 transition-all duration-300"
-                    style={{ width: `${progressToFreeShipping}%` }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Body */}
@@ -267,7 +238,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </div>
                         </div>
                         <div className="text-xs font-semibold text-brown-800 mt-1">
-                          {product.price * quantity} {curr}
+                          {format(product.price * quantity, isAr)}
                         </div>
                       </div>
                     </div>
@@ -386,7 +357,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="pt-3 border-t border-brown-200 space-y-1.5 text-brown-600">
                   <div className="flex justify-between">
                     <span>{t.subtotal}</span>
-                    <span className="font-semibold text-brown-900">{subtotal} {curr}</span>
+                    <span className="font-semibold text-brown-900">{format(subtotal, isAr)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>{isAr ? 'الشحن إلى الكويت' : 'Shipping to Kuwait'}</span>
@@ -395,12 +366,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         {isAr ? 'شحن مجاني' : 'FREE'}
                       </span>
                     ) : (
-                      <span className="font-semibold text-brown-900">{shippingCost} {curr}</span>
+                      <span className="font-semibold text-brown-900">{format(shippingCost, isAr)}</span>
                     )}
                   </div>
                   <div className="flex justify-between text-sm font-serif font-bold text-brown-950 pt-2 border-t border-brown-200/80">
                     <span>{isAr ? 'المجموع النهائي' : 'Total'}</span>
-                    <span>{finalTotal} {curr}</span>
+                    <span>{format(finalTotal, isAr)}</span>
                   </div>
                 </div>
               </form>
@@ -478,7 +449,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <>
                   <div className="flex justify-between text-sm text-brown-800 font-medium mb-3 sm:mb-4">
                     <span>{t.subtotal}</span>
-                    <span className="font-serif text-lg font-semibold">{subtotal} {curr}</span>
+                    <span className="font-serif text-lg font-semibold">{format(subtotal, isAr)}</span>
                   </div>
                   <button
                     type="button"
@@ -504,7 +475,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </>
                   ) : (
                     <>
-                      <span>{isAr ? `تأكيد الطلب (${finalTotal} ${curr})` : `Confirm Order (${finalTotal} ${curr})`}</span>
+                      <span>{isAr ? `تأكيد الطلب (${format(finalTotal, true)})` : `Confirm Order (${format(finalTotal, false)})`}</span>
                       <ArrowRight size={14} className={isAr ? 'rotate-180' : ''} />
                     </>
                   )}

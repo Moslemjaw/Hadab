@@ -4,6 +4,7 @@ import { ThreadKnot } from '../common/ThreadSpine';
 import type { Product } from '../../types';
 import { ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface SpotlightSectionProps {
   onAddToBag?: (product: Product) => void;
@@ -12,6 +13,8 @@ interface SpotlightSectionProps {
 
 export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag, onSelectProduct }) => {
   const { language, t } = useLanguage();
+  const { format } = useCurrency();
+  const isAr = language === 'ar';
   const { saleProducts, products } = useShopData();
   const displayItems = saleProducts.length > 0 ? saleProducts.slice(0, 3) : products.slice(0, 3);
 
@@ -65,11 +68,11 @@ export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag, 
                   <div className="flex items-center gap-2">
                     {item.originalPrice && (
                       <span className="text-xs text-brown-400 line-through">
-                        {item.originalPrice} {language === 'ar' ? 'د.ك' : 'KWD'}
+                        {format(item.originalPrice, isAr)}
                       </span>
                     )}
                     <span className="text-sm font-semibold text-burgundy-500">
-                      {item.price} {language === 'ar' ? 'د.ك' : 'KWD'}
+                      {format(item.price, isAr)}
                     </span>
                   </div>
                 </div>

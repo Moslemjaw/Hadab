@@ -44,6 +44,8 @@ import type { Product, ColorVariant } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useShopData } from '../../context/ShopDataContext';
+import { useCurrency } from '../../context/CurrencyContext';
+import { type CurrencyCode } from '../../constants/currencies';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 
@@ -98,6 +100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const { language, toggleLanguage } = useLanguage();
   const { user, logout } = useAuth();
   const { refreshData } = useShopData();
+  const { baseCurrency, setBaseCurrency, refreshSettings } = useCurrency();
   const isAr = language === 'ar';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
@@ -230,10 +233,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     };
   });
 
-  const [settingsCurrency, setSettingsCurrency] = useState(() => localStorage.getItem('hadab_currency') || 'KWD');
+  const [settingsCurrency, setSettingsCurrency] = useState(baseCurrency || 'KWD');
   const [settingsThreshold, setSettingsThreshold] = useState(() => Number(localStorage.getItem('hadab_threshold')) || 25);
   const [settingsEmail, setSettingsEmail] = useState(() => localStorage.getItem('hadab_email') || 'Byhadab@gmail.com');
   const [isErasing, setIsErasing] = useState(false);
+
+  // Load settings from server on mount
+  useEffect(() => {
+    api.getSettings().then((s) => {
+      if (s.baseCurrency) setSettingsCurrency(s.baseCurrency);
+      if (s.freeShippingThreshold) setSettingsThreshold(Number(s.freeShippingThreshold));
+      if (s.storeEmail) setSettingsEmail(s.storeEmail);
+    }).catch(() => {});
+  }, []);
 
   // Modal States
   const [editingCategory, setEditingCategory] = useState<CategoryRecord | null>(null);
@@ -705,13 +717,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   }, [settingsState]);
 
   // Save Preferences handler
-  const handleSavePreferences = () => {
-    localStorage.setItem('hadab_currency', settingsCurrency);
-    localStorage.setItem('hadab_threshold', String(settingsThreshold));
-    localStorage.setItem('hadab_email', settingsEmail);
-    localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
-    tactileAudio.playChime();
-    alert(isAr ? 'تم حفظ إعدادات المتجر بنجاح ✓' : 'Settings saved successfully ✓');
+  const handleSavePreferences = async () => {
+    try {
+      await api.updateSettings({
+        baseCurrency: settingsCurrency,
+        freeShippingThreshold: settingsThreshold,
+        storeEmail: settingsEmail,
+      });
+      // Update the CurrencyContext so the whole app picks up the new base currency
+      setBaseCurrency(settingsCurrency as CurrencyCode);
+      await refreshSettings();
+      // Also keep localStorage in sync for offline fallback
+      localStorage.setItem('hadab_currency', settingsCurrency);
+      localStorage.setItem('hadab_threshold', String(settingsThreshold));
+      localStorage.setItem('hadab_email', settingsEmail);
+      localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
+      tactileAudio.playChime();
+      alert(isAr ? 'تم حفظ إعدادات المتجر بنجاح ✓' : 'Settings saved successfully ✓');
+    } catch (err) {
+      // Fallback to localStorage only
+      localStorage.setItem('hadab_currency', settingsCurrency);
+      localStorage.setItem('hadab_threshold', String(settingsThreshold));
+      localStorage.setItem('hadab_email', settingsEmail);
+      setBaseCurrency(settingsCurrency as CurrencyCode);
+      tactileAudio.playChime();
+      alert(isAr ? 'تم حفظ الإعدادات محلياً ✓' : 'Settings saved locally ✓');
+    }
   };
 
   // Erase All Data handler
@@ -2211,18 +2242,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'العملة الأساسية' : 'Default Currency'}</label>
                       <select
                         value={settingsCurrency}
-                        onChange={(e) => setSettingsCurrency(e.target.value)}
+                        onChange={(e) => setSettingsCurrency(e.target.value as CurrencyCode)}
                         className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 cursor-pointer"
                       >
-                        <option value="KWD">KWD (د.ك) - Kuwait Dinar (Primary)</option>
-                        <option value="JOD">JOD (د.أ) - Jordan Dinar (Origin)</option>
-                        <option value="USD">USD ($) - International</option>
+                        {Object.values(SUPPORTED_CURRENCIES).map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {c.code} ({c.symbolAr}) — {isAr ? c.nameAr : c.name}
+                          </option>
+                        ))}
                       </select>
+                      <p className="text-[9px] text-brown-400 mt-1">{isAr ? 'جميع الأسعار في المتجر ستُعرض بهذه العملة كأساس' : 'All product prices are stored in this currency'}</p>
                     </div>
                     <div>
                       <label className="block text-brown-700 font-bold mb-1.5 uppercase tracking-wider text-[10px]">{isAr ? 'حد الشحن المجاني للكويت' : 'Free Shipping Threshold to Kuwait'}</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-500 font-bold text-xs">KD</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-500 font-bold text-xs">{settingsCurrency}</span>
                         <input
                           type="number"
                           value={settingsThreshold}
