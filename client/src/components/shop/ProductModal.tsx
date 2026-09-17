@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Product, ColorVariant } from '../../types';
-import { X, ShoppingBag, Eye, Sparkles, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ShoppingBag, Sparkles, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -17,7 +17,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
-  const [showTexture, setShowTexture] = useState(false);
   const [added, setAdded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -30,7 +29,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   // Reset selections when product changes
   useEffect(() => {
     setSelectedImageIndex(0);
-    setShowTexture(false);
     setSelectedVariantIndex(0);
 
     if (product?.sizes && product.sizes.length > 0) {
@@ -71,48 +69,70 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     ? product.colorVariants[selectedVariantIndex]
     : undefined;
 
-  // Compute active gallery images based on selected color variant
+  // Compute all available images for the slider:
+  // Combines all variant images, product images, and texture/detail image into one cohesive carousel!
   const galleryImages: string[] = useMemo(() => {
     if (!product) return [];
-    if (currentColorVariant && currentColorVariant.images && currentColorVariant.images.length > 0) {
-      return currentColorVariant.images;
+
+    const imagesSet = new Set<string>();
+
+    // 1. Prioritize images from all color variants if they exist
+    if (product.colorVariants && product.colorVariants.length > 0) {
+      product.colorVariants.forEach((v) => {
+        v.images?.forEach((img) => img && imagesSet.add(img));
+      });
     }
+
+    // 2. Add product.images
     if (product.images && product.images.length > 0) {
-      return product.images;
+      product.images.forEach((img) => img && imagesSet.add(img));
     }
-    return product.image ? [product.image] : [];
-  }, [currentColorVariant, product]);
 
-  // Total slides count (either images in current color, or color variants if single images)
-  const totalSlides = galleryImages.length > 1
-    ? galleryImages.length
-    : (product?.colorVariants && product.colorVariants.length > 1 ? product.colorVariants.length : 1);
+    // 3. Add base product.image
+    if (product.image) {
+      imagesSet.add(product.image);
+    }
 
-  const currentSlideIndex = galleryImages.length > 1
-    ? selectedImageIndex
-    : selectedVariantIndex;
+    // 4. Include close-up texture image directly in the slider alongside other pics
+    if (
+      product.textureImage &&
+      product.textureImage !== '/products/hadab-bag.jpg'
+    ) {
+      imagesSet.add(product.textureImage);
+    }
+
+    return Array.from(imagesSet);
+  }, [product]);
 
   // AUTO-SLIDE AFTER EACH 3 SECONDS (3000ms)
   useEffect(() => {
-    if (!product || isPaused || showTexture || totalSlides <= 1) return;
+    if (!product || isPaused || galleryImages.length <= 1) return;
 
     const variants = product.colorVariants;
     const timer = setInterval(() => {
-      if (galleryImages.length > 1) {
-        setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length);
-      } else if (variants && variants.length > 1) {
-        setSelectedVariantIndex((prev) => (prev + 1) % variants.length);
-      }
+      setSelectedImageIndex((prev) => {
+        const nextIndex = (prev + 1) % galleryImages.length;
+        const nextUrl = galleryImages[nextIndex];
+
+        // Sync active color variant if this slide matches a variant's photo
+        if (variants && variants.length > 0) {
+          const matchedIdx = variants.findIndex(
+            (v) => v.images && v.images.includes(nextUrl)
+          );
+          if (matchedIdx !== -1) {
+            setSelectedVariantIndex(matchedIdx);
+          }
+        }
+        return nextIndex;
+      });
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [product, isPaused, showTexture, totalSlides, galleryImages.length]);
+  }, [product, isPaused, galleryImages]);
 
   if (!product) return null;
 
-  const activeImage = showTexture
-    ? product.textureImage
-    : (galleryImages[selectedImageIndex] || product.image);
+  const activeImage = galleryImages[selectedImageIndex] || product.image;
 
   // Determine current active color name
   const activeColorNameEn = currentColorVariant?.name || selectedFallbackColor || product.colorName || 'Desert Oat';
@@ -121,8 +141,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   const handleSelectVariant = (index: number) => {
     setSelectedVariantIndex(index);
-    setSelectedImageIndex(0);
-    setShowTexture(false);
+    const variant = product?.colorVariants?.[index];
+    if (variant && variant.images && variant.images.length > 0) {
+      const imgIdx = galleryImages.indexOf(variant.images[0]);
+      if (imgIdx !== -1) {
+        setSelectedImageIndex(imgIdx);
+      }
+    }
     tactileAudio.playScrubTick(360);
   };
 
@@ -136,25 +161,37 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     tactileAudio.playScrubTick(340);
   };
 
+  const handleSelectImage = (idx: number) => {
+    setSelectedImageIndex(idx);
+    tactileAudio.playScrubTick(340);
+
+    // Sync active color variant if this thumbnail matches a variant
+    if (product?.colorVariants && product.colorVariants.length > 0) {
+      const clickedUrl = galleryImages[idx];
+      const matchedIdx = product.colorVariants.findIndex(
+        (v) => v.images && v.images.includes(clickedUrl)
+      );
+      if (matchedIdx !== -1) {
+        setSelectedVariantIndex(matchedIdx);
+      }
+    }
+  };
+
   const handlePrevSlide = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     tactileAudio.playScrubTick(340);
-    const variants = product?.colorVariants;
     if (galleryImages.length > 1) {
-      setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
-    } else if (variants && variants.length > 1) {
-      setSelectedVariantIndex((prev) => (prev - 1 + variants.length) % variants.length);
+      const prevIdx = (selectedImageIndex - 1 + galleryImages.length) % galleryImages.length;
+      handleSelectImage(prevIdx);
     }
   };
 
   const handleNextSlide = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     tactileAudio.playScrubTick(340);
-    const variants = product?.colorVariants;
     if (galleryImages.length > 1) {
-      setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length);
-    } else if (variants && variants.length > 1) {
-      setSelectedVariantIndex((prev) => (prev + 1) % variants.length);
+      const nextIdx = (selectedImageIndex + 1) % galleryImages.length;
+      handleSelectImage(nextIdx);
     }
   };
 
@@ -163,7 +200,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       ...product,
       selectedColor: isAr ? activeColorNameAr : activeColorNameEn,
       selectedSize: selectedSize || undefined,
-      image: galleryImages[0] || product.image,
+      image: activeImage,
     };
     onAddToBag(productToAdd);
     tactileAudio.playChime();
@@ -200,7 +237,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch min-h-[540px]">
           
-          {/* LEFT: Seamless Auto-Sliding Image Carousel */}
+          {/* LEFT: Consistent Full-Height Auto-Sliding Carousel with Always-Visible Thumbnails */}
           <div
             className="relative flex flex-col justify-between bg-[#F4EDE4] border-b md:border-b-0 md:border-r border-brown-200/70 h-full min-h-[380px] sm:min-h-[440px] md:min-h-[580px] overflow-hidden group select-none"
             onMouseEnter={() => setIsPaused(true)}
@@ -215,23 +252,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 className="w-full h-full object-cover object-center transition-all duration-700 ease-in-out transform group-hover:scale-105 animate-in fade-in duration-500"
               />
 
-              {/* Close-Up Texture Toggle Button (Top Corner) */}
-              {product.textureImage && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTexture(!showTexture);
-                    tactileAudio.playScrubTick(360);
-                  }}
-                  className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} py-1.5 px-3 rounded-full bg-brown-950/60 hover:bg-brown-950/85 text-cream-100 text-[11px] font-medium backdrop-blur-md flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer z-20`}
-                >
-                  <Eye size={13} />
-                  <span>{showTexture ? t.showFullPiece : t.inspectStitch}</span>
-                </button>
-              )}
-
               {/* Prev / Next Slide Arrows (Hover) */}
-              {totalSlides > 1 && !showTexture && (
+              {galleryImages.length > 1 && (
                 <>
                   <button
                     type="button"
@@ -253,22 +275,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               )}
 
               {/* 3-Second Slide Pagination Indicators */}
-              {totalSlides > 1 && !showTexture && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 px-3 py-1.5 rounded-full bg-brown-950/40 backdrop-blur-md shadow-sm">
-                  {Array.from({ length: totalSlides }).map((_, idx) => {
-                    const isActive = currentSlideIndex === idx;
+              {galleryImages.length > 1 && (
+                <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 px-3 py-1.5 rounded-full bg-brown-950/40 backdrop-blur-md shadow-sm">
+                  {galleryImages.map((_, idx) => {
+                    const isActive = selectedImageIndex === idx;
                     return (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => {
-                          if (galleryImages.length > 1) {
-                            setSelectedImageIndex(idx);
-                          } else {
-                            setSelectedVariantIndex(idx);
-                          }
-                          tactileAudio.playScrubTick(340);
-                        }}
+                        onClick={() => handleSelectImage(idx)}
                         className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
                           isActive
                             ? 'w-6 bg-cream-100 shadow-sm'
@@ -282,24 +297,21 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               )}
             </div>
 
-            {/* Thumbnail Strip (if more than 1 photo in current gallery) */}
-            {galleryImages.length > 1 && !showTexture && (
-              <div className="flex items-center justify-center gap-2 p-3 bg-cream-200/70 border-t border-brown-200/60 overflow-x-auto no-scrollbar">
+            {/* Thumbnail Strip: Always Visible at the Bottom */}
+            {galleryImages.length > 0 && (
+              <div className="flex items-center justify-center gap-2.5 p-3.5 bg-cream-200/80 border-t border-brown-200/70 overflow-x-auto no-scrollbar shrink-0">
                 {galleryImages.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => {
-                      setSelectedImageIndex(idx);
-                      tactileAudio.playScrubTick(340);
-                    }}
+                    onClick={() => handleSelectImage(idx)}
                     className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer shadow-sm ${
                       selectedImageIndex === idx
-                        ? 'border-burgundy-600 scale-105 ring-2 ring-burgundy-200'
+                        ? 'border-burgundy-600 scale-105 ring-2 ring-burgundy-300'
                         : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt={`Angle ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
