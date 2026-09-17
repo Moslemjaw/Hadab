@@ -89,7 +89,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
               <div className={`flex items-baseline justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2.5 sm:gap-3`}>
                 {isAr ? (
                   <h1 className="font-arabic text-5xl xs:text-6xl sm:text-7xl font-medium tracking-wide text-brown-900 leading-normal select-none pt-1">
-                    هدب
+                    هَدَب
                   </h1>
                 ) : (
                   <h1 className="font-display text-4xl xs:text-5xl sm:text-6xl lg:text-7xl font-normal tracking-tight text-brown-900 lowercase leading-none select-none">
