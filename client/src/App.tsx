@@ -12,12 +12,6 @@ import { CustomerDashboard } from './components/customer/CustomerDashboard';
 import { ProductModal } from './components/shop/ProductModal';
 import { FeaturedProductsSection } from './components/home/FeaturedProductsSection';
 import { CategoryTilesSection } from './components/home/CategoryTilesSection';
-import { BrandLineInSection } from './components/home/BrandLineInSection';
-import { SpotlightSection } from './components/home/SpotlightSection';
-import { CraftProcessSection } from './components/home/CraftProcessSection';
-import { TestimonialsSection } from './components/home/TestimonialsSection';
-import { AboutTeaserSection } from './components/home/AboutTeaserSection';
-import { NewsletterSection } from './components/home/NewsletterSection';
 import type { Product } from './types';
 import { useAuth } from './context/AuthContext';
 
@@ -184,15 +178,6 @@ export function App() {
               <CategoryTilesSection
                 onSelectCategory={(catId) => handleOpenCollection(catId)}
               />
-              <BrandLineInSection />
-              <SpotlightSection
-                onAddToBag={handleAddToBag}
-                onSelectProduct={(p) => setSelectedProduct(p)}
-              />
-              <CraftProcessSection />
-              <TestimonialsSection />
-              <AboutTeaserSection />
-              <NewsletterSection />
             </div>
           </div>
         ) : currentView === 'collection' ? (
