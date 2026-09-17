@@ -7,6 +7,7 @@ export interface Product {
   category: string;
   image: string;
   textureImage: string;
+  images?: string[];
   tag?: string;
   tagArabic?: string;
   description: string;

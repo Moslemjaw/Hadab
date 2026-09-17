@@ -19,6 +19,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const isAr = language === 'ar';
   const [showTexture, setShowTexture] = useState(false);
   const [added, setAdded] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+    setShowTexture(false);
+  }, [product?.id]);
 
   // Background body scroll lock on mobile & desktop
   useEffect(() => {
@@ -39,6 +45,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   }, [product, onClose]);
 
   if (!product) return null;
+
+  const galleryImages: string[] = product.images && product.images.length > 0
+    ? product.images
+    : [product.image];
+
+  const activeImage = showTexture
+    ? product.textureImage
+    : (galleryImages[selectedImageIndex] || product.image);
 
   const handleAdd = () => {
     onAddToBag(product);
@@ -74,26 +88,51 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2">
-          {/* Image & Texture Switcher - Max height on mobile to prevent pushing details down */}
-          <div className="relative aspect-[4/3] sm:aspect-square md:aspect-auto max-h-[35vh] sm:max-h-[45vh] md:max-h-none bg-cream-200 shrink-0">
-            <img
-              src={showTexture ? product.textureImage : product.image}
-              alt={displayName}
-              className="w-full h-full object-cover transition-all duration-500"
-            />
+          {/* Image & Texture Switcher & Gallery */}
+          <div className="flex flex-col bg-cream-200">
+            <div className="relative aspect-[4/3] sm:aspect-square md:aspect-auto max-h-[35vh] sm:max-h-[45vh] md:max-h-none shrink-0 overflow-hidden">
+              <img
+                src={activeImage}
+                alt={displayName}
+                className="w-full h-full object-cover transition-all duration-500"
+              />
 
-            {/* Toggle between Product Shot and Macro Yarn Texture */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowTexture(!showTexture);
-                tactileAudio.playScrubTick(360);
-              }}
-              className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 py-2 px-3 rounded-full bg-brown-800/85 text-cream-100 text-xs font-medium backdrop-blur-md flex items-center justify-center gap-2 hover:bg-brown-900 transition-colors shadow-warm-sm min-h-[38px] active:scale-95"
-            >
-              <Eye size={14} />
-              <span>{showTexture ? t.showFullPiece : t.inspectStitch}</span>
-            </button>
+              {/* Toggle between Product Shot and Macro Yarn Texture */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTexture(!showTexture);
+                  tactileAudio.playScrubTick(360);
+                }}
+                className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 py-2 px-3 rounded-full bg-brown-800/85 text-cream-100 text-xs font-medium backdrop-blur-md flex items-center justify-center gap-2 hover:bg-brown-900 transition-colors shadow-warm-sm min-h-[38px] active:scale-95"
+              >
+                <Eye size={14} />
+                <span>{showTexture ? t.showFullPiece : t.inspectStitch}</span>
+              </button>
+            </div>
+
+            {/* Multiple Photos Thumbnails Strip */}
+            {galleryImages.length > 1 && !showTexture && (
+              <div className="flex items-center gap-2 p-3 bg-cream-100/90 overflow-x-auto border-t border-brown-200/60 no-scrollbar">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedImageIndex(idx);
+                      tactileAudio.playScrubTick(340);
+                    }}
+                    className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                      selectedImageIndex === idx
+                        ? 'border-burgundy-600 scale-105 shadow-sm'
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`Angle ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details */}

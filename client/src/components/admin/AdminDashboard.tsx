@@ -249,10 +249,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [newProductCategory, setNewProductCategory] = useState<string>('bags');
   const [newProductTag, setNewProductTag] = useState('New Drop');
   const [newProductImage, setNewProductImage] = useState<string>('/products/hadab-bag.jpg');
+  const [newProductImages, setNewProductImages] = useState<string[]>([]);
   const [newProductColors, setNewProductColors] = useState<string>('');
   const [newProductSizes, setNewProductSizes] = useState<string>('');
   const [newProductDiscount, setNewProductDiscount] = useState<number>(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgressText, setUploadProgressText] = useState('');
 
   // Filtered Data
   const filteredProducts = useMemo(() => {
@@ -421,31 +423,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     const originalPriceVal = discountVal > 0 ? Number(newProductPrice) : undefined;
     const finalPriceVal = discountVal > 0 ? Math.max(0, Number(newProductPrice) - discountVal) : Number(newProductPrice);
 
+    const primaryImage = newProductImages.length > 0 ? newProductImages[0] : (newProductImage || '/products/hadab-bag.jpg');
+    const secondImage = newProductImages.length > 1 ? newProductImages[1] : primaryImage;
+
     const productPayload = {
-      name: newProductName,
-      nameArabic: newProductNameAr || newProductName,
+      name: newProductName.trim(),
+      nameArabic: newProductNameAr.trim() || undefined,
       price: finalPriceVal,
       originalPrice: originalPriceVal,
-      discount: discountVal,
-      colors: parsedColors,
-      sizes: parsedSizes,
-      category: newProductCategory,
-      tag: newProductTag,
-      image: newProductImage || '/products/hadab-bag.jpg',
-      textureImage: newProductImage || '/products/hadab-bag.jpg',
-      description: 'Handmade crochet piece crafted with quality unbleached cotton cord.',
-      descriptionArabic: 'قطعة كروشيه يدوية مصنوعة بعناية من خيوط القطن الطبيعي.',
-      stitchDetail: 'Hand-crocheted stitch with reinforced shape.',
-      stitchDetailArabic: 'حياكة يدوية متقنة تحافظ على قوام القطعة.',
-      yarnType: '100% Cotton Yarn',
-      yarnTypeArabic: 'خيوط قطن طبيعي ١٠٠٪',
-      colorName: parsedColors.length > 0 ? parsedColors[0] : 'Desert Oat',
-      colorNameArabic: parsedColors.length > 0 ? parsedColors[0] : 'بيج صحراوي',
-      colorHex: '#D6C7B2',
-      isFeatured: false,
-      isSale: discountVal > 0,
-      stockCount: 10,
-    };
+        discount: discountVal,
+        colors: parsedColors,
+        sizes: parsedSizes,
+        category: newProductCategory,
+        tag: newProductTag,
+        image: primaryImage,
+        textureImage: secondImage,
+        images: newProductImages.length > 0 ? newProductImages : [primaryImage],
+        description: 'Handmade crochet piece crafted with quality unbleached cotton cord.',
+        descriptionArabic: 'قطعة كروشيه يدوية مصنوعة بعناية من خيوط القطن الطبيعي.',
+        stitchDetail: 'Hand-crocheted stitch with reinforced shape.',
+        stitchDetailArabic: 'حياكة يدوية متقنة تحافظ على قوام القطعة.',
+        yarnType: '100% Cotton Yarn',
+        yarnTypeArabic: 'خيوط قطن طبيعي ١٠٠٪',
+        colorName: parsedColors.length > 0 ? parsedColors[0] : 'Desert Oat',
+        colorNameArabic: parsedColors.length > 0 ? parsedColors[0] : 'بيج صحراوي',
+        colorHex: '#D6C7B2',
+        isFeatured: false,
+        isSale: discountVal > 0,
+        stockCount: 10,
+      };
 
     const token = localStorage.getItem('hadab_token');
     if (!token) {
@@ -487,20 +493,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setEditingProduct(null);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleMultipleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setIsUploadingImage(true);
+    const uploadedUrls: string[] = [];
+
     try {
-      const res = await api.uploadImage(file);
-      setNewProductImage(res.url);
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgressText(
+          isAr
+            ? `جاري رفع الصورة ${i + 1} من ${files.length}...`
+            : `Uploading image ${i + 1} of ${files.length}...`
+        );
+        const res = await api.uploadImage(files[i]);
+        if (res?.url) {
+          uploadedUrls.push(res.url);
+        }
+      }
+
+      setNewProductImages((prev) => {
+        const combined = [...prev, ...uploadedUrls];
+        if (combined.length > 0) {
+          setNewProductImage(combined[0]);
+        }
+        return combined;
+      });
+
       tactileAudio.playChime();
     } catch (err: any) {
+      console.error('Upload error:', err);
       alert(err.message || 'Image upload failed');
     } finally {
       setIsUploadingImage(false);
+      setUploadProgressText('');
+      e.target.value = '';
     }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setNewProductImages((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== indexToRemove);
+      setNewProductImage(filtered.length > 0 ? filtered[0] : '/products/hadab-bag.jpg');
+      return filtered;
+    });
+  };
+
+  const handleSetPrimaryImage = (indexToPrimary: number) => {
+    setNewProductImages((prev) => {
+      if (indexToPrimary <= 0 || indexToPrimary >= prev.length) return prev;
+      const target = prev[indexToPrimary];
+      const rest = prev.filter((_, idx) => idx !== indexToPrimary);
+      const reordered = [target, ...rest];
+      setNewProductImage(reordered[0]);
+      return reordered;
+    });
   };
 
   const openNewProductModal = () => {
@@ -514,6 +562,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setNewProductCategory('bags');
     setNewProductTag('New Drop');
     setNewProductImage('/products/hadab-bag.jpg');
+    setNewProductImages([]);
     setIsProductModalOpen(true);
   };
 
@@ -531,6 +580,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setNewProductCategory(product.category);
     setNewProductTag(product.tag || 'Classic');
     setNewProductImage(product.image || '/products/hadab-bag.jpg');
+    const existingImages = product.images && product.images.length > 0
+      ? product.images
+      : (product.image ? [product.image] : ['/products/hadab-bag.jpg']);
+    setNewProductImages(existingImages);
     setIsProductModalOpen(true);
   };
   
@@ -2165,27 +2218,85 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Product Photo (Cloudinary)</label>
-                <div className="flex items-center gap-3">
-                  <label className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-dashed border-brown-300 hover:border-burgundy-500 bg-white/60 cursor-pointer transition-colors">
-                    <Upload size={14} className="text-brown-500" />
-                    <span className="text-xs text-brown-700 font-medium">
-                      {isUploadingImage ? (isAr ? 'جاري الرفع إلى كلاوديناري...' : 'Uploading to Cloudinary...') : (isAr ? 'اختيار صورة ورفعها' : 'Upload photo')}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={isUploadingImage}
-                      className="hidden"
-                    />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] uppercase tracking-wider font-bold text-brown-700">
+                    {isAr ? 'صور المنتج (يمكنك رفع عدة صور)' : 'Product Photos (Add Multiple Pics)'}
                   </label>
-                  {newProductImage && (
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-brown-300 shrink-0 bg-cream-100">
-                      <img src={newProductImage} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
+                  {newProductImages.length > 0 && (
+                    <span className="text-[10px] text-brown-500 font-semibold">
+                      {newProductImages.length} {isAr ? 'صور' : 'photos'}
+                    </span>
                   )}
                 </div>
+
+                {/* Upload Button Area */}
+                <label className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl border-2 border-dashed border-brown-300 hover:border-burgundy-500 bg-white/70 hover:bg-white cursor-pointer transition-all mb-2.5 group shadow-sm">
+                  <Upload size={16} className="text-brown-500 group-hover:text-burgundy-600 transition-colors" />
+                  <span className="text-xs text-brown-800 font-medium">
+                    {isUploadingImage
+                      ? (uploadProgressText || (isAr ? 'جاري رفع الصور...' : 'Uploading photos...'))
+                      : (isAr ? '+ إضافة صور جديدة (يمكنك تحديد عدة صور)' : '+ Add product photos (select multiple)')}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleMultipleImageUpload}
+                    disabled={isUploadingImage}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Thumbnails Gallery */}
+                {newProductImages.length > 0 ? (
+                  <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-1 no-scrollbar">
+                    {newProductImages.map((imgUrl, idx) => (
+                      <div
+                        key={idx}
+                        className="relative group/thumb w-16 h-16 rounded-xl overflow-hidden border border-brown-300 shrink-0 bg-cream-100 shadow-sm"
+                      >
+                        <img src={imgUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+
+                        {/* Primary / Cover Badge */}
+                        {idx === 0 ? (
+                          <span className="absolute bottom-0 inset-x-0 bg-brown-900/90 text-cream-100 text-[8px] font-bold text-center py-0.5 uppercase tracking-wider">
+                            {isAr ? 'الرئيسية' : 'Cover'}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPrimaryImage(idx)}
+                            title={isAr ? 'تعيين كصورة رئيسية' : 'Set as primary photo'}
+                            className="absolute bottom-0 inset-x-0 bg-burgundy-600/95 hover:bg-burgundy-700 text-cream-100 text-[8px] font-bold text-center py-0.5 uppercase opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                          >
+                            {isAr ? 'رئيسية' : 'Make Cover'}
+                          </button>
+                        )}
+
+                        {/* Remove Image Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          title={isAr ? 'حذف الصورة' : 'Remove photo'}
+                          className="absolute top-1 right-1 w-4 h-4 rounded-full bg-brown-900/80 hover:bg-burgundy-600 text-cream-100 flex items-center justify-center transition-colors shadow-sm"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  newProductImage && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-brown-300 shrink-0 bg-cream-100">
+                        <img src={newProductImage} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-[11px] text-brown-500 font-light">
+                        {isAr ? 'الصورة الافتراضية للقطعة' : 'Default piece photo'}
+                      </span>
+                    </div>
+                  )
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

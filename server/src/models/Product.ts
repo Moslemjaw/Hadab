@@ -8,6 +8,7 @@ export interface IProduct extends Document {
   category: string;
   image: string;
   textureImage: string;
+  images?: string[];
   tag?: string;
   tagArabic?: string;
   description: string;
@@ -42,6 +43,7 @@ const ProductSchema = new Schema<IProduct>(
     },
     image: { type: String, default: '/products/hadab-bag.jpg' },
     textureImage: { type: String, default: '/products/hadab-bag.jpg' },
+    images: { type: [String], default: [] },
     tag: { type: String, default: 'New Drop' },
     tagArabic: { type: String, default: 'إصدار جديد' },
     description: { type: String, required: true },
