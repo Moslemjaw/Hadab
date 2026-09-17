@@ -15,6 +15,8 @@ import { CategoryTilesSection } from './components/home/CategoryTilesSection';
 import { Marquee } from './components/home/Marquee';
 import type { Product } from './types';
 import { useAuth, type UserProfile } from './context/AuthContext';
+import { useNotification } from './context/NotificationContext';
+import { useLanguage } from './context/LanguageContext';
 
 interface BagItem {
   product: Product;
@@ -68,6 +70,8 @@ const saveCartToStorage = (userKey: string, items: BagItem[]) => {
 
 export function App() {
   const { user, isAdmin } = useAuth();
+  const { showToast } = useNotification();
+  const { isArabic: isAr } = useLanguage();
   const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin' | 'customer'>('home');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
@@ -172,6 +176,14 @@ export function App() {
       }
       return [...prev, { product, quantity: 1 }];
     });
+    showToast(
+      isAr
+        ? `تمت إضافة "${product.name}" إلى السلة`
+        : `"${product.name}" has been added to your bag`,
+      'success',
+      isAr ? 'أُضيف إلى السلة ✓' : 'Added to Bag ✓',
+      3000
+    );
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number, selectedColor?: string, selectedSize?: string) => {
