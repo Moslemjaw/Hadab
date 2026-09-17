@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { Setting } from '../models/Setting';
 import { authenticateToken, requireAdmin, type AuthRequest } from '../middleware/auth';
 
@@ -12,6 +12,20 @@ router.get('/', async (_req, res) => {
       baseCurrency: 'KWD',
       freeShippingThreshold: 25,
       storeEmail: 'Byhadab@gmail.com',
+      shippingConfig: {
+        enabled: true,
+        restOfWorldRate: 5,
+        rates: [
+          { countryCode: 'KW', countryName: 'Kuwait', countryNameAr: 'الكويت', rate: 2, enabled: true },
+          { countryCode: 'JO', countryName: 'Jordan', countryNameAr: 'الأردن', rate: 3, enabled: true },
+          { countryCode: 'SA', countryName: 'Saudi Arabia', countryNameAr: 'المملكة العربية السعودية', rate: 4, enabled: true },
+          { countryCode: 'AE', countryName: 'United Arab Emirates', countryNameAr: 'الإمارات العربية المتحدة', rate: 4, enabled: true },
+          { countryCode: 'QA', countryName: 'Qatar', countryNameAr: 'قطر', rate: 4, enabled: true },
+          { countryCode: 'BH', countryName: 'Bahrain', countryNameAr: 'البحرين', rate: 4, enabled: true },
+          { countryCode: 'OM', countryName: 'Oman', countryNameAr: 'عُمان', rate: 4, enabled: true },
+          { countryCode: 'REST', countryName: 'Other Countries', countryNameAr: 'باقي الدول', rate: 5, enabled: true },
+        ],
+      },
     };
 
     settingsList.forEach((s) => {

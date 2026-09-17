@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { Product } from '../../types';
-import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2 } from 'lucide-react';
+import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2, Globe } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { COUNTRY_CODES } from '../../constants/countryCodes';
 import { api } from '../../services/api';
 
 interface CartDrawerProps {
@@ -23,10 +24,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const { format } = useCurrency();
+  const { format, getShippingFee, shippingConfig } = useCurrency();
   const isAr = language === 'ar';
 
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
+  const [selectedCountry, setSelectedCountry] = useState<string>(() => {
+    return localStorage.getItem('hadab_customer_country') || 'KW';
+  });
   const [customerName, setCustomerName] = useState(user?.name || '');
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
   const [customerAddress, setCustomerAddress] = useState(
@@ -70,9 +74,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     (acc, item) => acc + item.product.price * item.quantity,
     0
   );
-  const freeShippingThreshold = 25;
-  const shippingCost = subtotal >= freeShippingThreshold ? 0 : 2.5;
+  
+  // Calculate country-specific shipping fee
+  const countryShippingFee = getShippingFee(selectedCountry);
+  const isFreeShipping = shippingConfig.enabled && selectedCountry === 'KW' && subtotal >= 25;
+  const shippingCost = isFreeShipping ? 0 : countryShippingFee;
   const finalTotal = subtotal + shippingCost;
+
+  const currentCountryObj = COUNTRY_CODES.find((c) => c.code === selectedCountry) || {
+    code: selectedCountry,
+    name: selectedCountry,
+    nameAr: selectedCountry,
+    sample: '+965 9912 3456',
+  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,9 +99,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         customerName,
         customerPhone,
         customerEmail: user?.email || (customerPhone ? `${customerPhone.replace(/[^0-9]/g, '')}@hadab.guest` : 'guest@hadab.kw'),
-        destination: 'Kuwait',
-        destinationArabic: 'الكويت',
-        address: customerAddress,
+        destination: currentCountryObj.name,
+        destinationArabic: currentCountryObj.nameAr,
+        address: `${currentCountryObj.name} - ${customerAddress}`,
         notes: customerNotes,
         status: 'pending',
         statusArabic: 'قيد الانتظار',
@@ -127,8 +141,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const whatsappMessage = encodeURIComponent(
     isAr
-      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nالعنوان: ${customerAddress}`
-      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nDelivery Address: ${customerAddress}`
+      ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nدولة التوصيل: ${currentCountryObj.nameAr}\nالعنوان: ${customerAddress}`
+      : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nCountry: ${currentCountryObj.name}\nDelivery Address: ${customerAddress}`
   );
 
   return (
@@ -253,13 +267,63 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="p-3.5 rounded-2xl bg-cream-200/60 border border-brown-200 text-brown-800 space-y-1">
                   <div className="flex items-center gap-1.5 font-medium text-brown-900">
                     <Sparkles size={14} className="text-burgundy-600" />
-                    <span>{isAr ? 'شحن من الأردن إلى الكويت' : 'Shipped from Jordan to Kuwait'}</span>
+                    <span>
+                      {isAr
+                        ? `شحن من الأردن إلى ${currentCountryObj.nameAr}`
+                        : `Shipped from Jordan to ${currentCountryObj.name}`}
+                    </span>
                   </div>
                   <p className="text-[11px] text-brown-500 font-light leading-relaxed">
                     {isAr
-                      ? 'مشروعنا المنزلي مقره الأردن ونشحن جميع القطع المحبوكة يدوياً مباشرة إلى باب منزلك في الكويت.'
-                      : 'Our handmade pieces are lovingly crafted in Jordan and delivered straight to your doorstep in Kuwait.'}
+                      ? 'مشروعنا المنزلي مقره الأردن ونشحن جميع القطع المحبوكة يدوياً مباشرة إلى باب منزلك.'
+                      : 'Our handmade pieces are lovingly crafted in Jordan and delivered straight to your doorstep.'}
                   </p>
+                </div>
+
+                {/* Country Destination Selector */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-brown-700 font-semibold text-[11px]">
+                      {isAr ? 'دولة التوصيل *' : 'Delivery Country *'}
+                    </label>
+                    <span className="text-[10px] font-semibold text-burgundy-700">
+                      {shippingCost === 0
+                        ? (isAr ? 'الشحن: مجاني' : 'Shipping: FREE')
+                        : `${isAr ? 'رسوم الشحن:' : 'Shipping:'} ${format(shippingCost, isAr)}`}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Globe size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-brown-400 pointer-events-none`} />
+                    <select
+                      value={selectedCountry}
+                      onChange={(e) => {
+                        setSelectedCountry(e.target.value);
+                        localStorage.setItem('hadab_customer_country', e.target.value);
+                      }}
+                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 cursor-pointer text-xs`}
+                    >
+                      {/* Prioritize GCC and Jordan */}
+                      {COUNTRY_CODES.slice(0, 7).map((c) => {
+                        const fee = getShippingFee(c.code);
+                        const feeText = fee === 0 ? (isAr ? 'مجاناً' : 'FREE') : format(fee, isAr);
+                        return (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {isAr ? c.nameAr : c.name} ({feeText})
+                          </option>
+                        );
+                      })}
+                      {/* Other Countries */}
+                      {COUNTRY_CODES.slice(7).map((c) => {
+                        const fee = getShippingFee(c.code);
+                        const feeText = fee === 0 ? (isAr ? 'مجاناً' : 'FREE') : format(fee, isAr);
+                        return (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {isAr ? c.nameAr : c.name} ({feeText})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
@@ -281,7 +345,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                 <div>
                   <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
-                    {isAr ? 'رقم الهاتف / الواتساب في الكويت *' : 'Kuwait Phone / WhatsApp *'}
+                    {isAr ? `رقم الهاتف / الواتساب (${currentCountryObj.nameAr}) *` : `Phone / WhatsApp (${currentCountryObj.name}) *`}
                   </label>
                   <div className="relative">
                     <Phone size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-brown-400`} />
@@ -290,7 +354,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="+965 9912 3456"
+                      placeholder={currentCountryObj.sample || '+965 9912 3456'}
                       className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300`}
                     />
                   </div>
@@ -298,7 +362,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                 <div>
                   <label className="block text-brown-700 font-semibold mb-1 text-[11px]">
-                    {isAr ? 'عنوان التوصيل في الكويت (المنطقة، القطعة، الشارع، المنزل) *' : 'Kuwait Delivery Address (Area, Block, Street, House) *'}
+                    {isAr ? `عنوان التوصيل في ${currentCountryObj.nameAr} (المدينة، المنطقة، الشارع) *` : `Delivery Address in ${currentCountryObj.name} (City, Area, Street) *`}
                   </label>
                   <div className="relative">
                     <MapPin size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-3 text-brown-400`} />
@@ -307,7 +371,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       required
                       value={customerAddress}
                       onChange={(e) => setCustomerAddress(e.target.value)}
-                      placeholder={isAr ? 'السالمية، قطعة ٤، شارع ١٢، منزل ٥' : 'Salmiya, Block 4, Street 12, House 5'}
+                      placeholder={isAr ? 'المدينة، الحي/المنطقة، الشارع، رقم المبنى' : 'City, Area, Street, Building number'}
                       className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 resize-none`}
                     />
                   </div>
@@ -336,7 +400,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </span>
                     </div>
                     <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                      KNET
+                      KNET / Transfer
                     </span>
                   </div>
                   <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
@@ -347,8 +411,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </p>
                     <p className="text-[10.5px] text-brown-600 font-light mt-0.5">
                       {isAr
-                        ? 'سنرسل لك رابط دفع KNET مخصص أو تأكيد الدفع عند الاستلام.'
-                        : 'We will send you a secure KNET link or confirm cash on delivery.'}
+                        ? 'سنرسل لك رابط دفع إلكتروني مخصص أو تأكيد الدفع عند الاستلام.'
+                        : 'We will send you a secure payment link or confirm cash on delivery.'}
                     </p>
                   </div>
                 </div>
@@ -360,7 +424,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <span className="font-semibold text-brown-900">{format(subtotal, isAr)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span>{isAr ? 'الشحن إلى الكويت' : 'Shipping to Kuwait'}</span>
+                    <span>
+                      {isAr
+                        ? `الشحن إلى ${currentCountryObj.nameAr}`
+                        : `Shipping to ${currentCountryObj.name}`}
+                    </span>
                     {shippingCost === 0 ? (
                       <span className="text-sage-700 font-semibold bg-sage-100 px-2 py-0.5 rounded-full text-[10px]">
                         {isAr ? 'شحن مجاني' : 'FREE'}
@@ -397,8 +465,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                 <p className="text-xs text-brown-600 font-light leading-relaxed max-w-xs">
                   {isAr
-                    ? 'بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى الكويت.'
-                    : 'We are preparing your handmade pieces with care in Jordan and shipping them straight to Kuwait.'}
+                    ? `بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى ${currentCountryObj.nameAr}.`
+                    : `We are preparing your handmade pieces with care in Jordan and shipping them straight to ${currentCountryObj.name}.`}
                 </p>
 
                 {/* Prominent Payment Notice */}

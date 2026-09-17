@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import {
   type CurrencyCode,
   type CurrencyInfo,
@@ -7,6 +7,11 @@ import {
   convertPrice,
   formatPriceValue,
 } from '../constants/currencies';
+import {
+  type ShippingConfig,
+  DEFAULT_SHIPPING_CONFIG,
+  getShippingFeeForCountry,
+} from '../constants/shipping';
 import { api } from '../services/api';
 
 interface CurrencyContextType {
@@ -14,8 +19,11 @@ interface CurrencyContextType {
   currency: CurrencyCode;
   currencyInfo: CurrencyInfo;
   supportedCurrencies: CurrencyInfo[];
+  shippingConfig: ShippingConfig;
   setCurrency: (code: CurrencyCode) => void;
   setBaseCurrency: (code: CurrencyCode) => void;
+  setShippingConfig: (config: ShippingConfig) => void;
+  getShippingFee: (countryCode: string) => number;
   convert: (amountInBase: number) => number;
   format: (amountInBase: number, isAr?: boolean) => string;
   formatRaw: (amount: number, currencyCode?: CurrencyCode, isAr?: boolean) => string;
@@ -37,7 +45,16 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
     return saved && SUPPORTED_CURRENCIES[saved] ? saved : 'KWD';
   });
 
-  // Fetch initial base currency from backend settings
+  // Shipping configuration from admin
+  const [shippingConfig, setShippingConfigState] = useState<ShippingConfig>(() => {
+    const saved = localStorage.getItem('hadab_shipping_config');
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
+    return DEFAULT_SHIPPING_CONFIG;
+  });
+
+  // Fetch initial base currency and shipping settings from backend
   const refreshSettings = async () => {
     try {
       const settings = await api.getSettings();
@@ -51,8 +68,13 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
           setCurrencyState(adminBase);
         }
       }
+
+      if (settings?.shippingConfig) {
+        setShippingConfigState(settings.shippingConfig);
+        localStorage.setItem('hadab_shipping_config', JSON.stringify(settings.shippingConfig));
+      }
     } catch (e) {
-      console.error('Failed to load currency settings:', e);
+      console.error('Failed to load currency/shipping settings:', e);
     }
   };
 
@@ -72,6 +94,15 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
       setBaseCurrencyState(code);
       localStorage.setItem('hadab_base_currency', code);
     }
+  };
+
+  const setShippingConfig = (config: ShippingConfig) => {
+    setShippingConfigState(config);
+    localStorage.setItem('hadab_shipping_config', JSON.stringify(config));
+  };
+
+  const getShippingFee = (countryCode: string): number => {
+    return getShippingFeeForCountry(countryCode, shippingConfig);
   };
 
   // Convert an amount from admin's base currency to customer's active display currency
@@ -104,8 +135,11 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
         currency,
         currencyInfo,
         supportedCurrencies: CURRENCY_LIST,
+        shippingConfig,
         setCurrency,
         setBaseCurrency,
+        setShippingConfig,
+        getShippingFee,
         convert,
         format,
         formatRaw,

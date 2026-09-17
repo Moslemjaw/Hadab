@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
-import { ShoppingBag, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Check, ArrowRight, ArrowLeft, Eye } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
@@ -82,28 +82,30 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   </span>
                 )}
 
-                {/* Quick Add Overlay: touch-friendly on mobile, hover slide on desktop */}
-                <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3.5 bg-gradient-to-t from-brown-950/70 via-brown-950/20 to-transparent sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between">
-                  <span className="text-[10.5px] text-cream-100 font-light tracking-wide hidden lg:inline">
-                    {isAr ? 'استكشف' : 'Quick View'}
+                {/* Quick Add Overlay: refined brown atelier buttons */}
+                <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 bg-gradient-to-t from-brown-950/80 via-brown-950/30 to-transparent sm:opacity-0 sm:translate-y-1.5 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between gap-2">
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brown-900/90 hover:bg-brown-950 text-cream-100 text-[10px] sm:text-[11px] font-medium tracking-wide backdrop-blur-md border border-brown-700/60 shadow-sm transition-colors">
+                    <Eye size={12} className="text-cream-200" />
+                    <span>{isAr ? 'معاينة' : 'Quick View'}</span>
                   </span>
                   <button
                     type="button"
                     onClick={(e) => handleAdd(e, product)}
-                    className={`p-1.5 sm:px-3.5 sm:py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-medium uppercase tracking-wider transition-all duration-200 flex items-center gap-1 shadow-warm active:scale-90 ml-auto ${
+                    className={`p-1.5 sm:px-3.5 sm:py-1.5 rounded-full text-[9.5px] sm:text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 shadow-md active:scale-95 ml-auto ${
                       isAdded
                         ? 'bg-sage-600 text-cream-100'
-                        : 'bg-cream-100/95 hover:bg-white text-brown-900'
+                        : 'bg-brown-900 hover:bg-brown-950 text-cream-100 border border-brown-700/80'
                     }`}
+                    aria-label={isAr ? 'أضف إلى الحقيبة' : 'Add to Bag'}
                   >
                     {isAdded ? (
                       <>
-                        <Check size={11} />
+                        <Check size={12} />
                         <span className="hidden sm:inline">{isAr ? 'أُضيف' : 'Added'}</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag size={11} />
+                        <ShoppingBag size={12} />
                         <span className="hidden sm:inline">{t.addToBag}</span>
                       </>
                     )}
@@ -114,7 +116,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
               {/* Minimalist Editorial Details */}
               <div className="pt-2.5 sm:pt-3.5 pb-1 flex items-start justify-between gap-1.5 sm:gap-3">
                 <div className="space-y-0.5 min-w-0">
-                  <h3 className="font-serif text-xs sm:text-base lg:text-lg text-brown-900 font-normal tracking-tight group-hover:text-burgundy-600 transition-colors truncate">
+                  <h3 className="font-serif text-xs sm:text-base lg:text-lg text-brown-900 font-normal tracking-tight group-hover:text-brown-950 transition-colors truncate">
                     {isAr ? (product.nameArabic || product.name) : product.name}
                   </h3>
                   {product.colors && product.colors.length > 0 && (

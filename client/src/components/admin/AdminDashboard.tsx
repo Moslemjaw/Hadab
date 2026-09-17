@@ -46,6 +46,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useShopData } from '../../context/ShopDataContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { SUPPORTED_CURRENCIES, type CurrencyCode } from '../../constants/currencies';
+import { type ShippingConfig, type CountryShippingRate, DEFAULT_SHIPPING_CONFIG } from '../../constants/shipping';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 
@@ -100,10 +101,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const { language, toggleLanguage } = useLanguage();
   const { user, logout } = useAuth();
   const { refreshData } = useShopData();
-  const { baseCurrency, setBaseCurrency, refreshSettings } = useCurrency();
+  const { baseCurrency, setBaseCurrency, shippingConfig, setShippingConfig, refreshSettings } = useCurrency();
   const isAr = language === 'ar';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'artisans' | 'settings' | 'categories' | 'customers'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'settings' | 'categories' | 'customers'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -236,6 +237,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [settingsCurrency, setSettingsCurrency] = useState(baseCurrency || 'KWD');
   const [settingsThreshold, setSettingsThreshold] = useState(() => Number(localStorage.getItem('hadab_threshold')) || 25);
   const [settingsEmail, setSettingsEmail] = useState(() => localStorage.getItem('hadab_email') || 'Byhadab@gmail.com');
+  const [shippingRatesState, setShippingRatesState] = useState<CountryShippingRate[]>(
+    () => shippingConfig?.rates || DEFAULT_SHIPPING_CONFIG.rates
+  );
+  const [shippingEnabledState, setShippingEnabledState] = useState<boolean>(
+    () => shippingConfig?.enabled ?? true
+  );
   const [isErasing, setIsErasing] = useState(false);
 
   // Load settings from server on mount
@@ -244,6 +251,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       if (s.baseCurrency) setSettingsCurrency(s.baseCurrency);
       if (s.freeShippingThreshold) setSettingsThreshold(Number(s.freeShippingThreshold));
       if (s.storeEmail) setSettingsEmail(s.storeEmail);
+      if (s.shippingConfig) {
+        if (Array.isArray(s.shippingConfig.rates)) setShippingRatesState(s.shippingConfig.rates);
+        if (typeof s.shippingConfig.enabled === 'boolean') setShippingEnabledState(s.shippingConfig.enabled);
+      }
     }).catch(() => {});
   }, []);
 
@@ -718,28 +729,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
   // Save Preferences handler
   const handleSavePreferences = async () => {
+    const shippingPayload: ShippingConfig = {
+      enabled: shippingEnabledState,
+      rates: shippingRatesState,
+      restOfWorldRate: shippingRatesState.find((r) => r.countryCode === 'REST')?.rate ?? 5,
+    };
+
     try {
       await api.updateSettings({
         baseCurrency: settingsCurrency,
         freeShippingThreshold: settingsThreshold,
         storeEmail: settingsEmail,
+        shippingConfig: shippingPayload,
       });
-      // Update the CurrencyContext so the whole app picks up the new base currency
+      // Update CurrencyContext so the whole app picks up the changes
       setBaseCurrency(settingsCurrency as CurrencyCode);
+      setShippingConfig(shippingPayload);
       await refreshSettings();
-      // Also keep localStorage in sync for offline fallback
+      // Also keep localStorage in sync
       localStorage.setItem('hadab_currency', settingsCurrency);
       localStorage.setItem('hadab_threshold', String(settingsThreshold));
       localStorage.setItem('hadab_email', settingsEmail);
       localStorage.setItem('hadab_admin_settings', JSON.stringify(settingsState));
+      localStorage.setItem('hadab_shipping_config', JSON.stringify(shippingPayload));
       tactileAudio.playChime();
-      alert(isAr ? 'تم حفظ إعدادات المتجر بنجاح ✓' : 'Settings saved successfully ✓');
+      alert(isAr ? 'تم حفظ إعدادات المتجر ورسوم الشحن بنجاح ✓' : 'Settings and shipping fees saved successfully ✓');
     } catch (err) {
       // Fallback to localStorage only
       localStorage.setItem('hadab_currency', settingsCurrency);
       localStorage.setItem('hadab_threshold', String(settingsThreshold));
       localStorage.setItem('hadab_email', settingsEmail);
+      localStorage.setItem('hadab_shipping_config', JSON.stringify(shippingPayload));
       setBaseCurrency(settingsCurrency as CurrencyCode);
+      setShippingConfig(shippingPayload);
       tactileAudio.playChime();
       alert(isAr ? 'تم حفظ الإعدادات محلياً ✓' : 'Settings saved locally ✓');
     }
@@ -1321,7 +1343,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     { label: isAr ? 'إضافة قطعة' : 'Add New Piece', icon: Plus, action: () => { setActiveTab('products'); setTimeout(openNewProductModal, 100); } },
                     { label: isAr ? 'مراجعة الطلبات' : 'Review Orders', icon: ListIcon, action: () => setActiveTab('orders') },
                     { label: isAr ? 'إدارة التصنيفات' : 'Manage Categories', icon: Tag, action: () => setActiveTab('categories') },
-                    { label: isAr ? 'مراسلة الحرفيين' : 'Message Artisans', icon: Mail, action: () => setActiveTab('artisans') },
+                    { label: isAr ? 'إدارة العملاء' : 'View Customers', icon: Users, action: () => setActiveTab('customers') },
                   ].map((btn, idx) => (
                     <button
                       key={idx}
@@ -2276,6 +2298,127 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Country-Based Shipping Fees */}
+              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-brown-200/50 bg-white/50 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-serif text-lg text-brown-900 font-medium">
+                      {isAr ? 'رسوم التوصيل حسب الدولة' : 'Shipping Fees by Country'}
+                    </h3>
+                    <p className="text-xs text-brown-500 font-light mt-0.5">
+                      {isAr
+                        ? `حدد تكلفة الشحن لكل دولة بـ (${settingsCurrency}). يمكن تشغيل أو إيقاف الخاصية بالكامل.`
+                        : `Set shipping fees per destination country in (${settingsCurrency}). Toggle feature on or off.`}
+                    </p>
+                  </div>
+                  
+                  {/* Master Feature Toggle (On / Off) */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-brown-700">
+                      {shippingEnabledState ? (isAr ? 'مفعل' : 'Active') : (isAr ? 'معطل' : 'Disabled')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShippingEnabledState(!shippingEnabledState)}
+                      className={`relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${
+                        shippingEnabledState ? 'bg-emerald-600' : 'bg-brown-300'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 shadow-sm ${
+                          shippingEnabledState ? 'left-6' : 'left-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  {!shippingEnabledState && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center gap-2">
+                      <AlertCircle size={14} className="shrink-0 text-amber-600" />
+                      <span>
+                        {isAr
+                          ? 'رسوم الشحن معطلة حالياً. سيتم احتساب الشحن مجاناً لكافة الطلبات.'
+                          : 'Country shipping fees are currently disabled. Shipping will show as free.'}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {shippingRatesState.map((countryRate, idx) => (
+                      <div
+                        key={countryRate.countryCode}
+                        className={`p-3.5 rounded-2xl border transition-all ${
+                          countryRate.enabled
+                            ? 'bg-white border-brown-200/80 shadow-warm-xs'
+                            : 'bg-brown-50/50 border-brown-200/40 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-brown-900">
+                              {isAr ? countryRate.countryNameAr : countryRate.countryName}
+                            </span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cream-200 text-brown-600">
+                              {countryRate.countryCode}
+                            </span>
+                          </div>
+                          
+                          {/* Row Enable Toggle */}
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={countryRate.enabled}
+                              onChange={(e) => {
+                                const next = [...shippingRatesState];
+                                next[idx] = { ...countryRate, enabled: e.target.checked };
+                                setShippingRatesState(next);
+                              }}
+                              className="rounded border-brown-300 text-burgundy-600 focus:ring-burgundy-500 w-3.5 h-3.5"
+                            />
+                            <span className="text-[10px] text-brown-500 font-medium">
+                              {isAr ? 'تفعيل' : 'Enable'}
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-brown-600 font-medium whitespace-nowrap">
+                            {isAr ? 'الرسوم:' : 'Fee:'}
+                          </span>
+                          <div className="relative flex-1">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-brown-400 font-bold text-xs">
+                              {settingsCurrency}
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              disabled={!countryRate.enabled}
+                              value={countryRate.rate}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const next = [...shippingRatesState];
+                                next[idx] = { ...countryRate, rate: isNaN(val) ? 0 : val };
+                                setShippingRatesState(next);
+                              }}
+                              className="w-full py-1.5 pl-12 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 text-xs font-semibold focus:outline-none focus:border-burgundy-500 disabled:bg-brown-100/50"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="text-[10.5px] text-brown-500 italic pt-1">
+                    {isAr
+                      ? `* يتم حساب رسوم الشحن بعملة المتجر الأساسية (${settingsCurrency}) وتحويلها تلقائياً لعملة العميل عند الدفع.`
+                      : `* Shipping fees are configured in base currency (${settingsCurrency}) and automatically converted to the customer's selected display currency.`}
+                  </p>
                 </div>
               </div>
 
