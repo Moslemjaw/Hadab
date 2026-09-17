@@ -65,23 +65,24 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     }
   }, [product, onClose]);
 
-  if (!product) return null;
-
-  const hasColorVariants = Boolean(product.colorVariants && product.colorVariants.length > 0);
-  const currentColorVariant: ColorVariant | undefined = hasColorVariants
-    ? product.colorVariants![selectedVariantIndex]
+  const hasColorVariants = Boolean(product?.colorVariants && product.colorVariants.length > 0);
+  const currentColorVariant: ColorVariant | undefined = hasColorVariants && product?.colorVariants
+    ? product.colorVariants[selectedVariantIndex]
     : undefined;
 
   // Compute active gallery images based on selected color variant
   const galleryImages: string[] = useMemo(() => {
+    if (!product) return [];
     if (currentColorVariant && currentColorVariant.images && currentColorVariant.images.length > 0) {
       return currentColorVariant.images;
     }
     if (product.images && product.images.length > 0) {
       return product.images;
     }
-    return [product.image];
+    return product.image ? [product.image] : [];
   }, [currentColorVariant, product]);
+
+  if (!product) return null;
 
   const activeImage = showTexture
     ? product.textureImage
