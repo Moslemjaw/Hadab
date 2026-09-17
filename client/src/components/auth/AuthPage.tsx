@@ -4,7 +4,6 @@ import {
   Mail,
   Lock,
   User as UserIcon,
-  Phone,
   Eye,
   EyeOff,
   Sparkles,
@@ -18,6 +17,8 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { tactileAudio } from '../../utils/audio';
+import { CountryCodeDropdown } from '../common/CountryCodeDropdown';
+import { type CountryCode, DEFAULT_COUNTRY } from '../../constants/countryCodes';
 
 interface AuthPageProps {
   initialMode?: 'signin' | 'signup';
@@ -44,6 +45,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   // Form Fields
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -97,7 +99,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       if (mode === 'signin') {
         loggedInUser = await login(email.trim(), password);
       } else {
-        loggedInUser = await register(fullName.trim(), email.trim(), password, phone.trim());
+        const cleanPhone = phone.trim().replace(/^0+/, '');
+        const fullPhone = cleanPhone ? `${selectedCountry.dialCode} ${cleanPhone}` : '';
+        loggedInUser = await register(fullName.trim(), email.trim(), password, fullPhone);
       }
 
       setIsSubmitting(false);
@@ -333,23 +337,31 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </div>
                 </div>
 
-                {/* Phone Number (Sign Up Optional) */}
+                {/* Phone Number (Sign Up Optional) with Country Code Dropdown */}
                 {mode === 'signup' && (
                   <div>
-                    <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800 mb-1.5">
-                      {t.phoneLabel}
-                    </label>
-                    <div className="relative flex items-center">
-                      <Phone
-                        size={16}
-                        className={`absolute ${isAr ? 'right-4' : 'left-4'} text-brown-400 pointer-events-none`}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[11px] uppercase tracking-[0.16em] font-semibold text-brown-800">
+                        {t.phoneLabel}
+                      </label>
+                      <span className="text-[10px] text-brown-400 font-light">
+                        {isAr ? selectedCountry.nameAr : selectedCountry.name}
+                      </span>
+                    </div>
+                    <div className="relative flex items-center rounded-2xl bg-[#F4EFEA] border border-brown-200/50 focus-within:ring-2 focus-within:ring-blush-300/70 focus-within:bg-white focus-within:border-transparent transition-all">
+                      <CountryCodeDropdown
+                        selectedCountry={selectedCountry}
+                        onSelectCountry={setSelectedCountry}
+                        isAr={isAr}
                       />
                       <input
                         type="tel"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder={t.phonePlaceholder}
-                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 rounded-2xl bg-[#F4EFEA] border border-brown-200/50 text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none focus:ring-2 focus:ring-blush-300/70 focus:bg-white transition-all`}
+                        onChange={(e) => setPhone(e.target.value.replace(/[^\d\s-]/g, ''))}
+                        placeholder={selectedCountry.sample || '9999 8888'}
+                        className={`w-full py-3.5 ${
+                          isAr ? 'pr-3 pl-4' : 'pl-3 pr-4'
+                        } bg-transparent text-brown-900 placeholder:text-brown-400 text-xs sm:text-sm font-light focus:outline-none`}
                       />
                     </div>
                   </div>
