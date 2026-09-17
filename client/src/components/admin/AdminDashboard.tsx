@@ -45,7 +45,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useShopData } from '../../context/ShopDataContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { type CurrencyCode } from '../../constants/currencies';
+import { SUPPORTED_CURRENCIES, type CurrencyCode } from '../../constants/currencies';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 
@@ -2425,10 +2425,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
                   <div>
                     <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
-                      {isAr ? 'السعر (د.ك KWD) *' : 'Price (KWD) *'}
+                      {isAr ? `السعر (${baseCurrency}) *` : `Price (${baseCurrency}) *`}
                     </label>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brown-500">KD</span>
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brown-500">{baseCurrency}</span>
                       <input
                         type="number"
                         required
@@ -2436,7 +2436,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         step="any"
                         value={newProductPrice}
                         onChange={(e) => setNewProductPrice(Number(e.target.value))}
-                        className="w-full py-2 pl-8 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                        className="w-full py-2 pl-12 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
                       />
                     </div>
                   </div>
@@ -2460,10 +2460,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
-                      {isAr ? 'خصم اختياري (د.ك)' : 'Discount (KWD)'}
+                      {isAr ? `خصم اختياري (${baseCurrency})` : `Discount (${baseCurrency})`}
                     </label>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brown-500">-KD</span>
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brown-500">-{baseCurrency}</span>
                       <input
                         type="number"
                         min="0"
@@ -2471,12 +2471,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         value={newProductDiscount}
                         onChange={(e) => setNewProductDiscount(Number(e.target.value))}
                         placeholder="0"
-                        className="w-full py-2 pl-10 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                        className="w-full py-2 pl-14 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
                       />
                     </div>
                     {newProductDiscount > 0 && (
                       <span className="text-[9px] text-burgundy-600 font-semibold mt-0.5 block">
-                        {isAr ? `السعر بعد الخصم: ${Math.max(0, newProductPrice - newProductDiscount)} د.ك` : `After: ${Math.max(0, newProductPrice - newProductDiscount)} KWD`}
+                        {isAr ? `السعر بعد الخصم: ${Math.max(0, newProductPrice - newProductDiscount)} ${baseCurrency}` : `After: ${Math.max(0, newProductPrice - newProductDiscount)} ${baseCurrency}`}
                       </span>
                     )}
                   </div>
