@@ -49,27 +49,23 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
         <div className="w-10 h-px bg-brown-300/60 mt-4" />
       </div>
 
-      {/* Asymmetric 2-Column Luxury Grid */}
+      {/* Refined Luxury Responsive Grid */}
       <div 
         ref={gridRef}
-        className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-16 lg:gap-x-16 lg:gap-y-24"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-6 lg:gap-8 max-w-7xl mx-auto"
       >
         {displayProducts.map((product, idx) => {
           const isAdded = addedIds.includes(product.id);
-          // Stagger odd items vertically on desktop for high-fashion editorial asymmetry
-          const isOffset = idx % 2 === 1;
 
           return (
             <div
               key={product.id}
-              className={`group flex flex-col cursor-pointer transition-all duration-700 ${
-                isOffset ? 'md:translate-y-16 lg:translate-y-20' : ''
-              } scroll-reveal ${gridRevealed ? 'revealed' : ''}`}
-              style={{ animationDelay: `${idx * 140}ms` }}
+              className={`group flex flex-col cursor-pointer transition-all duration-500 max-w-sm sm:max-w-none mx-auto w-full scroll-reveal ${gridRevealed ? 'revealed' : ''}`}
+              style={{ animationDelay: `${idx * 100}ms` }}
               onClick={() => onSelectProduct && onSelectProduct(product)}
             >
               {/* Product Visual Frame */}
-              <div className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-[#ECE4D8] border border-brown-200/40 shadow-sm transition-all duration-500 group-hover:shadow-warm-lg group-hover:-translate-y-1">
+              <div className="relative aspect-[4/5] w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#ECE4D8] border border-brown-200/40 shadow-sm transition-all duration-500 group-hover:shadow-warm-lg group-hover:-translate-y-1">
                 <img
                   src={product.image}
                   alt={isAr ? (product.nameArabic || product.name) : product.name}
@@ -79,20 +75,20 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
 
                 {/* Sale Badge */}
                 {(product.isSale || (product.originalPrice && product.originalPrice > product.price)) && (
-                  <span className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} px-3 py-1 rounded-full bg-burgundy-600/90 backdrop-blur-sm text-cream-100 text-[10px] font-medium uppercase tracking-widest shadow-sm`}>
+                  <span className={`absolute top-3.5 ${isAr ? 'right-3.5' : 'left-3.5'} px-2.5 py-0.5 rounded-full bg-burgundy-600/90 backdrop-blur-sm text-cream-100 text-[9px] sm:text-[10px] font-medium uppercase tracking-widest shadow-sm`}>
                     {isAr ? 'تخفيض' : 'Sale'}
                   </span>
                 )}
 
                 {/* Quick Add Overlay on Hover */}
-                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 bg-gradient-to-t from-brown-950/70 via-brown-950/20 to-transparent opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between">
-                  <span className="text-xs text-cream-100 font-light tracking-wide hidden sm:inline">
-                    {isAr ? 'استكشف التفاصيل' : 'Quick View'}
+                <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 bg-gradient-to-t from-brown-950/75 via-brown-950/25 to-transparent opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between">
+                  <span className="text-[11px] text-cream-100 font-light tracking-wide hidden sm:inline">
+                    {isAr ? 'استكشف' : 'Quick View'}
                   </span>
                   <button
                     type="button"
                     onClick={(e) => handleAdd(e, product)}
-                    className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs font-medium uppercase tracking-wider transition-all duration-200 flex items-center gap-2 shadow-warm active:scale-95 ml-auto ${
+                    className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-medium uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 shadow-warm active:scale-95 ml-auto ${
                       isAdded
                         ? 'bg-sage-600 text-cream-100'
                         : 'bg-cream-100 hover:bg-white text-brown-900'
@@ -100,12 +96,12 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   >
                     {isAdded ? (
                       <>
-                        <Check size={13} />
+                        <Check size={12} />
                         <span>{isAr ? 'أُضيف' : 'Added'}</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag size={13} />
+                        <ShoppingBag size={12} />
                         <span>{t.addToBag}</span>
                       </>
                     )}
@@ -114,17 +110,17 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
               </div>
 
               {/* Minimalist Editorial Details */}
-              <div className="pt-5 pb-2 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <h3 className="font-serif text-xl sm:text-2xl text-brown-900 font-normal tracking-tight group-hover:text-burgundy-600 transition-colors">
+              <div className="pt-4 pb-1 flex items-start justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <h3 className="font-serif text-base sm:text-lg text-brown-900 font-normal tracking-tight group-hover:text-burgundy-600 transition-colors truncate">
                     {isAr ? (product.nameArabic || product.name) : product.name}
                   </h3>
                   {product.colors && product.colors.length > 0 && (
-                    <div className="flex items-center gap-1.5 pt-1">
+                    <div className="flex items-center gap-1 pt-0.5">
                       {product.colors.slice(0, 3).map((col, cIdx, arr) => (
                         <span 
                           key={cIdx} 
-                          className="text-[11px] text-brown-400 font-light"
+                          className="text-[10px] text-brown-400 font-light"
                         >
                           {col}{cIdx < arr.length - 1 ? ' ·' : ''}
                         </span>
@@ -133,14 +129,14 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   )}
                 </div>
 
-                <div className="flex items-baseline gap-2 shrink-0 pt-1">
+                <div className="flex items-baseline gap-1.5 shrink-0 pt-0.5">
                   {product.originalPrice && product.originalPrice > product.price && (
-                    <span className="text-xs text-brown-400 line-through">
+                    <span className="text-[11px] text-brown-400 line-through">
                       {product.originalPrice}
                     </span>
                   )}
-                  <span className="font-medium text-base sm:text-lg text-brown-900">
-                    {product.price} <span className="text-xs uppercase text-brown-500 font-normal">{isAr ? 'د.ك' : 'KWD'}</span>
+                  <span className="font-medium text-sm sm:text-base text-brown-900">
+                    {product.price} <span className="text-[10px] uppercase text-brown-500 font-normal">{isAr ? 'د.ك' : 'KWD'}</span>
                   </span>
                 </div>
               </div>
