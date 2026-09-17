@@ -143,7 +143,6 @@ export function App() {
           onGoHome={handleGoHome}
           onOpenStory={handleOpenStory}
           onOpenAuth={handleOpenAuth}
-          onOpenAdmin={handleOpenAdmin}
           currentPage={
             currentView === 'story'
               ? 'story'
@@ -207,8 +206,22 @@ export function App() {
             initialMode={authMode}
             onBackToHome={handleGoHome}
             onSuccess={() => {
-              setCurrentView('customer');
-              window.location.hash = 'account';
+              const token = localStorage.getItem('hadab_token');
+              let isUserAdmin = false;
+              if (token) {
+                try {
+                  const p = JSON.parse(atob(token.split('.')[1]));
+                  if (p.email?.toLowerCase() === 'byhadab@gmail.com' || p.role === 'admin') {
+                    isUserAdmin = true;
+                  }
+                } catch {}
+              }
+              if (isUserAdmin || isAdmin) {
+                handleOpenAdmin();
+              } else {
+                setCurrentView('customer');
+                window.location.hash = 'account';
+              }
             }}
             onExploreCollection={() => handleOpenCollection('all')}
           />

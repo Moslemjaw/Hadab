@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 
 export interface UserProfile {
@@ -31,13 +31,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
       const storedToken = localStorage.getItem('hadab_token');
       if (storedToken) {
+        // Instantly recover user profile from token payload without waiting for network
+        try {
+          const parts = storedToken.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]));
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+              // Token actually expired
+              localStorage.removeItem('hadab_token');
+              setToken(null);
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+            const isSuper = payload.email?.toLowerCase() === 'byhadab@gmail.com';
+            setUser({
+              id: payload.id,
+              name: payload.name || (isSuper ? 'HADAB Admin' : 'Customer'),
+              email: payload.email,
+              role: isSuper || payload.role === 'admin' ? 'admin' : 'customer',
+            });
+          }
+        } catch (e) {
+          console.warn('[Auth] Token decode error:', e);
+        }
+
+        // Verify with server in background
         try {
           const profile = await api.getMe();
-          setUser(profile);
-        } catch {
-          localStorage.removeItem('hadab_token');
-          setToken(null);
-          setUser(null);
+          if (profile) {
+            setUser(profile);
+          }
+        } catch (err: any) {
+          const msg = err?.message || '';
+          // Only clear token if the backend explicitly rejected credentials
+          if (msg.includes('401') || msg.includes('403') || msg.includes('expired') || msg.includes('Invalid')) {
+            localStorage.removeItem('hadab_token');
+            setToken(null);
+            setUser(null);
+          }
         }
       }
       setIsLoading(false);

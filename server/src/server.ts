@@ -10,13 +10,41 @@ import customerRoutes from './routes/customerRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import adminRoutes from './routes/adminRoutes';
 
+import { User } from './models/User';
+import bcrypt from 'bcryptjs';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas
-connectDB();
+// Connect to MongoDB Atlas and ensure Admin account is ready
+connectDB().then(async () => {
+  try {
+    const adminEmail = 'byhadab@gmail.com';
+    const existing = await User.findOne({ email: adminEmail });
+    if (!existing) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash('Byhadab2026@', salt);
+      await User.create({
+        name: 'HADAB Admin',
+        email: adminEmail,
+        password: hashedPassword,
+        phone: '+965 9900 0000',
+        role: 'admin',
+        status: 'vip',
+        country: 'Kuwait',
+      });
+      console.log('[HADAB Backend] Admin account initialized: byhadab@gmail.com');
+    } else if (existing.role !== 'admin') {
+      existing.role = 'admin';
+      await existing.save();
+      console.log('[HADAB Backend] Admin account role confirmed: byhadab@gmail.com');
+    }
+  } catch (err) {
+    console.error('[HADAB Backend] Admin verification check notice:', err);
+  }
+});
 
 // Middlewares
 app.use(cors({

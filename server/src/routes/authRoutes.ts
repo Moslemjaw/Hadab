@@ -26,13 +26,14 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const isSuperAdmin = normalizedEmail === 'byhadab@gmail.com';
     const newUser = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       password: hashedPassword,
       phone: phone || '',
-      role: 'customer',
-      status: 'new',
+      role: isSuperAdmin ? 'admin' : 'customer',
+      status: isSuperAdmin ? 'vip' : 'new',
     });
 
     const secret = process.env.JWT_SECRET || 'hadab_secret_fallback';
@@ -81,9 +82,17 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Ensure byhadab@gmail.com is permanently admin
+    const isSuperAdmin = normalizedEmail === 'byhadab@gmail.com' || user.role === 'admin';
+    const effectiveRole = isSuperAdmin ? 'admin' : user.role;
+    if (isSuperAdmin && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
+    }
+
     const secret = process.env.JWT_SECRET || 'hadab_secret_fallback';
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
+      { id: user._id, email: user.email, role: effectiveRole },
       secret,
       { expiresIn: '30d' }
     );
@@ -95,7 +104,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        role: effectiveRole,
         status: user.status,
       },
     });
@@ -112,6 +121,13 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response): Pr
       res.status(404).json({ message: 'User not found' });
       return;
     }
+
+    // Auto-elevate superadmin if needed
+    if (user.email.toLowerCase() === 'byhadab@gmail.com' && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
+    }
+
     res.json({ user });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Server error' });
