@@ -2,15 +2,19 @@ import React, { useState } from 'react';
 import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
 import { ThreadKnot } from '../common/ThreadSpine';
-import { Eye, ShoppingBag, Check } from 'lucide-react';
+import { Eye, ShoppingBag, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface FeaturedProductsSectionProps {
   onAddToBag?: (product: Product) => void;
+  onSelectProduct?: (product: Product) => void;
+  onExploreCatalog?: () => void;
 }
 
 export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = ({
   onAddToBag,
+  onSelectProduct,
+  onExploreCatalog,
 }) => {
   const { language, t } = useLanguage();
   const { featuredProducts, products } = useShopData();
@@ -60,7 +64,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
               {/* Image Container with Texture Toggle */}
               <div
                 className="relative aspect-[4/5] overflow-hidden bg-cream-200 cursor-pointer"
-                onClick={() => setActiveTextureId((prev) => (prev === product.id ? null : product.id))}
+                onClick={() => onSelectProduct ? onSelectProduct(product) : setActiveTextureId((prev) => (prev === product.id ? null : product.id))}
                 onMouseEnter={() => setActiveTextureId(product.id)}
                 onMouseLeave={() => setActiveTextureId(null)}
               >
@@ -70,6 +74,13 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                   alt={language === 'ar' ? (product.nameArabic || product.name) : product.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
+
+                {/* Sale / Discount Badge */}
+                {(product.isSale || (product.originalPrice && product.originalPrice > product.price)) && (
+                  <span className={`absolute top-3 ${language === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-full bg-burgundy-600 text-cream-100 text-[10px] font-bold uppercase tracking-wider shadow-sm`}>
+                    {language === 'ar' ? 'تخفيض' : 'Sale'}
+                  </span>
+                )}
 
                 {/* Texture view toggle button / indicator */}
                 <div
@@ -94,17 +105,38 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
               <div className="p-5 flex flex-col flex-grow justify-between">
                 <div>
                   <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                    <h3 className="font-serif text-lg text-brown-800 font-medium group-hover:text-burgundy-500 transition-colors">
+                    <h3
+                      onClick={() => onSelectProduct && onSelectProduct(product)}
+                      className="font-serif text-lg text-brown-800 font-medium group-hover:text-burgundy-500 transition-colors cursor-pointer"
+                    >
                       {language === 'ar' ? (product.nameArabic || product.name) : product.name}
                     </h3>
-                    <span className="text-base font-semibold text-brown-800">
-                      {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="text-xs text-brown-400 line-through">
+                          {product.originalPrice}
+                        </span>
+                      )}
+                      <span className="text-base font-semibold text-brown-800">
+                        {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
+                      </span>
+                    </div>
                   </div>
 
-                  <p className="text-xs text-brown-500 leading-relaxed font-light mb-4 line-clamp-2">
+                  <p className="text-xs text-brown-500 leading-relaxed font-light mb-3 line-clamp-2">
                     {language === 'ar' ? (product.descriptionArabic || product.description) : product.description}
                   </p>
+
+                  {/* Colors & Sizes preview if present */}
+                  {product.colors && product.colors.length > 0 && (
+                    <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                      {product.colors.slice(0, 3).map((col, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded-md bg-cream-200 text-brown-600 text-[10px]">
+                          {col}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="pt-2 border-t border-brown-200/50 text-[11px] text-brown-400 space-y-1 mb-4">
                     <div className="flex items-center gap-1.5">
@@ -121,7 +153,7 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
                 <button
                   type="button"
                   onClick={() => handleAdd(product)}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-medium tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.98] ${
+                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-medium tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.98] cursor-pointer ${
                     isAdded
                       ? 'bg-sage-600 text-cream-100'
                       : 'bg-brown-700 hover:bg-burgundy-500 text-cream-100 shadow-warm-sm'
@@ -144,6 +176,20 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
           );
         })}
       </div>
+
+      {/* View All Products Button */}
+      {onExploreCatalog && (
+        <div className="mt-14 flex justify-center">
+          <button
+            type="button"
+            onClick={onExploreCatalog}
+            className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-xs font-semibold uppercase tracking-[0.2em] transition-all shadow-warm hover:shadow-warm-lg hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+          >
+            <span>{language === 'ar' ? 'عرض جميع المنتجات' : 'View All Products'}</span>
+            {language === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+          </button>
+        </div>
+      )}
     </section>
   );
 };

@@ -23,12 +23,12 @@ export const ScrollExperience: React.FC<ScrollExperienceProps> = ({
   return (
     <section
       ref={containerRef}
-      className="relative w-full min-h-[420vh]"
+      className="relative w-full min-h-[140vh] sm:min-h-[150vh]"
       style={{ backgroundColor: '#E4DCCD' }}
     >
       {/* Sticky Cinematic Viewport */}
       <div className="sticky top-0 w-full h-screen h-[100dvh] overflow-hidden flex items-center justify-center">
-        {/* The 36-Frame Canvas: optical 60fps/120fps subframe cross-fading */}
+        {/* The 19-Frame Canvas: optical 60fps/120fps subframe cross-fading to the bag frame */}
         <FrameCanvas currentFrame={floatFrame} />
 
         {/* Narrative & Micro-Interaction Overlay: continuous liquid interpolation */}

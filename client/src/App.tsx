@@ -10,6 +10,14 @@ import { AuthPage } from './components/auth/AuthPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { CustomerDashboard } from './components/customer/CustomerDashboard';
 import { ProductModal } from './components/shop/ProductModal';
+import { FeaturedProductsSection } from './components/home/FeaturedProductsSection';
+import { CategoryTilesSection } from './components/home/CategoryTilesSection';
+import { BrandLineInSection } from './components/home/BrandLineInSection';
+import { SpotlightSection } from './components/home/SpotlightSection';
+import { CraftProcessSection } from './components/home/CraftProcessSection';
+import { TestimonialsSection } from './components/home/TestimonialsSection';
+import { AboutTeaserSection } from './components/home/AboutTeaserSection';
+import { NewsletterSection } from './components/home/NewsletterSection';
 import type { Product } from './types';
 import { useAuth } from './context/AuthContext';
 
@@ -157,13 +165,36 @@ export function App() {
       {/* Main Experience */}
       <main className="flex-grow">
         {currentView === 'home' ? (
-          /* Cinematic 36-Frame Scroll Stage: Hero -> Brand Line -> Featured Products -> Categories */
-          <ScrollExperience
-            onAddToBag={handleAddToBag}
-            onSelectProduct={(p) => setSelectedProduct(p)}
-            onExploreCatalog={scrollToCatalog}
-            onSelectCategory={(catId) => handleOpenCollection(catId)}
-          />
+          <div className="flex flex-col">
+            {/* Cinematic Bag Intro Hero (stops at the bag frame) */}
+            <ScrollExperience
+              onAddToBag={handleAddToBag}
+              onSelectProduct={(p) => setSelectedProduct(p)}
+              onExploreCatalog={scrollToCatalog}
+              onSelectCategory={(catId) => handleOpenCollection(catId)}
+            />
+
+            {/* Normal Boutique Shop Experience */}
+            <div id="shop-showcase" className="relative z-10 bg-cream-200">
+              <FeaturedProductsSection
+                onAddToBag={handleAddToBag}
+                onSelectProduct={(p) => setSelectedProduct(p)}
+                onExploreCatalog={() => handleOpenCollection('all')}
+              />
+              <CategoryTilesSection
+                onSelectCategory={(catId) => handleOpenCollection(catId)}
+              />
+              <BrandLineInSection />
+              <SpotlightSection
+                onAddToBag={handleAddToBag}
+                onSelectProduct={(p) => setSelectedProduct(p)}
+              />
+              <CraftProcessSection />
+              <TestimonialsSection />
+              <AboutTeaserSection />
+              <NewsletterSection />
+            </div>
+          </div>
         ) : currentView === 'collection' ? (
           /* Dedicated Full Shop / Collection Page with Search, Category Tabs, Price & Discount Filters */
           <CollectionPage

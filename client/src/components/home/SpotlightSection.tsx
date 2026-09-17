@@ -7,9 +7,10 @@ import { useLanguage } from '../../context/LanguageContext';
 
 interface SpotlightSectionProps {
   onAddToBag?: (product: Product) => void;
+  onSelectProduct?: (product: Product) => void;
 }
 
-export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag }) => {
+export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag, onSelectProduct }) => {
   const { language, t } = useLanguage();
   const { saleProducts, products } = useShopData();
   const displayItems = saleProducts.length > 0 ? saleProducts.slice(0, 3) : products.slice(0, 3);
@@ -40,7 +41,10 @@ export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag }
               className="bg-cream-200/80 rounded-2xl overflow-hidden border border-brown-200/70 p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-warm"
             >
               <div>
-                <div className="relative aspect-square rounded-xl overflow-hidden mb-4 bg-cream-300/40">
+                <div
+                  onClick={() => onSelectProduct && onSelectProduct(item)}
+                  className="relative aspect-square rounded-xl overflow-hidden mb-4 bg-cream-300/40 cursor-pointer"
+                >
                   <img
                     src={item.image}
                     alt={language === 'ar' ? (item.nameArabic || item.name) : item.name}
@@ -52,7 +56,10 @@ export const SpotlightSection: React.FC<SpotlightSectionProps> = ({ onAddToBag }
                 </div>
 
                 <div className="flex items-baseline justify-between mb-1">
-                  <h3 className="font-serif text-lg text-brown-800 font-medium">
+                  <h3
+                    onClick={() => onSelectProduct && onSelectProduct(item)}
+                    className="font-serif text-lg text-brown-800 font-medium cursor-pointer hover:text-burgundy-600 transition-colors"
+                  >
                     {language === 'ar' ? (item.nameArabic || item.name) : item.name}
                   </h3>
                   <div className="flex items-center gap-2">
