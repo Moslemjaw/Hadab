@@ -153,9 +153,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   );
   
   // Calculate country-specific shipping fee
-  const countryShippingFee = getShippingFee(selectedCountry);
-  const isFreeShipping = shippingConfig.enabled && selectedCountry === 'KW' && subtotal >= 25;
-  const shippingCost = isFreeShipping ? 0 : countryShippingFee;
+  const shippingCost = getShippingFee(selectedCountry);
   const finalTotal = subtotal + shippingCost;
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
