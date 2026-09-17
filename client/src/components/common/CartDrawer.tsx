@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Product } from '../../types';
-import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2, Globe } from 'lucide-react';
+import { X, Trash2, ArrowRight, ArrowLeft, Sparkles, Check, Phone, MapPin, User, MessageCircle, Loader2, Search, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -26,13 +26,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const { format, getShippingFee, shippingConfig } = useCurrency();
+  const { format, getShippingFee, isCountryAvailable, shippingConfig } = useCurrency();
   const isAr = language === 'ar';
 
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [selectedCountry, setSelectedCountry] = useState<string>(() => {
     return localStorage.getItem('hadab_customer_country') || 'KW';
   });
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+
   const [customerName, setCustomerName] = useState(user?.name || '');
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
   const [customerAddress, setCustomerAddress] = useState(
@@ -44,6 +48,59 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderNumber, setPlacedOrderNumber] = useState('');
   const [orderTotal, setOrderTotal] = useState(0);
+
+  // Filter countries strictly according to admin shipping rules
+  const availableCountries = useMemo(() => {
+    const list = COUNTRY_CODES.filter((c) => isCountryAvailable(c.code));
+    return list.length > 0 ? list : [COUNTRY_CODES[0]];
+  }, [isCountryAvailable, shippingConfig]);
+
+  // Ensure selected country is valid among available countries
+  useEffect(() => {
+    if (availableCountries.length > 0 && !availableCountries.some((c) => c.code === selectedCountry)) {
+      const fallbackCode = availableCountries[0].code;
+      setSelectedCountry(fallbackCode);
+      localStorage.setItem('hadab_customer_country', fallbackCode);
+    }
+  }, [availableCountries, selectedCountry]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+    if (isCountryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isCountryDropdownOpen]);
+
+  // Filter available countries by search
+  const filteredAvailableCountries = useMemo(() => {
+    if (!countrySearchQuery.trim()) return availableCountries;
+    const q = countrySearchQuery.toLowerCase().trim();
+    return availableCountries.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.nameAr.includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [availableCountries, countrySearchQuery]);
+
+  const currentCountryObj = useMemo(() => {
+    return (
+      COUNTRY_CODES.find((c) => c.code === selectedCountry) || {
+        code: selectedCountry,
+        name: selectedCountry,
+        nameAr: selectedCountry,
+        dialCode: '',
+        flag: '🌐',
+        sample: '',
+      }
+    );
+  }, [selectedCountry]);
 
   useEffect(() => {
     if (user?.name && !customerName) setCustomerName(user.name);
@@ -82,13 +139,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const isFreeShipping = shippingConfig.enabled && selectedCountry === 'KW' && subtotal >= 25;
   const shippingCost = isFreeShipping ? 0 : countryShippingFee;
   const finalTotal = subtotal + shippingCost;
-
-  const currentCountryObj = COUNTRY_CODES.find((c) => c.code === selectedCountry) || {
-    code: selectedCountry,
-    name: selectedCountry,
-    nameAr: selectedCountry,
-    sample: '+965 9912 3456',
-  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,8 +362,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </p>
                 </div>
 
-                {/* Country Destination Selector */}
-                <div>
+                {/* Country Destination Selector with Flags & Instant Search */}
+                <div className="relative" ref={countryDropdownRef}>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-brown-700 font-semibold text-[11px]">
                       {isAr ? 'دولة التوصيل *' : 'Delivery Country *'}
@@ -324,38 +374,107 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         : `${isAr ? 'رسوم الشحن:' : 'Shipping:'} ${format(shippingCost, isAr)}`}
                     </span>
                   </div>
-                  <div className="relative">
-                    <Globe size={14} className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-brown-400 pointer-events-none`} />
-                    <select
-                      value={selectedCountry}
-                      onChange={(e) => {
-                        setSelectedCountry(e.target.value);
-                        localStorage.setItem('hadab_customer_country', e.target.value);
-                      }}
-                      className={`w-full py-2.5 ${isAr ? 'pr-9 pl-3' : 'pl-9 pr-3'} rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 cursor-pointer text-xs`}
-                    >
-                      {/* Prioritize GCC and Jordan */}
-                      {COUNTRY_CODES.slice(0, 7).map((c) => {
-                        const fee = getShippingFee(c.code);
-                        const feeText = fee === 0 ? (isAr ? 'مجاناً' : 'FREE') : format(fee, isAr);
-                        return (
-                          <option key={c.code} value={c.code}>
-                            {c.flag} {isAr ? c.nameAr : c.name} ({feeText})
-                          </option>
-                        );
-                      })}
-                      {/* Other Countries */}
-                      {COUNTRY_CODES.slice(7).map((c) => {
-                        const fee = getShippingFee(c.code);
-                        const feeText = fee === 0 ? (isAr ? 'مجاناً' : 'FREE') : format(fee, isAr);
-                        return (
-                          <option key={c.code} value={c.code}>
-                            {c.flag} {isAr ? c.nameAr : c.name} ({feeText})
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
+
+                  {/* Trigger Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCountryDropdownOpen(!isCountryDropdownOpen);
+                      setCountrySearchQuery('');
+                    }}
+                    className={`w-full py-2.5 px-3 rounded-xl bg-white border border-brown-200 hover:border-brown-400 text-brown-900 transition-all flex items-center justify-between text-xs cursor-pointer shadow-sm ${
+                      isCountryDropdownOpen ? 'ring-2 ring-brown-400 border-brown-400' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 leading-none">{currentCountryObj.flag || '🌐'}</span>
+                      <span className="font-medium truncate text-brown-900">
+                        {isAr ? currentCountryObj.nameAr : currentCountryObj.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-cream-200/80 text-brown-700 font-semibold">
+                        {shippingCost === 0 ? (isAr ? 'مجاني' : 'FREE') : format(shippingCost, isAr)}
+                      </span>
+                      <ChevronDown
+                        size={14}
+                        className={`text-brown-400 transition-transform duration-200 ${
+                          isCountryDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+
+                  {/* Searchable Dropdown Menu */}
+                  {isCountryDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#FAF6F0] rounded-2xl border border-brown-300/80 shadow-2xl overflow-hidden animate-in fade-in duration-150">
+                      {/* Search Bar */}
+                      <div className="p-2 border-b border-brown-200/70 bg-white/70">
+                        <div className="relative flex items-center">
+                          <Search size={13} className={`absolute ${isAr ? 'right-2.5' : 'left-2.5'} text-brown-400 pointer-events-none`} />
+                          <input
+                            type="text"
+                            autoFocus
+                            value={countrySearchQuery}
+                            onChange={(e) => setCountrySearchQuery(e.target.value)}
+                            placeholder={isAr ? 'ابحث عن الدولة...' : 'Search country...'}
+                            className={`w-full py-1.5 ${isAr ? 'pr-8 pl-6' : 'pl-8 pr-6'} rounded-lg bg-white border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-brown-400`}
+                          />
+                          {countrySearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setCountrySearchQuery('')}
+                              className={`absolute ${isAr ? 'left-2' : 'right-2'} text-brown-400 hover:text-brown-700 p-0.5`}
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Countries List */}
+                      <div className="max-h-52 overflow-y-auto no-scrollbar divide-y divide-brown-100">
+                        {filteredAvailableCountries.length === 0 ? (
+                          <div className="p-4 text-center text-brown-400 text-xs">
+                            {isAr ? 'لا توجد دول مطابقة لبحثك' : 'No matching countries found'}
+                          </div>
+                        ) : (
+                          filteredAvailableCountries.map((c) => {
+                            const isSelected = selectedCountry === c.code;
+                            const fee = getShippingFee(c.code);
+                            const feeText = fee === 0 ? (isAr ? 'مجاناً' : 'FREE') : format(fee, isAr);
+
+                            return (
+                              <div
+                                key={c.code}
+                                onClick={() => {
+                                  setSelectedCountry(c.code);
+                                  localStorage.setItem('hadab_customer_country', c.code);
+                                  setIsCountryDropdownOpen(false);
+                                }}
+                                className={`px-3 py-2 flex items-center justify-between cursor-pointer transition-colors text-xs ${
+                                  isSelected
+                                    ? 'bg-cream-200 text-brown-950 font-semibold'
+                                    : 'hover:bg-cream-100/80 text-brown-800'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="text-base leading-none">{c.flag}</span>
+                                  <span className="truncate">{isAr ? c.nameAr : c.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-brown-100 text-brown-700 font-medium">
+                                    {feeText}
+                                  </span>
+                                  {isSelected && <Check size={13} className="text-burgundy-700" />}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>

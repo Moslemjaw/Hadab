@@ -47,6 +47,7 @@ import { useShopData } from '../../context/ShopDataContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { SUPPORTED_CURRENCIES, type CurrencyCode } from '../../constants/currencies';
 import { type ShippingConfig, type CountryShippingRate, DEFAULT_SHIPPING_CONFIG } from '../../constants/shipping';
+import { COUNTRY_CODES } from '../../constants/countryCodes';
 import { api } from '../../services/api';
 import { tactileAudio } from '../../utils/audio';
 import { useNotification } from '../../context/NotificationContext';
@@ -246,6 +247,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     () => shippingConfig?.enabled ?? true
   );
   const [isErasing, setIsErasing] = useState(false);
+
+  // Add Specific Country Modal state
+  const [isAddCountryModalOpen, setIsAddCountryModalOpen] = useState(false);
+  const [newCountryCode, setNewCountryCode] = useState('');
+  const [newCountryRate, setNewCountryRate] = useState<number>(4);
+  const [newCountrySearch, setNewCountrySearch] = useState('');
+
+  const availableCountriesToAdd = useMemo(() => {
+    const existingCodes = new Set(shippingRatesState.map((r) => r.countryCode.toUpperCase()));
+    return COUNTRY_CODES.filter((c) => {
+      if (existingCodes.has(c.code.toUpperCase())) return false;
+      if (!newCountrySearch.trim()) return true;
+      const q = newCountrySearch.toLowerCase().trim();
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.nameAr.includes(q) ||
+        c.code.toLowerCase().includes(q)
+      );
+    });
+  }, [shippingRatesState, newCountrySearch]);
 
   // Load settings from server on mount
   useEffect(() => {
@@ -2406,22 +2427,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                             </span>
                           </div>
                           
-                          {/* Row Enable Toggle */}
-                          <label className="flex items-center gap-1.5 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={countryRate.enabled}
-                              onChange={(e) => {
-                                const next = [...shippingRatesState];
-                                next[idx] = { ...countryRate, enabled: e.target.checked };
-                                setShippingRatesState(next);
-                              }}
-                              className="rounded border-brown-300 text-burgundy-600 focus:ring-burgundy-500 w-3.5 h-3.5"
-                            />
-                            <span className="text-[10px] text-brown-500 font-medium">
-                              {isAr ? 'تفعيل' : 'Enable'}
-                            </span>
-                          </label>
+                          <div className="flex items-center gap-2">
+                            {/* Row Enable Toggle */}
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={countryRate.enabled}
+                                onChange={(e) => {
+                                  const next = [...shippingRatesState];
+                                  next[idx] = { ...countryRate, enabled: e.target.checked };
+                                  setShippingRatesState(next);
+                                }}
+                                className="rounded border-brown-300 text-burgundy-600 focus:ring-burgundy-500 w-3.5 h-3.5"
+                              />
+                              <span className="text-[10px] text-brown-500 font-medium">
+                                {isAr ? 'تفعيل' : 'Enable'}
+                              </span>
+                            </label>
+
+                            {!['KW', 'JO', 'SA', 'AE', 'QA', 'BH', 'OM', 'REST'].includes(countryRate.countryCode) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  tactileAudio.playScrubTick();
+                                  setShippingRatesState((prev) => prev.filter((_, i) => i !== idx));
+                                }}
+                                className="p-1 rounded-lg text-brown-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                title={isAr ? 'حذف الدولة' : 'Remove country'}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -2452,6 +2489,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     ))}
                   </div>
 
+                  {/* Add Specific Country Button */}
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick();
+                        setNewCountryCode('');
+                        setNewCountrySearch('');
+                        setNewCountryRate(4);
+                        setIsAddCountryModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brown-900 hover:bg-brown-950 text-cream-100 text-xs font-medium tracking-wide transition-all shadow-warm-xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{isAr ? 'إضافة دولة مخصصة للشحن' : 'Add Specific Country'}</span>
+                    </button>
+                  </div>
+
                   <p className="text-[10.5px] text-brown-500 italic pt-1">
                     {isAr
                       ? `* يتم حساب رسوم الشحن بعملة المتجر الأساسية (${settingsCurrency}) وتحويلها تلقائياً لعملة العميل عند الدفع.`
@@ -2459,6 +2514,160 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   </p>
                 </div>
               </div>
+
+              {/* Add Country Modal */}
+              {isAddCountryModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brown-950/40 backdrop-blur-sm animate-fade-in">
+                  <div className="relative w-full max-w-md bg-[#FDFBF7] rounded-3xl border border-brown-200/80 shadow-warm-xl overflow-hidden p-6">
+                    {/* Modal Header */}
+                    <div className="flex items-center justify-between pb-4 border-b border-brown-200/50">
+                      <div>
+                        <h3 className="font-serif text-lg text-brown-900 font-medium">
+                          {isAr ? 'إضافة دولة لقائمة الشحن' : 'Add Country to Shipping'}
+                        </h3>
+                        <p className="text-xs text-brown-500 font-light mt-0.5">
+                          {isAr
+                            ? 'اختر الدولة وحدد تكلفة الشحن المخصصة لها'
+                            : 'Select a country and set its specific shipping rate'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddCountryModalOpen(false)}
+                        className="w-8 h-8 rounded-full bg-cream-200/60 hover:bg-cream-300/60 text-brown-600 flex items-center justify-center transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Modal Body */}
+                    <div className="py-4 space-y-4">
+                      {/* Search Countries */}
+                      <div>
+                        <label className="block text-xs font-semibold text-brown-700 mb-1.5">
+                          {isAr ? 'البحث عن دولة' : 'Search Country'}
+                        </label>
+                        <div className="relative">
+                          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brown-400" />
+                          <input
+                            type="text"
+                            value={newCountrySearch}
+                            onChange={(e) => setNewCountrySearch(e.target.value)}
+                            placeholder={isAr ? 'ابحث بالاسم أو الرمز...' : 'Search by name or code...'}
+                            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Country List */}
+                      <div>
+                        <label className="block text-xs font-semibold text-brown-700 mb-1.5">
+                          {isAr ? 'اختر الدولة' : 'Select Country'}
+                        </label>
+                        <div className="max-h-48 overflow-y-auto rounded-xl border border-brown-200 bg-white divide-y divide-brown-100">
+                          {availableCountriesToAdd.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-brown-400">
+                              {isAr ? 'لا توجد دول متبقية للإضافة' : 'No available countries found'}
+                            </div>
+                          ) : (
+                            availableCountriesToAdd.map((c) => {
+                              const isSelected = newCountryCode === c.code;
+                              return (
+                                <button
+                                  key={c.code}
+                                  type="button"
+                                  onClick={() => setNewCountryCode(c.code)}
+                                  className={`w-full px-3 py-2.5 flex items-center justify-between text-left transition-colors ${
+                                    isSelected
+                                      ? 'bg-brown-100/70 text-brown-950 font-medium'
+                                      : 'hover:bg-cream-100/70 text-brown-800'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="text-base">{c.flag}</span>
+                                    <span className="text-xs">
+                                      {isAr ? c.nameAr : c.name}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cream-200/80 text-brown-600">
+                                    {c.code}
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Shipping Fee Input */}
+                      <div>
+                        <label className="block text-xs font-semibold text-brown-700 mb-1.5">
+                          {isAr ? `رسوم الشحن (${settingsCurrency})` : `Shipping Fee (${settingsCurrency})`}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-400 font-bold text-xs">
+                            {settingsCurrency}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={newCountryRate}
+                            onChange={(e) => setNewCountryRate(Number(e.target.value) || 0)}
+                            className="w-full pl-14 pr-3 py-2 text-xs rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 font-semibold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="pt-4 border-t border-brown-200/50 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddCountryModalOpen(false)}
+                        className="px-4 py-2 rounded-xl text-xs font-medium text-brown-600 hover:bg-cream-200/60 transition-colors"
+                      >
+                        {isAr ? 'إلغاء' : 'Cancel'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!newCountryCode}
+                        onClick={() => {
+                          const countryMeta = COUNTRY_CODES.find((c) => c.code === newCountryCode);
+                          if (!countryMeta) return;
+                          const newEntry: CountryShippingRate = {
+                            countryCode: countryMeta.code,
+                            countryName: countryMeta.name,
+                            countryNameAr: countryMeta.nameAr,
+                            rate: newCountryRate,
+                            enabled: true,
+                          };
+                          setShippingRatesState((prev) => {
+                            const restIdx = prev.findIndex((r) => r.countryCode === 'REST');
+                            if (restIdx !== -1) {
+                              const next = [...prev];
+                              next.splice(restIdx, 0, newEntry);
+                              return next;
+                            }
+                            return [...prev, newEntry];
+                          });
+                          tactileAudio.playChime();
+                          showToast(
+                            isAr
+                              ? `تمت إضافة ${countryMeta.nameAr} لقائمة الشحن بنجاح`
+                              : `Added ${countryMeta.name} to shipping rates successfully`,
+                            'success'
+                          );
+                          setIsAddCountryModalOpen(false);
+                        }}
+                        className="px-5 py-2 rounded-xl bg-brown-900 hover:bg-brown-950 disabled:opacity-40 disabled:hover:bg-brown-900 text-cream-100 text-xs font-medium tracking-wide transition-all shadow-warm-xs"
+                      >
+                        {isAr ? 'إضافة الدولة' : 'Add Country'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* System Toggles */}
               <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">

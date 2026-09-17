@@ -11,6 +11,7 @@ import {
   type ShippingConfig,
   DEFAULT_SHIPPING_CONFIG,
   getShippingFeeForCountry,
+  isCountryShippingAvailable,
 } from '../constants/shipping';
 import { api } from '../services/api';
 
@@ -24,6 +25,7 @@ interface CurrencyContextType {
   setBaseCurrency: (code: CurrencyCode) => void;
   setShippingConfig: (config: ShippingConfig) => void;
   getShippingFee: (countryCode: string) => number;
+  isCountryAvailable: (countryCode: string) => boolean;
   convert: (amountInBase: number) => number;
   format: (amountInBase: number, isAr?: boolean) => string;
   formatRaw: (amount: number, currencyCode?: CurrencyCode, isAr?: boolean) => string;
@@ -105,6 +107,10 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
     return getShippingFeeForCountry(countryCode, shippingConfig);
   };
 
+  const isCountryAvailable = (countryCode: string): boolean => {
+    return isCountryShippingAvailable(countryCode, shippingConfig);
+  };
+
   // Convert an amount from admin's base currency to customer's active display currency
   const convert = (amountInBase: number): number => {
     return convertPrice(amountInBase, baseCurrency, currency);
@@ -140,6 +146,7 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
         setBaseCurrency,
         setShippingConfig,
         getShippingFee,
+        isCountryAvailable,
         convert,
         format,
         formatRaw,

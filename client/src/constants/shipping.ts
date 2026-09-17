@@ -1,4 +1,4 @@
-﻿export interface CountryShippingRate {
+export interface CountryShippingRate {
   countryCode: string; // e.g. 'KW', 'JO', 'SA', 'REST'
   countryName: string;
   countryNameAr: string;
@@ -49,3 +49,22 @@ export function getShippingFeeForCountry(
 
   return config.restOfWorldRate ?? 5;
 }
+
+export function isCountryShippingAvailable(
+  countryCode: string,
+  config: ShippingConfig = DEFAULT_SHIPPING_CONFIG
+): boolean {
+  if (!config.enabled) return true;
+
+  const match = config.rates.find(
+    (r) => r.countryCode.toUpperCase() === countryCode.toUpperCase()
+  );
+
+  if (match) {
+    return match.enabled;
+  }
+
+  const rest = config.rates.find((r) => r.countryCode === 'REST');
+  return rest ? rest.enabled : false;
+}
+
