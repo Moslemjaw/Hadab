@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { CartDrawer } from './components/common/CartDrawer';
@@ -14,14 +14,114 @@ import { FeaturedProductsSection } from './components/home/FeaturedProductsSecti
 import { CategoryTilesSection } from './components/home/CategoryTilesSection';
 import { Marquee } from './components/home/Marquee';
 import type { Product } from './types';
-import { useAuth } from './context/AuthContext';
+import { useAuth, type UserProfile } from './context/AuthContext';
+
+interface BagItem {
+  product: Product;
+  quantity: number;
+}
+
+// Helpers for account-specific cart persistence
+const getActiveUserKey = (u?: UserProfile | null): string => {
+  if (u?.id) return `user_${u.id}`;
+  if (u?.email) return `user_${u.email.toLowerCase().trim()}`;
+  try {
+    const token = localStorage.getItem('hadab_token');
+    if (token) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.id) return `user_${payload.id}`;
+        if (payload.email) return `user_${payload.email.toLowerCase().trim()}`;
+      }
+    }
+  } catch {}
+  return 'guest';
+};
+
+const getCartStorageKey = (userKey: string) => `hadab_cart_${userKey}`;
+
+const loadCartFromStorage = (userKey: string): BagItem[] => {
+  try {
+    const raw = localStorage.getItem(getCartStorageKey(userKey));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item) => item && item.product && typeof item.quantity === 'number' && item.quantity > 0
+        );
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load cart for', userKey, e);
+  }
+  return [];
+};
+
+const saveCartToStorage = (userKey: string, items: BagItem[]) => {
+  try {
+    localStorage.setItem(getCartStorageKey(userKey), JSON.stringify(items));
+  } catch (e) {
+    console.error('Failed to save cart for', userKey, e);
+  }
+};
 
 export function App() {
   const { user, isAdmin } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin' | 'customer'>('home');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
-  const [bagItems, setBagItems] = useState<{ product: Product; quantity: number }[]>([]);
+  
+  // Initialize cart synchronously from the active user's saved cart (or guest cart)
+  const [bagItems, setBagItems] = useState<BagItem[]>(() => {
+    return loadCartFromStorage(getActiveUserKey());
+  });
+
+  const currentUserKey = getActiveUserKey(user);
+  const prevUserKeyRef = useRef(currentUserKey);
+
+  // When user signs in, signs out, or switches account, load their specific cart
+  useEffect(() => {
+    const prevKey = prevUserKeyRef.current;
+    if (prevKey !== currentUserKey) {
+      // If user just logged in from guest session, merge any guest cart items into user's account
+      if (prevKey === 'guest' && currentUserKey !== 'guest') {
+        const guestItems = loadCartFromStorage('guest');
+        const userItems = loadCartFromStorage(currentUserKey);
+        
+        const merged = [...userItems];
+        for (const gItem of guestItems) {
+          const existingIdx = merged.findIndex(
+            (item) =>
+              item.product.id === gItem.product.id &&
+              item.product.selectedColor === gItem.product.selectedColor &&
+              item.product.selectedSize === gItem.product.selectedSize
+          );
+          if (existingIdx !== -1) {
+            merged[existingIdx].quantity += gItem.quantity;
+          } else {
+            merged.push(gItem);
+          }
+        }
+
+        setBagItems(merged);
+        saveCartToStorage(currentUserKey, merged);
+        localStorage.removeItem(getCartStorageKey('guest'));
+      } else {
+        // Switched account or logged out: load this account's saved cart
+        const saved = loadCartFromStorage(currentUserKey);
+        setBagItems(saved);
+      }
+
+      prevUserKeyRef.current = currentUserKey;
+    }
+  }, [currentUserKey]);
+
+  // Persist cart to active user's localStorage whenever it changes
+  useEffect(() => {
+    saveCartToStorage(currentUserKey, bagItems);
+  }, [currentUserKey, bagItems]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -72,6 +172,22 @@ export function App() {
       }
       return [...prev, { product, quantity: 1 }];
     });
+  };
+
+  const handleUpdateQuantity = (productId: string, quantity: number, selectedColor?: string, selectedSize?: string) => {
+    if (quantity <= 0) {
+      handleRemoveFromBag(productId, selectedColor, selectedSize);
+      return;
+    }
+    setBagItems((prev) =>
+      prev.map((item) =>
+        item.product.id === productId &&
+        item.product.selectedColor === selectedColor &&
+        item.product.selectedSize === selectedSize
+          ? { ...item, quantity }
+          : item
+      )
+    );
   };
 
   const handleRemoveFromBag = (productId: string, selectedColor?: string, selectedSize?: string) => {
@@ -277,6 +393,7 @@ export function App() {
         onClose={() => setIsCartOpen(false)}
         items={bagItems}
         onRemoveItem={handleRemoveFromBag}
+        onUpdateQuantity={handleUpdateQuantity}
         onClearBag={() => setBagItems([])}
       />
 

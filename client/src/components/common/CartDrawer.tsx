@@ -12,6 +12,7 @@ interface CartDrawerProps {
   onClose: () => void;
   items: { product: Product; quantity: number }[];
   onRemoveItem: (id: string, color?: string, size?: string) => void;
+  onUpdateQuantity?: (id: string, quantity: number, color?: string, size?: string) => void;
   onClearBag?: () => void;
 }
 
@@ -20,6 +21,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onClose,
   items,
   onRemoveItem,
+  onUpdateQuantity,
   onClearBag,
 }) => {
   const { language, t } = useLanguage();
@@ -246,13 +248,43 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                 {product.selectedSize}
                               </span>
                             )}
-                            <span className="text-[10px] text-brown-400">
-                              • {isAr ? 'الكمية' : 'Qty'}: {quantity}
-                            </span>
                           </div>
-                        </div>
-                        <div className="text-xs font-semibold text-brown-800 mt-1">
-                          {format(product.price * quantity, isAr)}
+
+                          <div className="flex items-center justify-between mt-2 pt-1 border-t border-brown-200/50">
+                            {/* Quantity Stepper */}
+                            <div className="flex items-center rounded-lg border border-brown-300/70 bg-cream-200/80 overflow-hidden text-xs">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onUpdateQuantity
+                                    ? onUpdateQuantity(product.id, quantity - 1, product.selectedColor, product.selectedSize)
+                                    : onRemoveItem(product.id, product.selectedColor, product.selectedSize)
+                                }
+                                className="w-6 h-6 flex items-center justify-center hover:bg-brown-300/40 text-brown-800 transition-colors active:scale-95"
+                                aria-label="Decrease quantity"
+                              >
+                                -
+                              </button>
+                              <span className="w-6 h-6 flex items-center justify-center font-medium text-[11px] text-brown-900">
+                                {quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onUpdateQuantity &&
+                                  onUpdateQuantity(product.id, quantity + 1, product.selectedColor, product.selectedSize)
+                                }
+                                className="w-6 h-6 flex items-center justify-center hover:bg-brown-300/40 text-brown-800 transition-colors active:scale-95"
+                                aria-label="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <div className="text-xs font-semibold text-brown-900">
+                              {format(product.price * quantity, isAr)}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
