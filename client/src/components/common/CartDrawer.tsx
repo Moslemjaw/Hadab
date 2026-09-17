@@ -165,6 +165,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     if (user?.phone && !customerPhone) setCustomerPhone(user.phone);
   }, [user]);
 
+  const fullCustomerPhone = useMemo(() => {
+    const p = customerPhone.trim();
+    if (!p) return '';
+    if (p.startsWith('+') || p.startsWith('00')) return p;
+    return `${phoneCountryCode.dialCode} ${p}`;
+  }, [customerPhone, phoneCountryCode]);
+
   // Lock body scroll on open
   useEffect(() => {
     if (isOpen) {
@@ -185,8 +192,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const subtotal = items.reduce(
     (acc, item) => acc + item.product.price * item.quantity,
     0
@@ -195,13 +200,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   // Calculate country-specific shipping fee
   const shippingCost = getShippingFee(selectedCountry);
   const finalTotal = subtotal + shippingCost;
-
-  const fullCustomerPhone = useMemo(() => {
-    const p = customerPhone.trim();
-    if (!p) return '';
-    if (p.startsWith('+') || p.startsWith('00')) return p;
-    return `${phoneCountryCode.dialCode} ${p}`;
-  }, [customerPhone, phoneCountryCode]);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,6 +257,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       ? `مرحباً هَدَب! أود تأكيد طلبي رقم ${placedOrderNumber} بقيمة ${format(orderTotal, true)}.\nالاسم: ${customerName}\nالهاتف: ${fullCustomerPhone}\nدولة التوصيل: ${currentCountryObj.nameAr}\nالعنوان: ${addressSummary}`
       : `Hello HADAB! I'd like to confirm my order #${placedOrderNumber} for ${format(orderTotal, false)}.\nName: ${customerName}\nPhone: ${fullCustomerPhone}\nCountry: ${currentCountryObj.name}\nDelivery Address: ${addressSummary}`
   );
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
