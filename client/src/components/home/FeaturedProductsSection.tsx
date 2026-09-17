@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useShopData } from '../../context/ShopDataContext';
 import type { Product } from '../../types';
-import { ThreadKnot } from '../common/ThreadSpine';
-import { Eye, ShoppingBag, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 interface FeaturedProductsSectionProps {
   onAddToBag?: (product: Product) => void;
@@ -16,14 +16,16 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
   onSelectProduct,
   onExploreCatalog,
 }) => {
-  const { language, t } = useLanguage();
+  const { isArabic: isAr, t } = useLanguage();
   const { featuredProducts, products } = useShopData();
-  const [activeTextureId, setActiveTextureId] = useState<string | null>(null);
   const [addedIds, setAddedIds] = useState<string[]>([]);
+  const { ref: headerRef, isRevealed: headerRevealed } = useScrollReveal({ threshold: 0.2 });
+  const { ref: gridRef, isRevealed: gridRevealed } = useScrollReveal({ threshold: 0.1 });
 
   const displayProducts = featuredProducts.length > 0 ? featuredProducts.slice(0, 4) : products.slice(0, 4);
 
-  const handleAdd = (product: Product) => {
+  const handleAdd = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
     setAddedIds((prev) => [...prev, product.id]);
     if (onAddToBag) onAddToBag(product);
     setTimeout(() => {
@@ -32,161 +34,135 @@ export const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = (
   };
 
   return (
-    <section id="featured" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Section Header */}
-      <div className="flex flex-col items-center text-center mb-16">
-        <ThreadKnot
-          color="brown"
-          label={language === 'ar' ? 'الغرزة الثانية • قطع مختارة' : 'STITCH II • FEATURED PIECES'}
-          className="mb-6"
-        />
-        <h2 className="font-serif text-3xl sm:text-4xl text-brown-800 font-normal">
-          {language === 'ar' ? 'قطع صُنعت بتأنٍ وصبر' : 'Pieces made with time'}
+    <section id="featured" className="py-24 sm:py-32 px-4 sm:px-8 lg:px-16 max-w-[1400px] mx-auto overflow-hidden">
+      {/* Editorial Header */}
+      <div 
+        ref={headerRef}
+        className={`flex flex-col items-center text-center mb-16 sm:mb-24 scroll-reveal ${headerRevealed ? 'revealed' : ''}`}
+      >
+        <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-brown-400 font-medium mb-3">
+          {isAr ? 'مختارات الموسم' : 'Selected Pieces'}
+        </span>
+        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-brown-900 font-normal tracking-tight">
+          {isAr ? 'قطع صُنعت لتدوم' : 'Our Pieces'}
         </h2>
-        <p className="mt-3 text-brown-500 max-w-lg font-light text-base">
-          {language === 'ar'
-            ? 'تصاميم منتقاة ليومياتك الأنيقة. مرر الفأرة أو انقر لفحص ملمس وتفاصيل الغرزة الدقيقة.'
-            : 'Curated shapes for your day-to-day. Hover each piece to inspect the close-up yarn stitch and texture.'}
-        </p>
+        <div className="w-10 h-px bg-brown-300/60 mt-4" />
       </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {displayProducts.map((product) => {
-          const isTextureView = activeTextureId === product.id;
+      {/* Asymmetric 2-Column Luxury Grid */}
+      <div 
+        ref={gridRef}
+        className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-16 lg:gap-x-16 lg:gap-y-24"
+      >
+        {displayProducts.map((product, idx) => {
           const isAdded = addedIds.includes(product.id);
+          // Stagger odd items vertically on desktop for high-fashion editorial asymmetry
+          const isOffset = idx % 2 === 1;
 
           return (
             <div
               key={product.id}
-              className="group flex flex-col bg-cream-100/70 rounded-2xl overflow-hidden border border-brown-200/70 transition-all duration-300 hover:shadow-warm hover:-translate-y-1"
+              className={`group flex flex-col cursor-pointer transition-all duration-700 ${
+                isOffset ? 'md:translate-y-16 lg:translate-y-20' : ''
+              } scroll-reveal ${gridRevealed ? 'revealed' : ''}`}
+              style={{ animationDelay: `${idx * 140}ms` }}
+              onClick={() => onSelectProduct && onSelectProduct(product)}
             >
-              {/* Image Container with Texture Toggle */}
-              <div
-                className="relative aspect-[4/5] overflow-hidden bg-cream-200 cursor-pointer"
-                onClick={() => onSelectProduct ? onSelectProduct(product) : setActiveTextureId((prev) => (prev === product.id ? null : product.id))}
-                onMouseEnter={() => setActiveTextureId(product.id)}
-                onMouseLeave={() => setActiveTextureId(null)}
-              >
-                {/* Main Product Image */}
+              {/* Product Visual Frame */}
+              <div className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-[#ECE4D8] border border-brown-200/40 shadow-sm transition-all duration-500 group-hover:shadow-warm-lg group-hover:-translate-y-1">
                 <img
-                  src={isTextureView ? product.textureImage : product.image}
-                  alt={language === 'ar' ? (product.nameArabic || product.name) : product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  src={product.image}
+                  alt={isAr ? (product.nameArabic || product.name) : product.name}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  loading="lazy"
                 />
 
-                {/* Sale / Discount Badge */}
+                {/* Sale Badge */}
                 {(product.isSale || (product.originalPrice && product.originalPrice > product.price)) && (
-                  <span className={`absolute top-3 ${language === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-full bg-burgundy-600 text-cream-100 text-[10px] font-bold uppercase tracking-wider shadow-sm`}>
-                    {language === 'ar' ? 'تخفيض' : 'Sale'}
+                  <span className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} px-3 py-1 rounded-full bg-burgundy-600/90 backdrop-blur-sm text-cream-100 text-[10px] font-medium uppercase tracking-widest shadow-sm`}>
+                    {isAr ? 'تخفيض' : 'Sale'}
                   </span>
                 )}
 
-                {/* Texture view toggle button / indicator */}
-                <div
-                  className={`absolute bottom-3 ${
-                    language === 'ar' ? 'left-3' : 'right-3'
-                  } px-2.5 py-1 rounded-full bg-brown-800/80 text-cream-100 text-[10px] font-medium backdrop-blur-sm flex items-center gap-1.5 transition-opacity min-h-[30px]`}
-                >
-                  <Eye size={12} />
-                  <span>
-                    {language === 'ar'
-                      ? isTextureView
-                        ? 'عرض الغرزة'
-                        : 'فحص الخيط'
-                      : isTextureView
-                      ? 'Stitch View'
-                      : 'Inspect Yarn'}
+                {/* Quick Add Overlay on Hover */}
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 bg-gradient-to-t from-brown-950/70 via-brown-950/20 to-transparent opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-between">
+                  <span className="text-xs text-cream-100 font-light tracking-wide hidden sm:inline">
+                    {isAr ? 'استكشف التفاصيل' : 'Quick View'}
                   </span>
+                  <button
+                    type="button"
+                    onClick={(e) => handleAdd(e, product)}
+                    className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs font-medium uppercase tracking-wider transition-all duration-200 flex items-center gap-2 shadow-warm active:scale-95 ml-auto ${
+                      isAdded
+                        ? 'bg-sage-600 text-cream-100'
+                        : 'bg-cream-100 hover:bg-white text-brown-900'
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <Check size={13} />
+                        <span>{isAr ? 'أُضيف' : 'Added'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={13} />
+                        <span>{t.addToBag}</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
-              {/* Product Info */}
-              <div className="p-5 flex flex-col flex-grow justify-between">
-                <div>
-                  <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                    <h3
-                      onClick={() => onSelectProduct && onSelectProduct(product)}
-                      className="font-serif text-lg text-brown-800 font-medium group-hover:text-burgundy-500 transition-colors cursor-pointer"
-                    >
-                      {language === 'ar' ? (product.nameArabic || product.name) : product.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {product.originalPrice && product.originalPrice > product.price && (
-                        <span className="text-xs text-brown-400 line-through">
-                          {product.originalPrice}
-                        </span>
-                      )}
-                      <span className="text-base font-semibold text-brown-800">
-                        {product.price} {language === 'ar' ? 'د.ك' : 'KWD'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-brown-500 leading-relaxed font-light mb-3 line-clamp-2">
-                    {language === 'ar' ? (product.descriptionArabic || product.description) : product.description}
-                  </p>
-
-                  {/* Colors & Sizes preview if present */}
+              {/* Minimalist Editorial Details */}
+              <div className="pt-5 pb-2 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="font-serif text-xl sm:text-2xl text-brown-900 font-normal tracking-tight group-hover:text-burgundy-600 transition-colors">
+                    {isAr ? (product.nameArabic || product.name) : product.name}
+                  </h3>
                   {product.colors && product.colors.length > 0 && (
-                    <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                      {product.colors.slice(0, 3).map((col, idx) => (
-                        <span key={idx} className="px-2 py-0.5 rounded-md bg-cream-200 text-brown-600 text-[10px]">
-                          {col}
+                    <div className="flex items-center gap-1.5 pt-1">
+                      {product.colors.slice(0, 3).map((col, cIdx, arr) => (
+                        <span 
+                          key={cIdx} 
+                          className="text-[11px] text-brown-400 font-light"
+                        >
+                          {col}{cIdx < arr.length - 1 ? ' ·' : ''}
                         </span>
                       ))}
                     </div>
                   )}
-
-                  <div className="pt-2 border-t border-brown-200/50 text-[11px] text-brown-400 space-y-1 mb-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sage-500" />
-                      <span>{language === 'ar' ? (product.stitchDetailArabic || product.stitchDetail) : product.stitchDetail}</span>
-                    </div>
-                    <div className="text-brown-500 font-medium">
-                      {language === 'ar' ? (product.yarnTypeArabic || product.yarnType) : product.yarnType}
-                    </div>
-                  </div>
                 </div>
 
-                {/* Tactile "Add to bag" button with stitch knot animation */}
-                <button
-                  type="button"
-                  onClick={() => handleAdd(product)}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-medium tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.98] cursor-pointer ${
-                    isAdded
-                      ? 'bg-sage-600 text-cream-100'
-                      : 'bg-brown-700 hover:bg-burgundy-500 text-cream-100 shadow-warm-sm'
-                  }`}
-                >
-                  {isAdded ? (
-                    <>
-                      <Check size={14} />
-                      <span>{language === 'ar' ? 'تمت الإضافة للحقيبة' : 'Added to Bag'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={14} />
-                      <span>{t.addToBag}</span>
-                    </>
+                <div className="flex items-baseline gap-2 shrink-0 pt-1">
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <span className="text-xs text-brown-400 line-through">
+                      {product.originalPrice}
+                    </span>
                   )}
-                </button>
+                  <span className="font-medium text-base sm:text-lg text-brown-900">
+                    {product.price} <span className="text-xs uppercase text-brown-500 font-normal">{isAr ? 'د.ك' : 'KWD'}</span>
+                  </span>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* View All Products Button */}
+      {/* Editorial View All CTA */}
       {onExploreCatalog && (
-        <div className="mt-14 flex justify-center">
+        <div className="mt-28 sm:mt-36 flex justify-center">
           <button
             type="button"
             onClick={onExploreCatalog}
-            className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-brown-900 hover:bg-burgundy-600 text-cream-100 text-xs font-semibold uppercase tracking-[0.2em] transition-all shadow-warm hover:shadow-warm-lg hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+            className="group inline-flex items-center gap-3 px-9 py-4 rounded-full border border-brown-400/50 hover:border-brown-800 text-brown-900 text-xs font-medium uppercase tracking-[0.25em] transition-all duration-300 hover:bg-brown-900 hover:text-cream-100 hover:shadow-warm active:scale-95"
           >
-            <span>{language === 'ar' ? 'عرض جميع المنتجات' : 'View All Products'}</span>
-            {language === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+            <span>{isAr ? 'عرض كافة القطع' : 'View All Pieces'}</span>
+            {isAr ? (
+              <ArrowLeft size={14} className="transition-transform duration-300 group-hover:-translate-x-1" />
+            ) : (
+              <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+            )}
           </button>
         </div>
       )}

@@ -1,5 +1,4 @@
 import React from 'react';
-import { ArrowDown, ChevronRight } from 'lucide-react';
 import type { Product } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -86,46 +85,22 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
           style={getBeatStyle(0)}
         >
           <div className="w-full max-w-[1400px] mx-auto px-6 sm:px-12 lg:px-16 flex flex-col md:flex-row items-center justify-between">
-            <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto max-w-sm sm:max-w-sm mt-[43vh] xs:mt-[44vh] md:mt-0 md:-translate-y-6 lg:-translate-y-14`}>
-              <div className={`flex items-center justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2 mb-3 sm:mb-4 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] sm:tracking-[0.28em] font-semibold text-burgundy-600`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-burgundy-500" />
-                <span>{t.heroEyebrow}</span>
-              </div>
-
-              <div className={`flex items-baseline justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2.5 sm:gap-3 mb-2 mt-2 sm:mt-3`}>
+            <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto max-w-sm sm:max-w-md mt-[42vh] xs:mt-[43vh] md:mt-0 md:-translate-y-6 lg:-translate-y-12`}>
+              <div className={`flex items-baseline justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-2.5 sm:gap-3`}>
                 {isAr ? (
-                  <h1 className="font-arabic text-4xl xs:text-5xl sm:text-6xl font-medium tracking-wide text-brown-900 leading-normal select-none pt-1">
+                  <h1 className="font-arabic text-5xl xs:text-6xl sm:text-7xl font-medium tracking-wide text-brown-900 leading-normal select-none pt-1">
                     هدب
                   </h1>
                 ) : (
-                  <h1 className="font-display text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-brown-900 lowercase leading-none select-none">
+                  <h1 className="font-display text-4xl xs:text-5xl sm:text-6xl lg:text-7xl font-normal tracking-tight text-brown-900 lowercase leading-none select-none">
                     hadab
                   </h1>
                 )}
               </div>
 
-              <p className="font-serif italic text-base sm:text-lg text-brown-800 leading-snug mb-1.5">
-                {t.heroTagline}
+              <p className="font-serif italic text-lg sm:text-xl lg:text-2xl text-brown-800 leading-snug mt-3">
+                {isAr ? 'صُنع يدوياً ليومك.' : 'Handmade for your day.'}
               </p>
-
-              <p className="text-xs sm:text-[13px] text-brown-600 font-light leading-relaxed tracking-wide max-w-xs mx-auto md:mx-0">
-                {t.heroSubtitle}
-              </p>
-
-              <div className={`mt-3.5 sm:mt-4 flex items-center justify-center ${isAr ? 'md:justify-start' : 'md:justify-start'} gap-3`}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const shopEl = document.getElementById('shop-showcase') || document.getElementById('featured');
-                    if (shopEl) shopEl.scrollIntoView({ behavior: 'smooth' });
-                    else if (onExploreCatalog) onExploreCatalog();
-                  }}
-                  className="inline-flex items-center gap-2 px-5 py-2 sm:py-1.5 rounded-full bg-brown-900 text-cream-100 text-xs sm:text-[10.5px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-medium hover:bg-burgundy-600 transition-colors shadow-warm-sm min-h-[38px] sm:min-h-[34px] cursor-pointer active:scale-95"
-                >
-                  <span>{t.exploreWorks}</span>
-                  <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
-                </button>
-              </div>
             </div>
 
             <div className="hidden lg:block flex-1 min-w-[340px]" />
@@ -137,7 +112,7 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
           className="absolute inset-0 flex items-end justify-center pointer-events-none"
           style={getBeatStyle(1)}
         >
-          <div className="w-full max-w-[1400px] mx-auto px-4 xs:px-6 sm:px-12 lg:px-16 pb-14 sm:pb-16 md:pb-20 flex flex-col md:flex-row items-center md:items-end justify-between gap-3 md:gap-0">
+          <div className="w-full max-w-[1400px] mx-auto px-4 xs:px-6 sm:px-12 lg:px-16 pb-16 sm:pb-20 md:pb-24 flex flex-col md:flex-row items-center md:items-end justify-between gap-3 md:gap-0">
             {/* Left on desktop */}
             <div className={`text-center ${isAr ? 'md:text-right' : 'md:text-left'} pointer-events-auto`}>
               <p className="font-serif italic text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl text-brown-900 font-normal tracking-tight whitespace-normal sm:whitespace-nowrap select-none">
@@ -155,25 +130,24 @@ export const ScrollNarrativeOverlay: React.FC<ScrollNarrativeOverlayProps> = ({
         </div>
       </div>
 
-      {/* Bottom Scroll Cue */}
-      <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 pointer-events-auto z-30">
-        <button
-          type="button"
-          onClick={() => {
-            const target = document.getElementById('shop-showcase') || document.getElementById('featured');
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth' });
-            } else if (onExploreCatalog) {
-              onExploreCatalog();
-            }
-          }}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-cream-100/95 hover:bg-cream-50 backdrop-blur-md border border-brown-300/70 shadow-warm text-brown-700 transition-all hover:scale-105 active:scale-95 select-none min-h-[38px] cursor-pointer"
-        >
-          <span className="text-[10px] sm:text-[10.5px] uppercase tracking-[0.18em] sm:tracking-[0.22em] font-semibold text-brown-800">
-            {isAr ? 'مرّر للاستكشاف' : 'Scroll to Explore Shop'}
-          </span>
-          <ArrowDown size={13} className="text-burgundy-600 animate-bounce" />
-        </button>
+      {/* Minimal Luxury Scroll Cue */}
+      <div 
+        onClick={() => {
+          const target = document.getElementById('shop-showcase') || document.getElementById('featured');
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+          } else if (onExploreCatalog) {
+            onExploreCatalog();
+          }
+        }}
+        className="absolute bottom-5 sm:bottom-7 left-1/2 -translate-x-1/2 pointer-events-auto z-30 flex flex-col items-center gap-1.5 cursor-pointer opacity-70 hover:opacity-100 transition-opacity select-none"
+      >
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.3em] font-medium text-brown-600">
+          {isAr ? 'مرّر' : 'scroll'}
+        </span>
+        <div className="w-[1px] h-7 bg-brown-400/30 overflow-hidden relative">
+          <div className="w-full h-1/2 bg-brown-800 animate-pulse absolute top-0" style={{ animationDuration: '1.8s' }} />
+        </div>
       </div>
     </div>
   );
