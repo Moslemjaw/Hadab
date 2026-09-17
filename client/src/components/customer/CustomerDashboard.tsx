@@ -547,8 +547,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                         </div>
 
                         {/* Delivery Address & Invoice Download */}
-                        <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-brown-200/50">
-                          <div className="text-[11px] text-brown-600 font-light flex-1">
+                        <div className="pt-1 flex flex-col gap-2.5 bg-white p-3 rounded-xl border border-brown-200/50">
+                          <div className="text-[11px] text-brown-600 font-light">
                             <span className="font-semibold text-brown-800">{isAr ? 'العنوان: ' : 'Address: '}</span>
                             <span>{order.address || `${area}, Block ${block}, Street ${street}, House ${house}, Kuwait`}</span>
                           </div>
@@ -557,7 +557,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                               e.stopPropagation();
                               downloadOrderInvoicePdf(order, isAr ? 'د.ك' : 'KD', storePhone);
                             }}
-                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#2D2421] hover:bg-[#423430] text-white rounded-lg text-[11px] font-semibold transition-all shadow-xs cursor-pointer shrink-0"
+                            className="self-start inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#2D2421] hover:bg-[#423430] text-white rounded-lg text-[11px] font-semibold transition-all shadow-xs cursor-pointer"
                           >
                             <FileText size={12} />
                             <span>{isAr ? 'تحميل الفاتورة PDF' : 'Download Bill PDF'}</span>
