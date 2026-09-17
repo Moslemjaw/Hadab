@@ -21,9 +21,11 @@ interface CurrencyContextType {
   currencyInfo: CurrencyInfo;
   supportedCurrencies: CurrencyInfo[];
   shippingConfig: ShippingConfig;
+  storePhone: string;
   setCurrency: (code: CurrencyCode) => void;
   setBaseCurrency: (code: CurrencyCode) => void;
   setShippingConfig: (config: ShippingConfig) => void;
+  setStorePhone: (phone: string) => void;
   getShippingFee: (countryCode: string) => number;
   isCountryAvailable: (countryCode: string) => boolean;
   convert: (amountInBase: number) => number;
@@ -56,10 +58,25 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
     return DEFAULT_SHIPPING_CONFIG;
   });
 
+  // Store Phone / WhatsApp configured in Admin Dashboard
+  const [storePhone, setStorePhoneState] = useState<string>(() => {
+    return localStorage.getItem('hadab_store_phone') || '+965 9900 0000';
+  });
+
+  const setStorePhone = (phone: string) => {
+    setStorePhoneState(phone);
+    localStorage.setItem('hadab_store_phone', phone);
+  };
+
   // Fetch initial base currency and shipping settings from backend
   const refreshSettings = async () => {
     try {
       const settings = await api.getSettings();
+      if (settings?.storePhone) {
+        setStorePhoneState(settings.storePhone);
+        localStorage.setItem('hadab_store_phone', settings.storePhone);
+      }
+
       if (settings?.baseCurrency && SUPPORTED_CURRENCIES[settings.baseCurrency as CurrencyCode]) {
         const adminBase = settings.baseCurrency as CurrencyCode;
         setBaseCurrencyState(adminBase);
@@ -142,9 +159,11 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
         currencyInfo,
         supportedCurrencies: CURRENCY_LIST,
         shippingConfig,
+        storePhone,
         setCurrency,
         setBaseCurrency,
         setShippingConfig,
+        setStorePhone,
         getShippingFee,
         isCountryAvailable,
         convert,

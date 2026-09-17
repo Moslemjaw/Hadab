@@ -38,8 +38,17 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const { language } = useLanguage();
-  const { format } = useCurrency();
+  const { format, storePhone } = useCurrency();
   const isAr = language === 'ar';
+
+  const whatsappAdminPhone = useMemo(() => {
+    const raw = storePhone || localStorage.getItem('hadab_store_phone') || '+965 9900 0000';
+    let cleaned = raw.replace(/[^0-9]/g, '');
+    if (cleaned.startsWith('00')) {
+      cleaned = cleaned.slice(2);
+    }
+    return cleaned || '96599000000';
+  }, [storePhone]);
 
   const [activeTab, setActiveTab] = useState<'orders' | 'address' | 'support' | 'profile'>('orders');
   const [orders, setOrders] = useState<any[]>([]);
@@ -693,12 +702,12 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
               </h3>
               <p className="text-xs text-cream-200/80 font-light leading-relaxed max-w-xl">
                 {isAr
-                  ? 'يتم التواصل معك عبر الواتساب لتأكيد خيارات الألوان وإرسال رابط KNET الرسمي والآمن.'
-                  : 'Our team connects with you directly on WhatsApp to confirm custom details and send your official KNET payment link.'}
+                  ? 'يتم التواصل معك عبر الواتساب لتأكيد خيارات الألوان وإرسال رابط الدفع الإلكتروني الرسمي والآمن.'
+                  : 'Our team connects with you directly on WhatsApp to confirm custom details and send your official secure payment link.'}
               </p>
               <div className="pt-1 flex flex-wrap gap-2.5">
                 <a
-                  href="https://wa.me/96599000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%87%D9%8E%D8%AF%D9%8E%D8%A8%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D9%85%D8%B9%20%D8%AE%D8%AF%D9%85%D8%A9%20%D8%A7%D9%84%D8%B9%D9%85%D9%84%D8%A7%D8%A1"
+                  href={`https://wa.me/${whatsappAdminPhone}?text=${encodeURIComponent(isAr ? 'مرحباً هَدَب، أود التواصل مع خدمة العملاء بخصوص طلبي.' : 'Hello HADAB, I would like to connect with customer service regarding my order.')}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
@@ -726,13 +735,13 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
               <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">
                 <div className="font-semibold text-brown-900">{isAr ? '2. دفع آمن' : '2. Secure Payment'}</div>
                 <p className="text-[11px] text-brown-500 font-light">
-                  {isAr ? 'رابط KNET معتمد يُرسل لك بالواتساب.' : 'Official KNET link sent via WhatsApp.'}
+                  {isAr ? 'رابط دفع إلكتروني معتمد يُرسل لك بالواتساب.' : 'Official secure payment link sent via WhatsApp.'}
                 </p>
               </div>
               <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">
-                <div className="font-semibold text-brown-900">{isAr ? '3. توصيل للكويت' : '3. Kuwait Delivery'}</div>
+                <div className="font-semibold text-brown-900">{isAr ? '3. شحن دولي ومحلي' : '3. Express Delivery'}</div>
                 <p className="text-[11px] text-brown-500 font-light">
-                  {isAr ? 'شحن جوي سريع وتوصيل لباب منزلك.' : 'Express air shipping straight to your door.'}
+                  {isAr ? 'شحن سريع وتوصيل لباب منزلك مباشرة.' : 'Express shipping straight to your door.'}
                 </p>
               </div>
             </div>

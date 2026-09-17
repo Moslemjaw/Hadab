@@ -26,8 +26,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const { format, getShippingFee, isCountryAvailable, shippingConfig } = useCurrency();
+  const { format, getShippingFee, isCountryAvailable, shippingConfig, storePhone } = useCurrency();
   const isAr = language === 'ar';
+
+  const whatsappAdminPhone = useMemo(() => {
+    const raw = storePhone || localStorage.getItem('hadab_store_phone') || '+965 9900 0000';
+    let cleaned = raw.replace(/[^0-9]/g, '');
+    if (cleaned.startsWith('00')) {
+      cleaned = cleaned.slice(2);
+    }
+    return cleaned || '96599000000';
+  }, [storePhone]);
 
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [selectedCountry, setSelectedCountry] = useState<string>(() => {
@@ -629,7 +638,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </span>
                     </div>
                     <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                      KNET / Transfer
+                      {isAr ? 'رابط دفع / تحويل' : 'Payment Link / Transfer'}
                     </span>
                   </div>
                   <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
@@ -710,14 +719,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </div>
                   <p className="text-[11px] text-brown-600 font-light">
                     {isAr
-                      ? 'يرجى مراجعة رسائل الواتساب للحصول على رابط دفع KNET وتأكيد موعد الشحن.'
-                      : 'Please check your WhatsApp messages for the KNET payment link and delivery confirmation.'}
+                      ? 'يرجى مراجعة رسائل الواتساب للحصول على رابط الدفع الإلكتروني وتأكيد موعد الشحن.'
+                      : 'Please check your WhatsApp messages for the secure payment link and delivery confirmation.'}
                   </p>
                 </div>
 
                 <div className="w-full pt-2 space-y-2.5">
                   <a
-                    href={`https://wa.me/96599000000?text=${whatsappMessage}`}
+                    href={`https://wa.me/${whatsappAdminPhone}?text=${whatsappMessage}`}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full py-3.5 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold uppercase tracking-wider shadow-warm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"

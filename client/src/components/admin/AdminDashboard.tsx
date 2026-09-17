@@ -103,7 +103,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const { language, toggleLanguage } = useLanguage();
   const { user, logout } = useAuth();
   const { refreshData } = useShopData();
-  const { baseCurrency, setBaseCurrency, shippingConfig, setShippingConfig, refreshSettings } = useCurrency();
+  const { baseCurrency, setBaseCurrency, shippingConfig, setShippingConfig, setStorePhone, refreshSettings } = useCurrency();
   const { showToast, confirmDialog, promptDialog } = useNotification();
   const isAr = language === 'ar';
 
@@ -784,6 +784,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       // Update CurrencyContext so the whole app picks up the changes
       setBaseCurrency(settingsCurrency as CurrencyCode);
       setShippingConfig(shippingPayload);
+      setStorePhone(settingsPhone);
       await refreshSettings();
       // Also keep localStorage in sync
       localStorage.setItem('hadab_currency', settingsCurrency);
