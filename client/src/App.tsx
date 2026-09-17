@@ -236,7 +236,7 @@ export function App() {
           <AuthPage
             initialMode={authMode}
             onBackToHome={handleGoHome}
-            onSuccess={() => {
+            onSuccess={(completedMode?: 'signin' | 'signup') => {
               const token = localStorage.getItem('hadab_token');
               let isUserAdmin = false;
               if (token) {
@@ -249,6 +249,8 @@ export function App() {
               }
               if (isUserAdmin || isAdmin) {
                 handleOpenAdmin();
+              } else if (completedMode === 'signup') {
+                handleGoHome();
               } else {
                 setCurrentView('customer');
                 window.location.hash = 'account';

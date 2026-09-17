@@ -23,7 +23,7 @@ import { type CountryCode, DEFAULT_COUNTRY } from '../../constants/countryCodes'
 interface AuthPageProps {
   initialMode?: 'signin' | 'signup';
   onBackToHome: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (mode?: 'signin' | 'signup') => void;
   onExploreCollection?: () => void;
 }
 
@@ -112,8 +112,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       setTimeout(() => {
         if (loggedInUser.role === 'admin' || loggedInUser.email.toLowerCase() === 'byhadab@gmail.com') {
           window.location.hash = 'admin';
+        } else if (mode === 'signup') {
+          onBackToHome();
         } else if (onSuccess) {
-          onSuccess();
+          onSuccess('signin');
         } else {
           onBackToHome();
         }
