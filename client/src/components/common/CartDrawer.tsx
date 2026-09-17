@@ -8,7 +8,7 @@ interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   items: { product: Product; quantity: number }[];
-  onRemoveItem: (id: string) => void;
+  onRemoveItem: (id: string, color?: string, size?: string) => void;
   onClearBag?: () => void;
 }
 
@@ -80,13 +80,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         destinationArabic: 'الكويت',
         address: customerAddress,
         notes: customerNotes,
-        items: items.map((i) => ({
-          name: i.product.name,
-          nameArabic: i.product.nameArabic,
-          price: i.product.price,
-          quantity: i.quantity,
-          image: i.product.image,
-        })),
+        items: items.map((i) => {
+          const colorPart = i.product.selectedColor ? ` [${i.product.selectedColor}]` : '';
+          const sizePart = i.product.selectedSize ? ` - ${i.product.selectedSize}` : '';
+          return {
+            name: `${i.product.name}${colorPart}${sizePart}`,
+            nameArabic: `${i.product.nameArabic || i.product.name}${colorPart}${sizePart}`,
+            price: i.product.price,
+            quantity: i.quantity,
+            image: i.product.image,
+          };
+        }),
         total: finalTotal,
       };
 
@@ -206,7 +210,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 ) : (
                   items.map(({ product, quantity }) => (
                     <div
-                      key={product.id}
+                      key={`${product.id}-${product.selectedColor || ''}-${product.selectedSize || ''}`}
                       className="flex gap-4 p-3 rounded-xl bg-cream-200/50 border border-brown-200/60"
                     >
                       <img
@@ -222,18 +226,30 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             </h4>
                             <button
                               type="button"
-                              onClick={() => onRemoveItem(product.id)}
-                              className="text-brown-400 hover:text-burgundy-500 p-1"
+                              onClick={() => onRemoveItem(product.id, product.selectedColor, product.selectedSize)}
+                              className="text-brown-400 hover:text-burgundy-500 p-1 cursor-pointer"
                               aria-label={t.remove}
                             >
                               <Trash2 size={14} />
                             </button>
                           </div>
-                          <span className="text-[11px] text-brown-400">
-                            {isAr && product.colorNameArabic ? product.colorNameArabic : product.colorName} • {isAr ? 'الكمية' : 'Qty'}: {quantity}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-brown-500">
+                            {(product.selectedColor || product.colorName) && (
+                              <span className="px-1.5 py-0.5 rounded bg-cream-200 border border-brown-300/60 text-[10px] font-medium text-brown-800">
+                                {product.selectedColor || (isAr && product.colorNameArabic ? product.colorNameArabic : product.colorName)}
+                              </span>
+                            )}
+                            {product.selectedSize && (
+                              <span className="px-1.5 py-0.5 rounded bg-cream-200 border border-brown-300/60 text-[10px] font-medium text-brown-800">
+                                {product.selectedSize}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-brown-400">
+                              • {isAr ? 'الكمية' : 'Qty'}: {quantity}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-xs font-semibold text-brown-800">
+                        <div className="text-xs font-semibold text-brown-800 mt-1">
                           {product.price * quantity} {curr}
                         </div>
                       </div>

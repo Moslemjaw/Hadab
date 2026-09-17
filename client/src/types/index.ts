@@ -1,3 +1,10 @@
+export interface ColorVariant {
+  name: string;
+  nameArabic?: string;
+  colorHex?: string;
+  images: string[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -21,9 +28,13 @@ export interface Product {
   colorHex: string;
   colors?: string[];
   sizes?: string[];
+  colorVariants?: ColorVariant[];
+  selectedColor?: string;
+  selectedSize?: string;
   discount?: number;
   isFeatured?: boolean;
   isSale?: boolean;
+  stockCount?: number;
 }
 
 export interface Category {

@@ -57,10 +57,15 @@ export function App() {
 
   const handleAddToBag = (product: Product) => {
     setBagItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.product.id === product.id
+      const existingIndex = prev.findIndex(
+        (item) =>
+          item.product.id === product.id &&
+          item.product.selectedColor === product.selectedColor &&
+          item.product.selectedSize === product.selectedSize
+      );
+      if (existingIndex !== -1) {
+        return prev.map((item, idx) =>
+          idx === existingIndex
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -69,8 +74,17 @@ export function App() {
     });
   };
 
-  const handleRemoveFromBag = (productId: string) => {
-    setBagItems((prev) => prev.filter((item) => item.product.id !== productId));
+  const handleRemoveFromBag = (productId: string, selectedColor?: string, selectedSize?: string) => {
+    setBagItems((prev) =>
+      prev.filter(
+        (item) =>
+          !(
+            item.product.id === productId &&
+            item.product.selectedColor === selectedColor &&
+            item.product.selectedSize === selectedSize
+          )
+      )
+    );
   };
 
   const handleOpenCollection = (catId: string = 'all') => {

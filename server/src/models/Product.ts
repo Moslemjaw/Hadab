@@ -1,5 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export interface IColorVariant {
+  name: string;
+  nameArabic?: string;
+  colorHex?: string;
+  images: string[];
+}
+
 export interface IProduct extends Document {
   name: string;
   nameArabic?: string;
@@ -22,6 +29,9 @@ export interface IProduct extends Document {
   colorHex: string;
   colors?: string[];
   sizes?: string[];
+  colorVariants?: IColorVariant[];
+  selectedColor?: string;
+  selectedSize?: string;
   discount?: number;
   isFeatured: boolean;
   isSale: boolean;
@@ -57,6 +67,19 @@ const ProductSchema = new Schema<IProduct>(
     colorHex: { type: String, default: '#D6C7B2' },
     colors: { type: [String], default: [] },
     sizes: { type: [String], default: [] },
+    colorVariants: {
+      type: [
+        {
+          name: { type: String, required: true },
+          nameArabic: { type: String, default: '' },
+          colorHex: { type: String, default: '#D6C7B2' },
+          images: { type: [String], default: [] },
+        },
+      ],
+      default: [],
+    },
+    selectedColor: { type: String },
+    selectedSize: { type: String },
     discount: { type: Number, default: 0 },
     isFeatured: { type: Boolean, default: false },
     isSale: { type: Boolean, default: false },

@@ -40,7 +40,7 @@ import {
   Upload,
   LogOut
 } from 'lucide-react';
-import type { Product } from '../../types';
+import type { Product, ColorVariant } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useShopData } from '../../context/ShopDataContext';
@@ -248,6 +248,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [newProductPrice, setNewProductPrice] = useState<number>(15);
   const [newProductCategory, setNewProductCategory] = useState<string>('bags');
   const [newProductTag, setNewProductTag] = useState('New Drop');
+  const [newProductTagAr, setNewProductTagAr] = useState('إصدار جديد');
+  const [newProductDescription, setNewProductDescription] = useState('');
+  const [newProductDescriptionAr, setNewProductDescriptionAr] = useState('');
+  const [newProductYarnType, setNewProductYarnType] = useState('100% Recycled Cotton Ribbon');
+  const [newProductYarnTypeAr, setNewProductYarnTypeAr] = useState('خيط قطن معاد تدويره ١٠٠٪');
+  const [newProductStitchDetail, setNewProductStitchDetail] = useState('Hand-hooked continuous stitch');
+  const [newProductStitchDetailAr, setNewProductStitchDetailAr] = useState('حياكة يدوية متصلة');
+  const [newProductColorVariants, setNewProductColorVariants] = useState<ColorVariant[]>([]);
   const [newProductImage, setNewProductImage] = useState<string>('/products/hadab-bag.jpg');
   const [newProductImages, setNewProductImages] = useState<string[]>([]);
   const [newProductColors, setNewProductColors] = useState<string>('');
@@ -426,32 +434,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     const primaryImage = newProductImages.length > 0 ? newProductImages[0] : (newProductImage || '/products/hadab-bag.jpg');
     const secondImage = newProductImages.length > 1 ? newProductImages[1] : primaryImage;
 
+    let effectiveColors = parsedColors;
+    if (newProductColorVariants.length > 0) {
+      const variantColorNames = newProductColorVariants.map((v) => v.name.trim()).filter(Boolean);
+      effectiveColors = Array.from(new Set([...effectiveColors, ...variantColorNames]));
+    }
+
+    const firstVariant = newProductColorVariants[0];
+    const defaultColorName = firstVariant?.name || effectiveColors[0] || 'Desert Oat';
+    const defaultColorNameAr = firstVariant?.nameArabic || effectiveColors[0] || 'بيج صحراوي';
+    const defaultColorHex = firstVariant?.colorHex || '#D6C7B2';
+
     const productPayload = {
       name: newProductName.trim(),
       nameArabic: newProductNameAr.trim() || undefined,
       price: finalPriceVal,
       originalPrice: originalPriceVal,
-        discount: discountVal,
-        colors: parsedColors,
-        sizes: parsedSizes,
-        category: newProductCategory,
-        tag: newProductTag,
-        image: primaryImage,
-        textureImage: secondImage,
-        images: newProductImages.length > 0 ? newProductImages : [primaryImage],
-        description: 'Handmade crochet piece crafted with quality unbleached cotton cord.',
-        descriptionArabic: 'قطعة كروشيه يدوية مصنوعة بعناية من خيوط القطن الطبيعي.',
-        stitchDetail: 'Hand-crocheted stitch with reinforced shape.',
-        stitchDetailArabic: 'حياكة يدوية متقنة تحافظ على قوام القطعة.',
-        yarnType: '100% Cotton Yarn',
-        yarnTypeArabic: 'خيوط قطن طبيعي ١٠٠٪',
-        colorName: parsedColors.length > 0 ? parsedColors[0] : 'Desert Oat',
-        colorNameArabic: parsedColors.length > 0 ? parsedColors[0] : 'بيج صحراوي',
-        colorHex: '#D6C7B2',
-        isFeatured: false,
-        isSale: discountVal > 0,
-        stockCount: 10,
-      };
+      discount: discountVal,
+      colors: effectiveColors,
+      sizes: parsedSizes,
+      colorVariants: newProductColorVariants,
+      category: newProductCategory,
+      tag: newProductTag.trim() || 'New Drop',
+      tagArabic: newProductTagAr.trim() || 'إصدار جديد',
+      image: primaryImage,
+      textureImage: secondImage,
+      images: newProductImages.length > 0 ? newProductImages : [primaryImage],
+      description: newProductDescription.trim() || 'Handmade crochet piece crafted with quality unbleached cotton cord.',
+      descriptionArabic: newProductDescriptionAr.trim() || 'قطعة كروشيه يدوية مصنوعة بعناية من خيوط القطن الطبيعي.',
+      stitchDetail: newProductStitchDetail.trim() || 'Hand-hooked continuous stitch',
+      stitchDetailArabic: newProductStitchDetailAr.trim() || 'حياكة يدوية متصلة',
+      yarnType: newProductYarnType.trim() || '100% Recycled Cotton Ribbon',
+      yarnTypeArabic: newProductYarnTypeAr.trim() || 'خيط قطن معاد تدويره ١٠٠٪',
+      colorName: defaultColorName,
+      colorNameArabic: defaultColorNameAr,
+      colorHex: defaultColorHex,
+      isFeatured: editingProduct ? editingProduct.isFeatured : false,
+      isSale: discountVal > 0,
+      stockCount: 10,
+    };
 
     const token = localStorage.getItem('hadab_token');
     if (!token) {
@@ -551,6 +572,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     });
   };
 
+  const handleAddColorVariant = () => {
+    setNewProductColorVariants((prev) => [
+      ...prev,
+      {
+        name: '',
+        nameArabic: '',
+        colorHex: '#D6C7B2',
+        images: [],
+      },
+    ]);
+  };
+
+  const handleRemoveColorVariant = (index: number) => {
+    setNewProductColorVariants((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateColorVariant = (index: number, field: keyof ColorVariant, value: any) => {
+    setNewProductColorVariants((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleToggleImageForColorVariant = (variantIndex: number, imgUrl: string) => {
+    setNewProductColorVariants((prev) =>
+      prev.map((variant, i) => {
+        if (i !== variantIndex) return variant;
+        const exists = variant.images.includes(imgUrl);
+        const nextImages = exists
+          ? variant.images.filter((img) => img !== imgUrl)
+          : [...variant.images, imgUrl];
+        return { ...variant, images: nextImages };
+      })
+    );
+  };
+
   const openNewProductModal = () => {
     setEditingProduct(null);
     setNewProductName('');
@@ -561,6 +617,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setNewProductDiscount(0);
     setNewProductCategory('bags');
     setNewProductTag('New Drop');
+    setNewProductTagAr('إصدار جديد');
+    setNewProductDescription('Handmade crochet piece crafted with quality unbleached cotton cord.');
+    setNewProductDescriptionAr('قطعة كروشيه يدوية مصنوعة بعناية من خيوط القطن الطبيعي.');
+    setNewProductYarnType('100% Recycled Cotton Ribbon');
+    setNewProductYarnTypeAr('خيط قطن معاد تدويره ١٠٠٪');
+    setNewProductStitchDetail('Hand-hooked continuous stitch');
+    setNewProductStitchDetailAr('حياكة يدوية متصلة');
+    setNewProductColorVariants([]);
     setNewProductImage('/products/hadab-bag.jpg');
     setNewProductImages([]);
     setIsProductModalOpen(true);
@@ -578,7 +642,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     const disc = product.discount !== undefined ? product.discount : (product.originalPrice ? (product.originalPrice - product.price) : 0);
     setNewProductDiscount(disc);
     setNewProductCategory(product.category);
-    setNewProductTag(product.tag || 'Classic');
+    setNewProductTag(product.tag || 'New Drop');
+    setNewProductTagAr(product.tagArabic || 'إصدار جديد');
+    setNewProductDescription(product.description || '');
+    setNewProductDescriptionAr(product.descriptionArabic || '');
+    setNewProductYarnType(product.yarnType || '100% Recycled Cotton Ribbon');
+    setNewProductYarnTypeAr(product.yarnTypeArabic || 'خيط قطن معاد تدويره ١٠٠٪');
+    setNewProductStitchDetail(product.stitchDetail || 'Hand-hooked continuous stitch');
+    setNewProductStitchDetailAr(product.stitchDetailArabic || 'حياكة يدوية متصلة');
+    setNewProductColorVariants(product.colorVariants && product.colorVariants.length > 0 ? product.colorVariants : []);
     setNewProductImage(product.image || '/products/hadab-bag.jpg');
     const existingImages = product.images && product.images.length > 0
       ? product.images
@@ -2151,91 +2223,267 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           PRODUCT ADD / EDIT MODAL
       ========================================================================== */}
       {isProductModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-lg w-full transform transition-all">
-            <h3 className="font-serif text-xl text-brown-950 font-normal mb-1">
-              {editingProduct ? (isAr ? 'تعديل بيانات القطعة' : 'Edit Handmade Piece') : (isAr ? 'إضافة قطعة يدوية جديدة' : 'Add New Handcrafted Piece')}
-            </h3>
-            <p className="text-xs text-brown-500 font-light mb-6">
-              {isAr ? 'أدخلي تفاصيل القطعة الحرفية، السعر والتصنيف لإضافتها في المتجر' : 'Enter craft details, price, and category to update the storefront'}
-            </p>
-
-            <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] rounded-[28px] sm:rounded-[36px] border border-brown-200 shadow-2xl p-5 sm:p-7 max-w-2xl w-full max-h-[92vh] overflow-y-auto transform transition-all no-scrollbar">
+            
+            <div className="flex items-start justify-between pb-4 border-b border-brown-200/80 mb-5">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Title (English) *</label>
-                <input
-                  type="text"
-                  required
-                  value={newProductName}
-                  onChange={(e) => setNewProductName(e.target.value)}
-                  placeholder="e.g. The Corded Tassel Pouch"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
-                />
+                <h3 className="font-serif text-xl sm:text-2xl text-brown-950 font-normal">
+                  {editingProduct ? (isAr ? 'تعديل تفاصيل القطعة اليدوية' : 'Edit Handmade Piece') : (isAr ? 'إضافة قطعة يدوية جديدة' : 'Add New Handcrafted Piece')}
+                </h3>
+                <p className="text-xs text-brown-500 font-light mt-0.5">
+                  {isAr ? 'حددي تفاصيل القطعة، الألوان والصور والمواصفات ليراها العملاء في المتجر' : 'Configure piece details, colors, photos, and craft specifications for the storefront'}
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsProductModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-cream-200 text-brown-600 hover:text-brown-900 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">الاسم (بالعربية)</label>
-                <input
-                  type="text"
-                  value={newProductNameAr}
-                  onChange={(e) => setNewProductNameAr(e.target.value)}
-                  placeholder="مثال: حقيبة الشرّابات المنسوجة"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
-                />
-              </div>
+            <form onSubmit={handleSaveProduct} className="space-y-6 text-xs">
+              {/* SECTION 1: BASIC INFORMATION */}
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2 pb-1 border-b border-brown-200/40">
+                  <Package size={14} className="text-burgundy-600" />
+                  <span className="text-[11px] uppercase tracking-wider font-bold text-brown-800">
+                    {isAr ? 'المعلومات الأساسية' : 'Basic Information'}
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
-                    {isAr ? 'السعر (د.ك KWD) *' : 'Price (KWD / د.ك) *'}
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brown-500">KD</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      Title (English) *
+                    </label>
                     <input
-                      type="number"
+                      type="text"
                       required
-                      value={newProductPrice}
-                      onChange={(e) => setNewProductPrice(Number(e.target.value))}
-                      className="w-full py-2.5 pl-9 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      placeholder="e.g. The Corded Tassel Pouch"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      الاسم (بالعربية)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductNameAr}
+                      onChange={(e) => setNewProductNameAr(e.target.value)}
+                      placeholder="مثال: حقيبة الشرّابات المنسوجة"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Category *</label>
-                  <select
-                    value={newProductCategory}
-                    onChange={(e) => setNewProductCategory(e.target.value)}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 cursor-pointer focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
-                  >
-                    {categoryList.map((cat) => (
-                      <option key={cat.id} value={cat.slug}>
-                        {isAr ? cat.nameAr : cat.name} ({cat.slug})
-                      </option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      {isAr ? 'السعر (د.ك KWD) *' : 'Price (KWD) *'}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brown-500">KD</span>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        step="any"
+                        value={newProductPrice}
+                        onChange={(e) => setNewProductPrice(Number(e.target.value))}
+                        className="w-full py-2 pl-8 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={newProductCategory}
+                      onChange={(e) => setNewProductCategory(e.target.value)}
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 cursor-pointer focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    >
+                      {categoryList.map((cat) => (
+                        <option key={cat.id} value={cat.slug}>
+                          {isAr ? cat.nameAr : cat.name} ({cat.slug})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      {isAr ? 'خصم اختياري (د.ك)' : 'Discount (KWD)'}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brown-500">-KD</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={newProductDiscount}
+                        onChange={(e) => setNewProductDiscount(Number(e.target.value))}
+                        placeholder="0"
+                        className="w-full py-2 pl-10 pr-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                      />
+                    </div>
+                    {newProductDiscount > 0 && (
+                      <span className="text-[9px] text-burgundy-600 font-semibold mt-0.5 block">
+                        {isAr ? `السعر بعد الخصم: ${Math.max(0, newProductPrice - newProductDiscount)} د.ك` : `After: ${Math.max(0, newProductPrice - newProductDiscount)} KWD`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      Badge / Tag (English)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductTag}
+                      onChange={(e) => setNewProductTag(e.target.value)}
+                      placeholder="e.g. New Drop / Signature Piece / Best Seller"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      شارة القطعة (بالعربية)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductTagAr}
+                      onChange={(e) => setNewProductTagAr(e.target.value)}
+                      placeholder="مثال: إصدار جديد / قطعة مميزة / الأكثر طلباً"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] uppercase tracking-wider font-bold text-brown-700">
-                    {isAr ? 'صور المنتج (يمكنك رفع عدة صور)' : 'Product Photos (Add Multiple Pics)'}
-                  </label>
+              {/* SECTION 2: CRAFT DETAILS & DESCRIPTIONS */}
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2 pb-1 border-b border-brown-200/40">
+                  <Sparkles size={14} className="text-burgundy-600" />
+                  <span className="text-[11px] uppercase tracking-wider font-bold text-brown-800">
+                    {isAr ? 'الوصف ومواصفات الحرفة اليدوية' : 'Description & Craft Specifications'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      Description (English)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={newProductDescription}
+                      onChange={(e) => setNewProductDescription(e.target.value)}
+                      placeholder="Detailed craftsmanship narrative, soft cotton texture, styling recommendations..."
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      الوصف (بالعربية)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={newProductDescriptionAr}
+                      onChange={(e) => setNewProductDescriptionAr(e.target.value)}
+                      placeholder="وصف القطعة باللغة العربية، نعومة الخيوط، الاستخدام اليومي..."
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      Yarn Material (English)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductYarnType}
+                      onChange={(e) => setNewProductYarnType(e.target.value)}
+                      placeholder="e.g. 100% Recycled Cotton Ribbon"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      نوع الخيط (بالعربية)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductYarnTypeAr}
+                      onChange={(e) => setNewProductYarnTypeAr(e.target.value)}
+                      placeholder="مثال: خيط قطن معاد تدويره ١٠٠٪"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      Crochet Stitch / Technique (English)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductStitchDetail}
+                      onChange={(e) => setNewProductStitchDetail(e.target.value)}
+                      placeholder="e.g. Hand-hooked continuous stitch"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                      تقنية الغرزة (بالعربية)
+                    </label>
+                    <input
+                      type="text"
+                      value={newProductStitchDetailAr}
+                      onChange={(e) => setNewProductStitchDetailAr(e.target.value)}
+                      placeholder="مثال: حياكة يدوية متصلة ومشدودة"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: PRODUCT PHOTOS */}
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between pb-1 border-b border-brown-200/40">
+                  <div className="flex items-center gap-2">
+                    <Upload size={14} className="text-burgundy-600" />
+                    <span className="text-[11px] uppercase tracking-wider font-bold text-brown-800">
+                      {isAr ? 'صور المنتج' : 'Product Photos'}
+                    </span>
+                  </div>
                   {newProductImages.length > 0 && (
                     <span className="text-[10px] text-brown-500 font-semibold">
-                      {newProductImages.length} {isAr ? 'صور' : 'photos'}
+                      {newProductImages.length} {isAr ? 'صور مرفوعة' : 'photos uploaded'}
                     </span>
                   )}
                 </div>
 
-                {/* Upload Button Area */}
-                <label className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl border-2 border-dashed border-brown-300 hover:border-burgundy-500 bg-white/70 hover:bg-white cursor-pointer transition-all mb-2.5 group shadow-sm">
+                <label className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl border-2 border-dashed border-brown-300 hover:border-burgundy-500 bg-white/70 hover:bg-white cursor-pointer transition-all group shadow-sm">
                   <Upload size={16} className="text-brown-500 group-hover:text-burgundy-600 transition-colors" />
                   <span className="text-xs text-brown-800 font-medium">
                     {isUploadingImage
                       ? (uploadProgressText || (isAr ? 'جاري رفع الصور...' : 'Uploading photos...'))
-                      : (isAr ? '+ إضافة صور جديدة (يمكنك تحديد عدة صور)' : '+ Add product photos (select multiple)')}
+                      : (isAr ? '+ رفع صور إضافية للقطعة (يمكنك تحديد عدة صور)' : '+ Add product photos (select multiple)')}
                   </span>
                   <input
                     type="file"
@@ -2247,7 +2495,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   />
                 </label>
 
-                {/* Thumbnails Gallery */}
                 {newProductImages.length > 0 ? (
                   <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-1 no-scrollbar">
                     {newProductImages.map((imgUrl, idx) => (
@@ -2257,7 +2504,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       >
                         <img src={imgUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
 
-                        {/* Primary / Cover Badge */}
                         {idx === 0 ? (
                           <span className="absolute bottom-0 inset-x-0 bg-brown-900/90 text-cream-100 text-[8px] font-bold text-center py-0.5 uppercase tracking-wider">
                             {isAr ? 'الرئيسية' : 'Cover'}
@@ -2273,7 +2519,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           </button>
                         )}
 
-                        {/* Remove Image Button */}
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(idx)}
@@ -2299,82 +2544,227 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
-                    {isAr ? 'خصم اختياري (د.ك KWD)' : 'Discount (KWD / د.ك - Optional)'}
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brown-500">-KD</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={newProductDiscount}
-                      onChange={(e) => setNewProductDiscount(Number(e.target.value))}
-                      placeholder="0"
-                      className="w-full py-2.5 pl-11 pr-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
-                    />
-                  </div>
-                  {newProductDiscount > 0 && (
-                    <span className="text-[10px] text-burgundy-600 font-semibold mt-1 block">
-                      {isAr ? `السعر بعد الخصم: ${Math.max(0, newProductPrice - newProductDiscount)} د.ك` : `Price after discount: ${Math.max(0, newProductPrice - newProductDiscount)} KWD`}
+              {/* SECTION 4: MULTI-COLORS & COLOR-TO-IMAGE LINKING */}
+              <div className="space-y-3.5 bg-cream-100/70 p-4 rounded-2xl border border-brown-200/80">
+                <div className="flex items-center justify-between pb-1 border-b border-brown-200/50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 rounded-full bg-burgundy-600 border border-white" />
+                    <span className="text-[11px] uppercase tracking-wider font-bold text-brown-900">
+                      {isAr ? 'الألوان وربط الصور بكل لون' : 'Colors & Color-to-Photo Linking'}
                     </span>
-                  )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddColorVariant}
+                    className="px-2.5 py-1 rounded-lg bg-brown-900 hover:bg-brown-800 text-cream-100 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+                  >
+                    <Plus size={12} />
+                    <span>{isAr ? 'إضافة لون جديد' : 'Add Color Variant'}</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">Badge / Tag</label>
-                  <input
-                    type="text"
-                    value={newProductTag}
-                    onChange={(e) => setNewProductTag(e.target.value)}
-                    placeholder="e.g. Signature Piece / New Drop"
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
-                  />
-                </div>
-              </div>
+                <p className="text-[11px] text-brown-600 font-light leading-relaxed">
+                  {isAr
+                    ? 'أضيفي خيارات الألوان المتوفرة للقطعة وحددي الصور الخاصة بكل لون، بحيث عندما يختار العميل اللون تظهر له صوره فوراً.'
+                    : 'Add color variants and assign photos to each color so customers see the matching photos when selecting that color.'}
+                </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
-                    {isAr ? 'الألوان المتوفرة (مفصولة بفواصل)' : 'Colors (comma-separated)'}
+                {/* Color Variants List */}
+                {newProductColorVariants.length > 0 ? (
+                  <div className="space-y-3 pt-1">
+                    {newProductColorVariants.map((variant, vIdx) => (
+                      <div
+                        key={vIdx}
+                        className="p-3 rounded-xl bg-white border border-brown-200/80 shadow-sm space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-brown-500">
+                            {isAr ? `اللون #${vIdx + 1}` : `Color Variant #${vIdx + 1}`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveColorVariant(vIdx)}
+                            className="text-brown-400 hover:text-burgundy-600 p-1 transition-colors"
+                            title={isAr ? 'حذف هذا اللون' : 'Remove color'}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="block text-[9px] uppercase font-bold text-brown-600 mb-1">
+                              Color Name (EN) *
+                            </label>
+                            <input
+                              type="text"
+                              value={variant.name}
+                              onChange={(e) => handleUpdateColorVariant(vIdx, 'name', e.target.value)}
+                              placeholder="e.g. Burgundy"
+                              className="w-full py-1.5 px-2.5 rounded-lg bg-cream-50 border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-burgundy-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[9px] uppercase font-bold text-brown-600 mb-1">
+                              اسم اللون (بالعربية)
+                            </label>
+                            <input
+                              type="text"
+                              value={variant.nameArabic || ''}
+                              onChange={(e) => handleUpdateColorVariant(vIdx, 'nameArabic', e.target.value)}
+                              placeholder="مثال: عنابي"
+                              className="w-full py-1.5 px-2.5 rounded-lg bg-cream-50 border border-brown-200 text-brown-900 text-xs focus:outline-none focus:border-burgundy-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[9px] uppercase font-bold text-brown-600 mb-1">
+                              {isAr ? 'درجة اللون (Hex)' : 'Color Swatch (Hex)'}
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={variant.colorHex || '#D6C7B2'}
+                                onChange={(e) => handleUpdateColorVariant(vIdx, 'colorHex', e.target.value)}
+                                className="w-8 h-8 rounded-lg border border-brown-300 cursor-pointer p-0.5 bg-white"
+                              />
+                              <input
+                                type="text"
+                                value={variant.colorHex || '#D6C7B2'}
+                                onChange={(e) => handleUpdateColorVariant(vIdx, 'colorHex', e.target.value)}
+                                className="flex-1 py-1.5 px-2 rounded-lg bg-cream-50 border border-brown-200 text-brown-900 text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Photo Assignment for this Color */}
+                        {newProductImages.length > 0 && (
+                          <div className="pt-2 border-t border-brown-100">
+                            <label className="block text-[9px] uppercase font-bold text-brown-600 mb-1.5">
+                              {isAr
+                                ? 'اضغطي على الصور الخاصة بهذا اللون لربطها به:'
+                                : 'Click photos to assign to this color:'}
+                            </label>
+                            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                              {newProductImages.map((imgUrl, pIdx) => {
+                                const isAssigned = variant.images?.includes(imgUrl);
+                                return (
+                                  <button
+                                    key={pIdx}
+                                    type="button"
+                                    onClick={() => handleToggleImageForColorVariant(vIdx, imgUrl)}
+                                    className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
+                                      isAssigned
+                                        ? 'border-burgundy-600 ring-2 ring-burgundy-300 scale-105'
+                                        : 'border-brown-200 opacity-60 hover:opacity-100'
+                                    }`}
+                                  >
+                                    <img src={imgUrl} alt={`Option ${pIdx + 1}`} className="w-full h-full object-cover" />
+                                    {isAssigned && (
+                                      <div className="absolute inset-0 bg-burgundy-900/30 flex items-center justify-center">
+                                        <Check size={14} className="text-white drop-shadow" />
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-3 px-4 rounded-xl bg-white/60 border border-dashed border-brown-200 text-brown-500">
+                    <span className="text-xs">
+                      {isAr
+                        ? 'لم تتم إضافة ألوان منفصلة بعد. انقري على "+ إضافة لون جديد" بالأعلى لربط الصور بالألوان.'
+                        : 'No color variants added yet. Click "+ Add Color Variant" above to link photos with colors.'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Comma-separated Colors Fallback */}
+                <div className="pt-2">
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                    {isAr ? 'أو أدخلي أسماء الألوان كنص (مفصولة بفواصل)' : 'Or enter colors as text (comma-separated)'}
                   </label>
                   <input
                     type="text"
                     value={newProductColors}
                     onChange={(e) => setNewProductColors(e.target.value)}
-                    placeholder={isAr ? 'مثال: أسود, بيج, رملي, زيتوني' : 'e.g. Beige, Sand, Charcoal, Olive'}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                    placeholder={isAr ? 'مثال: بيج, عنابي, زيتوني' : 'e.g. Desert Oat, Burgundy, Forest Olive'}
+                    className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
                   />
+                </div>
+              </div>
+
+              {/* SECTION 5: SIZES */}
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2 pb-1 border-b border-brown-200/40">
+                  <Scissors size={14} className="text-burgundy-600" />
+                  <span className="text-[11px] uppercase tracking-wider font-bold text-brown-800">
+                    {isAr ? 'المقاسات المتاحة' : 'Available Sizes'}
+                  </span>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1.5">
-                    {isAr ? 'المقاسات المتوفرة (مفصولة بفواصل)' : 'Sizes (comma-separated)'}
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-brown-700 mb-1">
+                    {isAr ? 'المقاسات (مفصولة بفواصل)' : 'Sizes (comma-separated)'}
                   </label>
                   <input
                     type="text"
                     value={newProductSizes}
                     onChange={(e) => setNewProductSizes(e.target.value)}
                     placeholder={isAr ? 'مثال: Small, Medium, Large أو موحّد' : 'e.g. Small, Medium, Large or One Size'}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-blush-300 focus:ring-1 focus:ring-blush-300 shadow-sm"
+                    className="w-full py-2 px-3 rounded-xl bg-white border border-brown-200 text-brown-900 focus:outline-none focus:border-burgundy-500 shadow-sm"
                   />
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-[10px] text-brown-500 font-medium">
+                      {isAr ? 'خيارات سريعة:' : 'Quick Presets:'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setNewProductSizes(isAr ? 'مقاس موحّد' : 'One Size')}
+                      className="px-2 py-0.5 rounded-full bg-cream-200 hover:bg-cream-300 text-brown-700 text-[10px] transition-colors"
+                    >
+                      {isAr ? 'مقاس موحّد' : 'One Size'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewProductSizes(isAr ? 'صغير, متوسط, كبير' : 'Small, Medium, Large')}
+                      className="px-2 py-0.5 rounded-full bg-cream-200 hover:bg-cream-300 text-brown-700 text-[10px] transition-colors"
+                    >
+                      {isAr ? 'صغير, متوسط, كبير' : 'Small, Medium, Large'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewProductSizes(isAr ? 'ميني, عادي' : 'Mini, Regular')}
+                      className="px-2 py-0.5 rounded-full bg-cream-200 hover:bg-cream-300 text-brown-700 text-[10px] transition-colors"
+                    >
+                      {isAr ? 'ميني, عادي' : 'Mini, Regular'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-brown-200/60 mt-6">
+              {/* ACTION BUTTONS */}
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-brown-200 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsProductModalOpen(false)}
                   className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-brown-600 hover:text-brown-900 hover:bg-brown-100 transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+                  className="px-7 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
                 >
-                  {editingProduct ? 'Update Piece' : 'Add to Collection'}
+                  <Check size={14} />
+                  <span>{editingProduct ? (isAr ? 'حفظ تعديلات القطعة' : 'Update Piece') : (isAr ? 'إضافة إلى المتجر' : 'Add to Collection')}</span>
                 </button>
               </div>
             </form>
