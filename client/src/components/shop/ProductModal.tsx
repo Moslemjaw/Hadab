@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Product, ColorVariant } from '../../types';
-import { X, ShoppingBag, Eye, Sparkles, Check } from 'lucide-react';
+import { X, ShoppingBag, Eye, Sparkles, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -25,6 +25,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
   const [selectedFallbackColor, setSelectedFallbackColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [isPaused, setIsPaused] = useState<boolean>(false);
 
   // Reset selections when product changes
   useEffect(() => {
@@ -82,6 +83,31 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     return product.image ? [product.image] : [];
   }, [currentColorVariant, product]);
 
+  // Total slides count (either images in current color, or color variants if single images)
+  const totalSlides = galleryImages.length > 1
+    ? galleryImages.length
+    : (product?.colorVariants && product.colorVariants.length > 1 ? product.colorVariants.length : 1);
+
+  const currentSlideIndex = galleryImages.length > 1
+    ? selectedImageIndex
+    : selectedVariantIndex;
+
+  // AUTO-SLIDE AFTER EACH 3 SECONDS (3000ms)
+  useEffect(() => {
+    if (!product || isPaused || showTexture || totalSlides <= 1) return;
+
+    const variants = product.colorVariants;
+    const timer = setInterval(() => {
+      if (galleryImages.length > 1) {
+        setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length);
+      } else if (variants && variants.length > 1) {
+        setSelectedVariantIndex((prev) => (prev + 1) % variants.length);
+      }
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [product, isPaused, showTexture, totalSlides, galleryImages.length]);
+
   if (!product) return null;
 
   const activeImage = showTexture
@@ -110,8 +136,29 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     tactileAudio.playScrubTick(340);
   };
 
+  const handlePrevSlide = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    tactileAudio.playScrubTick(340);
+    const variants = product?.colorVariants;
+    if (galleryImages.length > 1) {
+      setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+    } else if (variants && variants.length > 1) {
+      setSelectedVariantIndex((prev) => (prev - 1 + variants.length) % variants.length);
+    }
+  };
+
+  const handleNextSlide = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    tactileAudio.playScrubTick(340);
+    const variants = product?.colorVariants;
+    if (galleryImages.length > 1) {
+      setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length);
+    } else if (variants && variants.length > 1) {
+      setSelectedVariantIndex((prev) => (prev + 1) % variants.length);
+    }
+  };
+
   const handleAdd = () => {
-    // Construct product with customer's chosen variants
     const productToAdd: Product = {
       ...product,
       selectedColor: isAr ? activeColorNameAr : activeColorNameEn,
@@ -134,7 +181,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6 lg:p-8 font-sans">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-brown-950/60 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-brown-950/65 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
@@ -145,24 +192,30 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className={`absolute top-3.5 ${isAr ? 'left-3.5 sm:left-5' : 'right-3.5 sm:right-5'} sm:top-5 w-10 h-10 rounded-full bg-cream-200/90 hover:bg-cream-300 text-brown-700 hover:text-brown-950 transition-colors z-30 flex items-center justify-center shadow-md cursor-pointer`}
+          className={`absolute top-3.5 ${isAr ? 'left-3.5 sm:left-5' : 'right-3.5 sm:right-5'} sm:top-5 w-10 h-10 rounded-full bg-cream-100/90 hover:bg-cream-200 text-brown-700 hover:text-brown-950 transition-colors z-30 flex items-center justify-center shadow-md cursor-pointer border border-brown-200/60`}
           aria-label={isAr ? 'إغلاق التفاصيل' : 'Close details'}
         >
           <X size={18} />
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch min-h-[540px]">
           
-          {/* LEFT: Image Gallery & Macro Texture */}
-          <div className="flex flex-col bg-[#F3ECE4] border-b md:border-b-0 md:border-r border-brown-200/70">
-            <div className="relative aspect-[4/3] sm:aspect-square md:aspect-auto md:h-[480px] shrink-0 overflow-hidden group">
+          {/* LEFT: Seamless Auto-Sliding Image Carousel */}
+          <div
+            className="relative flex flex-col justify-between bg-[#F4EDE4] border-b md:border-b-0 md:border-r border-brown-200/70 h-full min-h-[380px] sm:min-h-[440px] md:min-h-[580px] overflow-hidden group select-none"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            {/* Main Picture Container */}
+            <div className="relative flex-1 w-full h-full min-h-[320px] overflow-hidden flex items-center justify-center bg-[#F2EAE0]">
               <img
+                key={activeImage}
                 src={activeImage}
                 alt={displayName}
-                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                className="w-full h-full object-cover object-center transition-all duration-700 ease-in-out transform group-hover:scale-105 animate-in fade-in duration-500"
               />
 
-              {/* Texture Toggle Button */}
+              {/* Close-Up Texture Toggle Button (Top Corner) */}
               {product.textureImage && (
                 <button
                   type="button"
@@ -170,17 +223,68 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     setShowTexture(!showTexture);
                     tactileAudio.playScrubTick(360);
                   }}
-                  className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 py-2.5 px-4 rounded-full bg-brown-900/85 hover:bg-brown-900 text-cream-100 text-xs font-medium backdrop-blur-md flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer"
+                  className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} py-1.5 px-3 rounded-full bg-brown-950/60 hover:bg-brown-950/85 text-cream-100 text-[11px] font-medium backdrop-blur-md flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer z-20`}
                 >
-                  <Eye size={14} />
+                  <Eye size={13} />
                   <span>{showTexture ? t.showFullPiece : t.inspectStitch}</span>
                 </button>
               )}
+
+              {/* Prev / Next Slide Arrows (Hover) */}
+              {totalSlides > 1 && !showTexture && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevSlide}
+                    className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-3' : 'left-3'} w-9 h-9 rounded-full bg-brown-950/50 hover:bg-brown-950/80 text-cream-100 backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md cursor-pointer z-20 active:scale-95`}
+                    aria-label="Previous slide"
+                  >
+                    <ChevronLeft size={18} className={isAr ? 'rotate-180' : ''} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextSlide}
+                    className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'left-3' : 'right-3'} w-9 h-9 rounded-full bg-brown-950/50 hover:bg-brown-950/80 text-cream-100 backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md cursor-pointer z-20 active:scale-95`}
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight size={18} className={isAr ? 'rotate-180' : ''} />
+                  </button>
+                </>
+              )}
+
+              {/* 3-Second Slide Pagination Indicators */}
+              {totalSlides > 1 && !showTexture && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 px-3 py-1.5 rounded-full bg-brown-950/40 backdrop-blur-md shadow-sm">
+                  {Array.from({ length: totalSlides }).map((_, idx) => {
+                    const isActive = currentSlideIndex === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          if (galleryImages.length > 1) {
+                            setSelectedImageIndex(idx);
+                          } else {
+                            setSelectedVariantIndex(idx);
+                          }
+                          tactileAudio.playScrubTick(340);
+                        }}
+                        className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                          isActive
+                            ? 'w-6 bg-cream-100 shadow-sm'
+                            : 'w-1.5 bg-cream-100/50 hover:bg-cream-100/80'
+                        }`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* Thumbnails Gallery Strip */}
+            {/* Thumbnail Strip (if more than 1 photo in current gallery) */}
             {galleryImages.length > 1 && !showTexture && (
-              <div className="flex items-center gap-2.5 p-3.5 bg-cream-200/60 overflow-x-auto border-t border-brown-200/60 no-scrollbar">
+              <div className="flex items-center justify-center gap-2 p-3 bg-cream-200/70 border-t border-brown-200/60 overflow-x-auto no-scrollbar">
                 {galleryImages.map((img, idx) => (
                   <button
                     key={idx}
@@ -189,10 +293,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       setSelectedImageIndex(idx);
                       tactileAudio.playScrubTick(340);
                     }}
-                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer shadow-sm ${
+                    className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer shadow-sm ${
                       selectedImageIndex === idx
                         ? 'border-burgundy-600 scale-105 ring-2 ring-burgundy-200'
-                        : 'border-transparent opacity-70 hover:opacity-100'
+                        : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
                     <img src={img} alt={`Angle ${idx + 1}`} className="w-full h-full object-cover" />
@@ -242,10 +346,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               {(hasColorVariants || (product.colors && product.colors.length > 0)) && (
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] uppercase tracking-wider font-bold text-brown-700">
-                      {isAr ? 'اللون المحدد:' : 'Color:'}
+                    <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-brown-500">
+                      {isAr ? 'اللون:' : 'COLOR'}
                     </span>
-                    <span className="text-xs font-semibold text-burgundy-700">
+                    <span className="text-xs font-serif italic text-burgundy-700">
                       {activeColorDisplay}
                     </span>
                   </div>
@@ -260,7 +364,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                             key={idx}
                             type="button"
                             onClick={() => handleSelectVariant(idx)}
-                            className={`group flex items-center gap-2 py-1.5 px-3 rounded-full border text-xs font-medium transition-all cursor-pointer ${
+                            className={`group flex items-center gap-2 py-1.5 px-3.5 rounded-full border text-xs font-medium transition-all cursor-pointer ${
                               isSelected
                                 ? 'border-burgundy-600 bg-white ring-2 ring-burgundy-300 shadow-sm text-brown-950 font-semibold'
                                 : 'border-brown-200 bg-cream-200/70 hover:bg-cream-200 text-brown-700'
@@ -304,8 +408,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               {product.sizes && product.sizes.length > 0 && (
                 <div className="pt-1">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] uppercase tracking-wider font-bold text-brown-700">
-                      {isAr ? 'المقاس المختار:' : 'Size:'}
+                    <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-brown-500">
+                      {isAr ? 'المقاس:' : 'SIZE'}
                     </span>
                     <span className="text-xs font-semibold text-brown-900">
                       {selectedSize}
@@ -335,12 +439,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               )}
 
               {/* Narrative Description */}
-              <p className="text-xs sm:text-sm text-brown-700 font-light leading-relaxed pt-1">
+              <p className="text-xs sm:text-[13px] text-brown-700 font-light leading-relaxed pt-1">
                 {displayDesc}
               </p>
 
-              {/* Craft Specifications */}
-              <div className="pt-4 border-t border-brown-200/80 space-y-2.5 text-xs">
+              {/* Craft Specifications Card */}
+              <div className="p-3.5 rounded-2xl bg-cream-200/50 border border-brown-200/70 space-y-2 text-xs">
                 <div className="flex justify-between items-center py-0.5">
                   <span className="text-brown-500 font-light">{t.yarnMaterial}</span>
                   <span className="font-medium text-brown-900">{displayYarn}</span>
@@ -356,7 +460,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               </div>
 
               {/* Handmade Highlight Badge */}
-              <div className="p-3.5 rounded-2xl bg-cream-200/70 border border-brown-200 text-[11px] text-brown-600 font-light flex items-center gap-2.5">
+              <div className="p-3 rounded-2xl bg-cream-200/70 border border-brown-200 text-[11px] text-brown-600 font-light flex items-center gap-2.5">
                 <Sparkles size={15} className="text-burgundy-600 shrink-0" />
                 <span>
                   {isAr
@@ -367,14 +471,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
 
             {/* ADD TO BAG BUTTON */}
-            <div className="pt-3">
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={handleAdd}
                 className={`w-full py-4 px-6 rounded-full text-xs uppercase tracking-wider font-bold shadow-lg transition-all flex items-center justify-center gap-2.5 min-h-[48px] active:scale-[0.98] cursor-pointer ${
                   added
                     ? 'bg-sage-700 text-cream-100'
-                    : 'bg-burgundy-600 hover:bg-burgundy-700 text-cream-100'
+                    : 'bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100'
                 }`}
               >
                 {added ? (
