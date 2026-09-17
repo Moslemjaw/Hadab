@@ -106,33 +106,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     return Array.from(imagesSet);
   }, [product]);
 
-  // AUTO-SLIDE AFTER EACH 3 SECONDS (3000ms)
+  // AUTO-SLIDE AFTER EACH 3 SECONDS (3000ms) — only advances image, does NOT change selected color
   useEffect(() => {
     if (!product || isPaused || galleryImages.length <= 1) return;
 
-    const variants = product.colorVariants;
-    const colors = product.colors;
     const timer = setInterval(() => {
-      setSelectedImageIndex((prev) => {
-        const nextIndex = (prev + 1) % galleryImages.length;
-        const nextUrl = galleryImages[nextIndex];
-
-        // Sync active color variant if this slide matches a variant's photo
-        if (variants && variants.length > 0) {
-          let matchedIdx = variants.findIndex(
-            (v) => v.images && v.images.includes(nextUrl)
-          );
-          if (matchedIdx === -1 && nextIndex < variants.length) {
-            matchedIdx = nextIndex;
-          }
-          if (matchedIdx !== -1) {
-            setSelectedVariantIndex(matchedIdx);
-          }
-        } else if (colors && nextIndex < colors.length) {
-          setSelectedFallbackColor(colors[nextIndex]);
-        }
-        return nextIndex;
-      });
+      setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length);
     }, 3000);
 
     return () => clearInterval(timer);
@@ -188,22 +167,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const handleSelectImage = (idx: number) => {
     setSelectedImageIndex(idx);
     tactileAudio.playScrubTick(340);
-
-    // Sync active color variant if this thumbnail matches a variant
-    if (product?.colorVariants && product.colorVariants.length > 0) {
-      const clickedUrl = galleryImages[idx];
-      let matchedIdx = product.colorVariants.findIndex(
-        (v) => v.images && v.images.includes(clickedUrl)
-      );
-      if (matchedIdx === -1 && idx < product.colorVariants.length) {
-        matchedIdx = idx;
-      }
-      if (matchedIdx !== -1) {
-        setSelectedVariantIndex(matchedIdx);
-      }
-    } else if (product?.colors && idx < product.colors.length) {
-      setSelectedFallbackColor(product.colors[idx]);
-    }
   };
 
   const handlePrevSlide = (e?: React.MouseEvent) => {
