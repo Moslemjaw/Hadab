@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Order } from '../models/Order';
 import { User } from '../models/User';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
-import { sendPushToRole, sendPushToUser } from '../config/webPush';
+import { sendPushToRole, sendPushToUser, sendPushToRecipient } from '../config/webPush';
 
 const router = Router();
 
@@ -167,23 +167,48 @@ router.patch('/:id/status', authenticateToken, requireAdmin, async (req: Request
       return;
     }
 
-    // 🔔 DISPATCH REAL-TIME WEB PUSH TO CUSTOMER ON STATUS UPDATE
-    if (updated.userId && (status || statusArabic)) {
-      try {
-        const displayStatus = updated.statusArabic || updated.status;
-        sendPushToUser(updated.userId, {
-          title: '🧵 تحديث حالة طلبك | HADAB',
-          body: `حالة طلبك #${updated.orderNumber} الآن: ${displayStatus}`,
-          icon: '/apple-touch-icon.png',
-          badge: '/apple-touch-icon.png',
-          url: '/#account',
-          tag: `order-update-${updated.orderNumber}`,
-          data: {
-            orderId: updated._id,
-            status: updated.status,
-          },
-        }).catch(() => {});
-      } catch {}
+    const recipient = {
+      userId: updated.userId,
+      email: updated.customerEmail,
+    };
+
+    // 🔔 DISPATCH PUSH FOR PAYMENT STATUS: "contacting" (جاري التواصل)
+    if (paymentStatus === 'contacting') {
+      sendPushToRecipient(recipient, {
+        title: '💬 فريق هَدَب يحاول التواصل معك | HADAB',
+        body: `عزيزي العميل، يحاول فريق هَدَب التواصل معك بخصوص طلبك #${updated.orderNumber}. يُرجى تفقّد رسائل تطبيق الواتساب لتأكيد تفاصيل طلبك 📲🤍`,
+        icon: '/apple-touch-icon.png',
+        badge: '/apple-touch-icon.png',
+        url: '/#account',
+        tag: `order-contacting-${updated.orderNumber}`,
+        data: {
+          orderId: updated._id,
+          orderNumber: updated.orderNumber,
+          type: 'contacting',
+        },
+      }).catch((err) => {
+        console.error('[WebPush] Error dispatching contacting push:', err);
+      });
+    }
+
+    // 🔔 DISPATCH REAL-TIME WEB PUSH TO CUSTOMER ON FULFILLMENT STATUS UPDATE
+    if (status || statusArabic) {
+      const displayStatus = updated.statusArabic || updated.status;
+      sendPushToRecipient(recipient, {
+        title: '🧵 تحديث حالة طلبك | HADAB',
+        body: `حالة طلبك #${updated.orderNumber} الآن: ${displayStatus}`,
+        icon: '/apple-touch-icon.png',
+        badge: '/apple-touch-icon.png',
+        url: '/#account',
+        tag: `order-update-${updated.orderNumber}`,
+        data: {
+          orderId: updated._id,
+          orderNumber: updated.orderNumber,
+          status: updated.status,
+        },
+      }).catch((err) => {
+        console.error('[WebPush] Error dispatching order status push:', err);
+      });
     }
 
     res.json(updated);

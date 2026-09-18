@@ -26,14 +26,18 @@ router.post('/subscribe', async (req: Request, res: Response): Promise<void> => 
 
     // Optional auth token check
     let userId: string | null = null;
+    let userEmail: string | null = null;
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
         const token = authHeader.split(' ')[1];
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'hadab_super_secret_jwt_key_2026');
         userId = decoded.id;
+        userEmail = decoded.email ? decoded.email.toLowerCase().trim() : null;
       } catch {}
     }
+
+    const resolvedEmail = (userEmail || req.body.userEmail || req.body.email || '').toLowerCase().trim() || null;
 
     // Upsert subscription
     const existing = await PushSubscription.findOneAndUpdate(
@@ -44,6 +48,7 @@ router.post('/subscribe', async (req: Request, res: Response): Promise<void> => 
           auth: subscription.keys.auth,
         },
         userId: userId || req.body.userId || null,
+        userEmail: resolvedEmail,
         role: role === 'admin' ? 'admin' : 'customer',
         device,
         userAgent,

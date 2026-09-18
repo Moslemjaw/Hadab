@@ -120,4 +120,43 @@ export const sendPushToUser = async (
   }
 };
 
+/**
+ * Send push notification to a recipient by userId OR email
+ */
+export const sendPushToRecipient = async (
+  recipient: { userId?: string | null; email?: string | null },
+  payload: PushNotificationPayload
+) => {
+  try {
+    const conditions: any[] = [];
+    if (recipient.userId) {
+      conditions.push({ userId: recipient.userId });
+    }
+    if (recipient.email) {
+      conditions.push({ userEmail: recipient.email.toLowerCase().trim() });
+    }
+    if (!conditions.length) return { sent: 0, total: 0 };
+
+    const subscriptions = await PushSubscription.find({ $or: conditions });
+    if (!subscriptions.length) {
+      console.log(`[WebPush] No push subscription found for recipient: ${recipient.userId || recipient.email}`);
+      return { sent: 0, total: 0 };
+    }
+
+    const results = await Promise.allSettled(
+      subscriptions.map((sub) => sendPushNotification(sub, payload))
+    );
+
+    const successful = results.filter(
+      (r) => r.status === 'fulfilled' && (r.value as any)?.success
+    ).length;
+
+    console.log(`[WebPush] Dispatched push to recipient: ${successful}/${subscriptions.length} delivered`);
+    return { sent: successful, total: subscriptions.length };
+  } catch (error) {
+    console.error('[WebPush] Error sending to recipient:', error);
+    return { sent: 0, total: 0, error };
+  }
+};
+
 export { webpush };

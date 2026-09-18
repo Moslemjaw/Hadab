@@ -538,6 +538,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         paymentStatus: nextPaymentStatus,
         paymentStatusArabic: paymentLabels[nextPaymentStatus],
       });
+      if (nextPaymentStatus === 'contacting') {
+        showToast(
+          isAr
+            ? 'تم إرسال إشعار للعميل لتفقّد رسائل الواتساب 📲'
+            : 'Push alert sent to customer to check their WhatsApp messages 📲',
+          'success'
+        );
+      }
     } catch (err) {
       console.error('Failed to sync payment status to database:', err);
     }

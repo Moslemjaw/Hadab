@@ -7,6 +7,7 @@ export interface IPushSubscription extends Document {
     auth: string;
   };
   userId?: string;
+  userEmail?: string;
   role: 'admin' | 'customer';
   device?: string;
   userAgent?: string;
@@ -22,6 +23,7 @@ const PushSubscriptionSchema = new Schema<IPushSubscription>(
       auth: { type: String, required: true },
     },
     userId: { type: String, default: null, index: true },
+    userEmail: { type: String, default: null, index: true },
     role: { type: String, enum: ['admin', 'customer'], default: 'customer', index: true },
     device: { type: String, default: 'unknown' },
     userAgent: { type: String, default: '' },
