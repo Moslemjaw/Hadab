@@ -1107,7 +1107,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         `}
       >
         <div>
-          {/* Brand Header */}
+          {/* Brand Header: Logo Only, Prominent & Clean */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#3D2D25]/70">
             <button
               type="button"
@@ -1116,23 +1116,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 setActiveTab('overview');
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }}
-              className="flex items-center gap-3 text-left cursor-pointer group"
-              title={isAr ? 'الذهاب للوحة المؤشرات' : 'Go to Dashboard Overview'}
+              className="flex items-center cursor-pointer group py-1"
+              title={isAr ? 'الصفحة الرئيسية - هَدَب' : 'HADAB Overview'}
             >
-              <div className="h-10 px-2.5 rounded-2xl bg-cream-100/10 border border-cream-200/20 flex items-center justify-center shrink-0">
-                <img
-                  src={isAr ? '/arabic.png' : '/PNG-HADAB-CREAM.png'}
-                  alt="HADAB"
-                  className="h-6 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div>
-                <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0] group-hover:text-blush-200 transition-colors">HADAB</span>
-                <span className="text-[10px] uppercase tracking-[0.22em] text-blush-200 block">{isAr ? 'إدارة المتجر' : 'Store Admin'}</span>
-              </div>
+              <img
+                src={isAr ? '/arabic.png' : '/PNG-HADAB-CREAM.png'}
+                alt="HADAB"
+                className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
             </button>
-            <button className="md:hidden p-1.5 text-brown-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
-              <X size={18} />
+            <button
+              type="button"
+              className="md:hidden p-2 text-brown-400 hover:text-white rounded-xl active:bg-white/10"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <X size={20} />
             </button>
           </div>
 
@@ -1258,17 +1257,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 title={isAr ? 'العودة للمتجر' : 'Back to Store'}
               >
                 <Home size={12} />
-              </button>
-              <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
-              <button
-                type="button"
-                onClick={() => {
-                  tactileAudio.playScrubTick(300);
-                  setActiveTab('overview');
-                }}
-                className="hover:text-brown-900 transition-colors cursor-pointer"
-              >
-                Admin
               </button>
               <ChevronRight size={12} className={isAr ? 'rotate-180' : ''} />
               <span className="text-brown-900 font-semibold">{getBreadcrumbLabel()}</span>
