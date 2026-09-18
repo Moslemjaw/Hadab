@@ -1682,14 +1682,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           {activeTab === 'products' && (
             <div className="space-y-6">
               
-              {/* Top Controls Bar */}
-              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-[#FAF6F0] p-3 sm:p-4 rounded-3xl border border-brown-200/60 shadow-sm">
+              {/* Top Controls Bar: Luxury Categories Nav & Display Switcher */}
+              <div className="bg-[#FAF6F0] p-3 sm:p-4 rounded-3xl border border-brown-200/60 shadow-sm space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-4">
                 
-                {/* Category Filters */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                {/* Category Filters Carousel */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar scroll-smooth -mx-1 px-1">
                   {['all', ...categoryList.map((c) => c.slug)].map((cat) => {
                     const matchedCat = categoryList.find(c => c.slug === cat);
-                    const label = cat === 'all' ? (isAr ? 'الكل' : 'All') : (isAr && matchedCat ? matchedCat.nameAr : matchedCat ? matchedCat.name : cat);
+                    const label = cat === 'all' 
+                      ? (isAr ? 'الكل' : 'All') 
+                      : (isAr && matchedCat ? matchedCat.nameAr : matchedCat ? matchedCat.name : cat);
+                    const count = cat === 'all' 
+                      ? productsList.length 
+                      : productsList.filter(p => p.category === cat).length;
+                    const isSelected = selectedCategory === cat;
+
                     return (
                       <button
                         key={cat}
@@ -1698,22 +1705,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           tactileAudio.playScrubTick(300);
                           setSelectedCategory(cat);
                         }}
-                        className={`px-3.5 py-1.5 rounded-full text-[10.5px] uppercase tracking-wider font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                          selectedCategory === cat
-                            ? 'bg-[#2E221B] text-cream-100 shadow-sm'
-                            : 'bg-transparent text-brown-600 hover:bg-brown-200/50'
+                        className={`group px-3.5 py-2 rounded-2xl text-[11px] uppercase tracking-wider font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-[#2E221B] text-[#FAF6F0] shadow-md border border-[#2E221B]'
+                            : 'bg-white/80 hover:bg-white text-brown-700 hover:text-brown-900 border border-brown-200/70 hover:border-brown-300 shadow-xs'
                         }`}
                       >
-                        {label}
+                        <span>{label}</span>
+                        <span className={`text-[9.5px] px-1.5 py-0.5 rounded-full font-mono font-bold transition-colors ${
+                          isSelected
+                            ? 'bg-cream-100/20 text-cream-100'
+                            : 'bg-brown-100/80 text-brown-600 group-hover:bg-brown-200/70'
+                        }`}>
+                          {count}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Bulk Actions & View Toggle */}
-                <div className="flex items-center gap-3 ml-auto shrink-0 border-t md:border-t-0 border-brown-200/50 pt-3 md:pt-0">
+                {/* Bulk Actions & View Toggle & Add Button */}
+                <div className="flex items-center justify-between md:justify-end gap-3 pt-2.5 md:pt-0 border-t md:border-t-0 border-brown-200/60 shrink-0">
+                  {/* Mobile Piece Counter / Bulk indicator */}
+                  <div className="flex items-center gap-2 text-xs text-brown-500 font-medium md:hidden">
+                    {selectedProductIds.size > 0 ? (
+                      <div className="flex items-center gap-1.5 animate-in fade-in">
+                        <span className="text-xs text-burgundy-700 font-bold bg-burgundy-50 px-2 py-0.5 rounded-lg border border-burgundy-200/60">
+                          {selectedProductIds.size} {isAr ? 'محدد' : 'selected'}
+                        </span>
+                        <button
+                          onClick={handleBulkDeleteProducts}
+                          className="p-1.5 rounded-lg text-burgundy-600 hover:bg-burgundy-50 transition-colors cursor-pointer"
+                          title="Delete Selected"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-brown-600 font-semibold bg-cream-100/80 px-2.5 py-1 rounded-xl border border-brown-200/50">
+                        {filteredProducts.length} {isAr ? 'قطعة' : 'pieces'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Desktop Bulk Action */}
                   {selectedProductIds.size > 0 && (
-                    <div className="flex items-center gap-2 mr-2 animate-in fade-in">
+                    <div className="hidden md:flex items-center gap-2 mr-2 animate-in fade-in">
                       <span className="text-xs text-brown-600 font-medium">{selectedProductIds.size} selected</span>
                       <button onClick={handleBulkDeleteProducts} className="p-1.5 rounded-lg text-burgundy-600 hover:bg-burgundy-50 transition-colors" title="Delete Selected">
                         <Trash2 size={16} />
@@ -1721,28 +1758,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </div>
                   )}
 
-                  <div className="flex items-center bg-cream-50 rounded-xl border border-brown-200 p-0.5">
+                  {/* Display Mode Switcher (Grid / List) */}
+                  <div className="flex items-center bg-cream-100/90 rounded-2xl border border-brown-200/80 p-1 shadow-xs">
                     <button 
-                      onClick={() => setProductView('grid')} 
-                      className={`p-1.5 rounded-lg transition-colors ${productView === 'grid' ? 'bg-white shadow-sm text-brown-900' : 'text-brown-400 hover:text-brown-600'}`}
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        setProductView('grid');
+                      }} 
+                      className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                        productView === 'grid' 
+                          ? 'bg-[#2E221B] text-[#FAF6F0] shadow-xs' 
+                          : 'text-brown-500 hover:text-brown-900 hover:bg-white/50'
+                      }`}
+                      title={isAr ? 'عرض شبكي' : 'Grid View'}
                     >
                       <GridIcon size={14} />
+                      <span className="text-[10px] font-bold hidden sm:inline">{isAr ? 'شبكة' : 'Grid'}</span>
                     </button>
                     <button 
-                      onClick={() => setProductView('list')} 
-                      className={`p-1.5 rounded-lg transition-colors ${productView === 'list' ? 'bg-white shadow-sm text-brown-900' : 'text-brown-400 hover:text-brown-600'}`}
+                      type="button"
+                      onClick={() => {
+                        tactileAudio.playScrubTick(300);
+                        setProductView('list');
+                      }} 
+                      className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                        productView === 'list' 
+                          ? 'bg-[#2E221B] text-[#FAF6F0] shadow-xs' 
+                          : 'text-brown-500 hover:text-brown-900 hover:bg-white/50'
+                      }`}
+                      title={isAr ? 'عرض قائمة' : 'List View'}
                     >
                       <ListIcon size={14} />
+                      <span className="text-[10px] font-bold hidden sm:inline">{isAr ? 'قائمة' : 'List'}</span>
                     </button>
                   </div>
                   
+                  {/* Add New Piece Button */}
                   <button
                     type="button"
                     onClick={openNewProductModal}
-                    className="px-4 py-2 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                    className="px-3.5 sm:px-4 py-2 rounded-2xl bg-[#2E221B] hover:bg-[#3D2D25] text-[#FAF6F0] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
                   >
                     <Plus size={14} />
-                    <span className="hidden sm:inline">{isAr ? 'إضافة قطعة' : 'Add Piece'}</span>
+                    <span>{isAr ? 'إضافة قطعة' : 'Add Piece'}</span>
                   </button>
                 </div>
               </div>
