@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, Search, Menu, X, Globe, User, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Globe, User, ChevronDown, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
@@ -29,7 +29,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
+  const [isMobileCurrencyOpen, setIsMobileCurrencyOpen] = useState(false);
   const currencyMenuRef = useRef<HTMLDivElement>(null);
+
+  const currentCurrencyObj = supportedCurrencies.find((c) => c.code === currency) || supportedCurrencies[0];
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      setIsMobileCurrencyOpen(false);
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   // Close currency dropdown on click outside
   useEffect(() => {
@@ -298,104 +314,168 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => setIsMobileMenuOpen(false)}
         />
 
-        {/* Close button — top right */}
+        {/* Close button — top right, clearly above all content with safe-area spacing and ample touch area */}
         <button
           type="button"
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="absolute top-5 right-5 p-2.5 text-cream-200 hover:text-cream-100 transition-colors z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsMobileMenuOpen(false);
+          }}
+          className="absolute z-50 p-2.5 text-cream-200 hover:text-white transition-all min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full bg-white/10 hover:bg-white/20 active:scale-90 shadow-sm"
+          style={{
+            top: 'max(1.25rem, env(safe-area-inset-top, 1.25rem))',
+            right: 'max(1.25rem, env(safe-area-inset-right, 1.25rem))',
+          }}
           aria-label="Close menu"
         >
-          <X size={24} strokeWidth={1.5} />
+          <X size={26} strokeWidth={1.75} />
         </button>
 
-        {/* Centered Navigation Links */}
-        <div className="relative z-10 h-full flex flex-col items-center justify-center gap-8">
-          {[
-            {
-              label: t.navCollection,
-              action: () => {
-                if (onOpenCollection) {
-                  onOpenCollection('all');
-                } else if (onOpenCategories) {
-                  onOpenCategories('all');
-                }
+        {/* Centered Navigation Links & Controls Container */}
+        <div className="relative z-10 h-full flex flex-col justify-between items-center py-16 px-6 overflow-y-auto">
+          {/* Top spacer */}
+          <div className="h-4" />
+
+          {/* Centered Links */}
+          <div className="flex flex-col items-center gap-7 sm:gap-8 my-auto">
+            {[
+              {
+                label: t.navCollection,
+                action: () => {
+                  if (onOpenCollection) {
+                    onOpenCollection('all');
+                  } else if (onOpenCategories) {
+                    onOpenCategories('all');
+                  }
+                },
               },
-            },
-            {
-              label: t.navCategories,
-              action: () => {
-                if (onOpenCategories) onOpenCategories();
+              {
+                label: t.navCategories,
+                action: () => {
+                  if (onOpenCategories) onOpenCategories();
+                },
               },
-            },
-            {
-              label: t.navStory,
-              action: () => {
-                if (onOpenStory) {
-                  onOpenStory();
-                } else if (onGoHome) {
-                  onGoHome();
-                  setTimeout(() => {
-                    const el = document.getElementById('about');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }, 100);
-                }
+              {
+                label: t.navStory,
+                action: () => {
+                  if (onOpenStory) {
+                    onOpenStory();
+                  } else if (onGoHome) {
+                    onGoHome();
+                    setTimeout(() => {
+                      const el = document.getElementById('about');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }
+                },
               },
-            },
-            {
-              label: language === 'ar' ? 'حسابي' : 'My Account',
-              action: () => {
-                if (onOpenAuth) onOpenAuth('signin');
+              {
+                label: language === 'ar' ? 'حسابي' : 'My Account',
+                action: () => {
+                  if (onOpenAuth) onOpenAuth('signin');
+                },
               },
-            },
-          ].map((item, i) => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                item.action();
-              }}
-              className={`text-cream-100 text-[13px] uppercase tracking-[0.35em] font-medium hover:text-blush-200 transition-all duration-500 ${
-                isMobileMenuOpen
-                  ? 'opacity-100 translate-y-0'
-                  : 'opacity-0 translate-y-4'
-              }`}
-              style={{ transitionDelay: isMobileMenuOpen ? `${150 + i * 80}ms` : '0ms' }}
-            >
-              {item.label}
-            </button>
-          ))}
+            ].map((item, i) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  item.action();
+                }}
+                className={`text-cream-100 text-[13px] uppercase tracking-[0.35em] font-medium hover:text-blush-200 transition-all duration-500 cursor-pointer ${
+                  isMobileMenuOpen
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 translate-y-4'
+                }`}
+                style={{ transitionDelay: isMobileMenuOpen ? `${150 + i * 80}ms` : '0ms' }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
 
           {/* Mobile Drawer Language & Currency Switcher */}
           <div
-            className={`absolute bottom-6 left-0 right-0 flex flex-col items-center gap-3 px-6 transition-all duration-500 ${
+            className={`w-full max-w-xs flex flex-col items-center gap-3.5 pt-6 transition-all duration-500 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-4'
             }`}
-            style={{ transitionDelay: isMobileMenuOpen ? '420ms' : '0ms' }}
+            style={{ transitionDelay: isMobileMenuOpen ? '350ms' : '0ms' }}
           >
-            {/* Currency horizontal pills */}
-            <div className="w-full max-w-xs">
-              <label className="block text-[9px] uppercase tracking-widest text-cream-300/70 text-center mb-1.5 font-medium">
+            {/* Redesigned Luxury Currency Selector */}
+            <div className="w-full relative">
+              <label className="block text-[10px] uppercase tracking-[0.22em] text-cream-300/70 text-center mb-1.5 font-medium">
                 {language === 'ar' ? 'عملة العرض' : 'Display Currency'}
               </label>
-              <div className="flex items-center justify-center gap-1 flex-wrap">
-                {supportedCurrencies.map((c) => (
-                  <button
-                    key={c.code}
-                    type="button"
-                    onClick={() => setCurrency(c.code)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-mono transition-all ${
-                      c.code === currency
-                        ? 'bg-cream-100 text-brown-900 font-bold shadow-sm'
-                        : 'bg-cream-100/10 text-cream-200/80 hover:bg-cream-100/20'
+
+              <button
+                type="button"
+                onClick={() => setIsMobileCurrencyOpen(!isMobileCurrencyOpen)}
+                className="w-full py-2.5 px-3.5 rounded-2xl bg-cream-100/10 hover:bg-cream-100/15 border border-cream-200/25 flex items-center justify-between text-cream-100 transition-all active:scale-[0.98] shadow-sm cursor-pointer"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-lg leading-none shrink-0">{currentCurrencyObj.flag}</span>
+                  <span className="font-mono text-xs font-bold tracking-wider text-cream-100 shrink-0">
+                    {currentCurrencyObj.code}
+                  </span>
+                  <span className="text-cream-400 text-xs shrink-0">•</span>
+                  <span className="text-xs text-cream-200/90 truncate font-light">
+                    {language === 'ar' ? currentCurrencyObj.nameAr : currentCurrencyObj.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-mono text-xs font-semibold text-cream-300">
+                    {language === 'ar' ? currentCurrencyObj.symbolAr : currentCurrencyObj.symbol}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={`text-cream-300/80 transition-transform duration-200 ${
+                      isMobileCurrencyOpen ? 'rotate-180' : ''
                     }`}
-                  >
-                    {c.flag} {c.code}
-                  </button>
-                ))}
-              </div>
+                  />
+                </div>
+              </button>
+
+              {/* Mobile Currency Popover */}
+              {isMobileCurrencyOpen && (
+                <div className="absolute bottom-full mb-2 inset-x-0 max-h-56 overflow-y-auto bg-[#231813]/98 backdrop-blur-2xl border border-cream-200/30 rounded-2xl p-1.5 shadow-2xl z-50 divide-y divide-white/5 animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
+                  {supportedCurrencies.map((c) => {
+                    const isSelected = c.code === currency;
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => {
+                          setCurrency(c.code);
+                          setIsMobileCurrencyOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-cream-100 text-brown-950 font-bold shadow-sm'
+                            : 'text-cream-100 hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-base leading-none shrink-0">{c.flag}</span>
+                          <span className="font-mono text-xs tracking-wider shrink-0">{c.code}</span>
+                          <span className={`text-[11px] truncate ${isSelected ? 'text-brown-800' : 'text-cream-300/80'}`}>
+                            {language === 'ar' ? c.nameAr : c.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`font-mono text-xs ${isSelected ? 'text-brown-900 font-bold' : 'text-cream-400'}`}>
+                            {language === 'ar' ? c.symbolAr : c.symbol}
+                          </span>
+                          {isSelected && <Check size={14} className="text-burgundy-700" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Dual Language Segment Toggle */}
@@ -406,7 +486,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   if (language !== 'en') toggleLanguage();
                   setIsMobileMenuOpen(false);
                 }}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                   language === 'en'
                     ? 'bg-cream-100 text-brown-900 shadow-sm'
                     : 'text-cream-200/80 hover:text-cream-100'
@@ -420,7 +500,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   if (language !== 'ar') toggleLanguage();
                   setIsMobileMenuOpen(false);
                 }}
-                className={`px-4 py-1.5 rounded-full font-arabic text-xs font-semibold transition-all duration-200 ${
+                className={`px-4 py-1.5 rounded-full font-arabic text-xs font-semibold transition-all duration-200 cursor-pointer ${
                   language === 'ar'
                     ? 'bg-cream-100 text-brown-900 shadow-sm'
                     : 'text-cream-200/80 hover:text-cream-100'
