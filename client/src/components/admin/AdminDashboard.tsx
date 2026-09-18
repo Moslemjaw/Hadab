@@ -20,7 +20,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Star,
   Menu,
   X,
   Bell,
@@ -83,6 +82,7 @@ interface OrderItem {
   paymentStatusArabic?: string;
   artisan: string;
   createdAt: string;
+  createdAtRaw: string;
 }
 
 interface AdminDashboardProps {
@@ -192,6 +192,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
             paymentStatusArabic: o.paymentStatusArabic || 'غير مدفوع',
             artisan: o.artisan || 'Hadab Team',
             createdAt: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'Recent',
+            createdAtRaw: o.createdAt || '',
           }))
         );
       } else {
@@ -459,7 +460,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     }
 
     ordersList.forEach((order) => {
-      const orderDate = new Date(order.createdAt);
+      const orderDate = new Date(order.createdAtRaw);
       if (!isNaN(orderDate.getTime())) {
         const found = months.find(
           (m) => m.monthIndex === orderDate.getMonth() && m.year === orderDate.getFullYear()
@@ -1495,7 +1496,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           {activeTab === 'overview' && (
             <div className="space-y-8">
               {/* Metric Cards Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
                   <div className="flex items-center justify-between text-brown-500 mb-4">
                     <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'إجمالي المبيعات' : 'Total Revenue'}</span>
@@ -1543,22 +1544,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </div>
                     <div className="w-full h-1 bg-brown-100 rounded-full overflow-hidden">
                       <div className="h-full bg-brown-400 rounded-full" style={{ width: '60%' }}></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between text-brown-500 mb-4">
-                    <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'معدل رضا المشترين' : 'Artisan Rating'}</span>
-                    <div className="p-2 rounded-xl bg-amber-100 text-amber-700 group-hover:scale-110 transition-transform"><Sparkles size={16} /></div>
-                  </div>
-                  <div className="font-serif text-3xl font-medium text-brown-900">4.98</div>
-                  <div className="mt-4 flex flex-col gap-2">
-                    <div className="text-[11px] text-brown-500 font-light">
-                      {isAr ? 'بناءً على طلبات التسليم المؤكدة' : '100% verified slow craft reviews'}
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(i => <Star key={i} size={10} className={i === 5 ? 'text-amber-200 fill-amber-200' : 'text-amber-400 fill-amber-400'} />)}
                     </div>
                   </div>
                 </div>
