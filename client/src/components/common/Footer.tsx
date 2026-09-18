@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Mail, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { LegalModal, type LegalDocType } from './LegalModal';
 
 interface FooterProps {
   onOpenCategories?: (catId?: string) => void;
   onOpenCollection?: (catId?: string) => void;
   onOpenStory?: () => void;
   onGoHome?: () => void;
+  onOpenLegal?: (doc: LegalDocType) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -14,10 +16,20 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenCollection,
   onOpenStory,
   onGoHome,
+  onOpenLegal,
 }) => {
   const { language, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [internalLegalDoc, setInternalLegalDoc] = useState<LegalDocType | null>(null);
+
+  const handleTriggerLegal = (doc: LegalDocType) => {
+    if (onOpenLegal) {
+      onOpenLegal(doc);
+    } else {
+      setInternalLegalDoc(doc);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,19 +177,32 @@ export const Footer: React.FC<FooterProps> = ({
                         if (el) el.scrollIntoView({ behavior: 'smooth' });
                       }
                     }}
-                    className="block py-1 hover:text-cream-100 transition-colors text-left text-xs text-cream-300/80 font-light"
+                    className="block py-1 hover:text-cream-100 transition-colors text-start text-xs text-cream-300/80 font-light cursor-pointer"
                   >
                     {t.navStory}
                   </button>
                 </li>
                 <li>
-                  <span className="block py-1 text-cream-300/80">
-                    {t.footerCareHandwash}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerLegal('shipping')}
+                    className="block py-1 hover:text-cream-100 transition-colors text-start text-xs text-cream-300/80 font-light cursor-pointer"
+                  >
+                    {language === 'ar' ? 'الشحن والتوصيل' : 'Shipping & Delivery'}
+                  </button>
                 </li>
                 <li>
-                  <span className="block py-1 text-cream-300/80">
-                    {t.footerCareDrying}
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerLegal('returns')}
+                    className="block py-1 hover:text-cream-100 transition-colors text-start text-xs text-cream-300/80 font-light cursor-pointer"
+                  >
+                    {language === 'ar' ? 'الاسترجاع والاستبدال' : 'Returns & Exchanges'}
+                  </button>
+                </li>
+                <li>
+                  <span className="block py-1 text-cream-400/60 text-[11px]">
+                    {t.footerCareHandwash}
                   </span>
                 </li>
               </ul>
@@ -215,7 +240,7 @@ export const Footer: React.FC<FooterProps> = ({
                     type="submit"
                     className={`absolute ${
                       language === 'ar' ? 'left-1.5' : 'right-1.5'
-                    } top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-brown-700 hover:bg-burgundy-600 text-cream-100 transition-colors flex items-center justify-center active:scale-95 shadow-sm`}
+                    } top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-brown-700 hover:bg-burgundy-600 text-cream-100 transition-colors flex items-center justify-center active:scale-95 shadow-sm cursor-pointer`}
                     aria-label={language === 'ar' ? 'اشتراك' : 'Subscribe'}
                   >
                     {language === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
@@ -226,7 +251,7 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
-        {/* Bottom Editorial Bar */}
+        {/* Bottom Editorial Bar with Legal Links */}
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-cream-400/80 font-light gap-4 safe-bottom">
           <div className="flex flex-col xs:flex-row items-center gap-2 xs:gap-3 text-center sm:text-left">
             <span>© {new Date().getFullYear()} HADAB.</span>
@@ -234,11 +259,50 @@ export const Footer: React.FC<FooterProps> = ({
             <span>{t.footerRights}</span>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-5 flex-wrap justify-center text-cream-400/70">
-            <span className="text-center text-[10.5px] xs:text-[11px]">{t.tickerLocation}</span>
+          <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap justify-center text-cream-300/70 text-[10.5px] xs:text-[11px]">
+            <button
+              type="button"
+              onClick={() => handleTriggerLegal('privacy')}
+              className="hover:text-cream-100 transition-colors cursor-pointer underline underline-offset-4 decoration-brown-700 hover:decoration-cream-300"
+            >
+              {language === 'ar' ? 'الخصوصية' : 'Privacy Policy'}
+            </button>
+            <span className="text-brown-700">•</span>
+            <button
+              type="button"
+              onClick={() => handleTriggerLegal('terms')}
+              className="hover:text-cream-100 transition-colors cursor-pointer underline underline-offset-4 decoration-brown-700 hover:decoration-cream-300"
+            >
+              {language === 'ar' ? 'الشروط والأحكام' : 'Terms of Service'}
+            </button>
+            <span className="text-brown-700">•</span>
+            <button
+              type="button"
+              onClick={() => handleTriggerLegal('shipping')}
+              className="hover:text-cream-100 transition-colors cursor-pointer underline underline-offset-4 decoration-brown-700 hover:decoration-cream-300"
+            >
+              {language === 'ar' ? 'الشحن' : 'Shipping'}
+            </button>
+            <span className="text-brown-700">•</span>
+            <button
+              type="button"
+              onClick={() => handleTriggerLegal('returns')}
+              className="hover:text-cream-100 transition-colors cursor-pointer underline underline-offset-4 decoration-brown-700 hover:decoration-cream-300"
+            >
+              {language === 'ar' ? 'الاسترجاع' : 'Returns'}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Embedded Legal Modal */}
+      {internalLegalDoc && (
+        <LegalModal
+          isOpen={Boolean(internalLegalDoc)}
+          initialDoc={internalLegalDoc}
+          onClose={() => setInternalLegalDoc(null)}
+        />
+      )}
     </footer>
   );
 };
