@@ -13,6 +13,7 @@ import {
   Package,
   Layers,
   ExternalLink,
+  X,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -35,7 +36,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   onExploreCollection,
 }) => {
   const { language, t } = useLanguage();
-  const { login, register } = useAuth();
+  const { login, register, loginWithOAuth } = useAuth();
   const { showToast } = useNotification();
   const isAr = language === 'ar';
 
@@ -56,6 +57,54 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // OAuth Flow States
+  const [oauthModal, setOauthModal] = useState<'google' | 'apple' | null>(null);
+  const [oauthEmail, setOauthEmail] = useState('');
+  const [oauthName, setOauthName] = useState('');
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+
+  const handleStartOAuth = (provider: 'google' | 'apple') => {
+    tactileAudio.playScrubTick(360);
+    setOauthEmail('');
+    setOauthName('');
+    setOauthModal(provider);
+  };
+
+  const handleQuickOAuth = async (provider: 'google' | 'apple', targetEmail: string, targetName?: string) => {
+    try {
+      setIsOAuthLoading(true);
+      tactileAudio.playScrubTick(300);
+      const loggedInUser = await loginWithOAuth(provider, targetEmail.trim().toLowerCase(), targetName);
+      tactileAudio.playChime();
+      showToast(
+        isAr
+          ? `تم تسجيل الدخول بنجاح عبر ${provider === 'google' ? 'Google' : 'Apple'} ✓`
+          : `Signed in successfully with ${provider === 'google' ? 'Google' : 'Apple'} ✓`,
+        'success'
+      );
+      setOauthModal(null);
+      setTimeout(() => {
+        if (loggedInUser.role === 'admin' || loggedInUser.email.toLowerCase() === 'byhadab@gmail.com') {
+          window.location.hash = 'admin';
+        } else if (onSuccess) {
+          onSuccess('signin');
+        } else {
+          onBackToHome();
+        }
+      }, 700);
+    } catch (err: any) {
+      showToast(err.message || 'OAuth authentication failed', 'error');
+    } finally {
+      setIsOAuthLoading(false);
+    }
+  };
+
+  const handleOAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!oauthEmail || !oauthModal) return;
+    await handleQuickOAuth(oauthModal, oauthEmail, oauthName);
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -507,10 +556,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <div className="grid grid-cols-2 gap-3.5">
                   <button
                     type="button"
-                    onClick={() => {
-                      tactileAudio.playScrubTick(360);
-                      showToast(isAr ? 'تسجيل الدخول عبر Google متاح قريباً' : 'Google sign-in available soon', 'info');
-                    }}
+                    onClick={() => handleStartOAuth('google')}
                     className="py-3 px-4 rounded-full border border-brown-200/70 bg-white hover:bg-[#FDFBF7] text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer shadow-sm"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -536,10 +582,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => {
-                      tactileAudio.playScrubTick(360);
-                      showToast(isAr ? 'تسجيل الدخول عبر Apple متاح قريباً' : 'Apple sign-in available soon', 'info');
-                    }}
+                    onClick={() => handleStartOAuth('apple')}
                     className="py-3 px-4 rounded-full border border-brown-200/70 bg-white hover:bg-[#FDFBF7] text-brown-800 text-xs font-medium transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer shadow-sm"
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -567,6 +610,143 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
         </div>
       </div>
+
+      {/* ──── OAuth Modal ──── */}
+      {oauthModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => !isOAuthLoading && setOauthModal(null)}
+        >
+          <div
+            className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            dir={isAr ? 'rtl' : 'ltr'}
+          >
+            {/* Modal Header */}
+            <div className={`px-6 pt-6 pb-4 text-center ${oauthModal === 'apple' ? 'bg-black text-white' : 'bg-white'}`}>
+              <button
+                type="button"
+                onClick={() => !isOAuthLoading && setOauthModal(null)}
+                className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} p-1.5 rounded-full transition-colors ${
+                  oauthModal === 'apple' ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <X size={18} />
+              </button>
+
+              {oauthModal === 'google' ? (
+                <>
+                  <svg className="w-8 h-8 mx-auto mb-3" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {isAr ? 'تسجيل الدخول بـ Google' : 'Sign in with Google'}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {isAr ? 'اختاري حسابك أو أدخلي بريدك الإلكتروني' : 'Choose your account or enter your email'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <svg className="w-8 h-8 mx-auto mb-3 fill-white" viewBox="0 0 24 24">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.02.62-2.66 1.37-.57.65-1.06 1.73-.93 2.76 1.03.08 2.07-.51 2.67-1.26z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-white">
+                    {isAr ? 'تسجيل الدخول بـ Apple' : 'Sign in with Apple'}
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1">
+                    {isAr ? 'أدخلي Apple ID الخاص بك' : 'Enter your Apple ID'}
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Quick Pick — admin shortcut (Google only) */}
+            {oauthModal === 'google' && (
+              <div className="px-6 pt-3">
+                <button
+                  type="button"
+                  disabled={isOAuthLoading}
+                  onClick={() => handleQuickOAuth('google', 'byhadab@gmail.com', 'Hadab Admin')}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border border-gray-200 hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left disabled:opacity-50"
+                >
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy-600 to-burgundy-800 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    H
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-gray-900 truncate">Hadab Admin</div>
+                    <div className="text-xs text-gray-500 truncate">byhadab@gmail.com</div>
+                  </div>
+                  {isOAuthLoading && oauthEmail === '' && (
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="px-6 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className={`text-[10px] uppercase tracking-widest ${oauthModal === 'apple' ? 'text-gray-400' : 'text-gray-400'}`}>
+                  {isAr ? 'أو' : 'or'}
+                </span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+            </div>
+
+            {/* Email Input Form */}
+            <form onSubmit={handleOAuthSubmit} className="px-6 pb-6 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  {isAr ? 'البريد الإلكتروني' : 'Email address'}
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={oauthEmail}
+                  onChange={(e) => setOauthEmail(e.target.value)}
+                  placeholder={oauthModal === 'apple' ? 'apple-id@icloud.com' : 'you@gmail.com'}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  {isAr ? 'الاسم (اختياري)' : 'Name (optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={oauthName}
+                  onChange={(e) => setOauthName(e.target.value)}
+                  placeholder={isAr ? 'اسمك' : 'Your name'}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isOAuthLoading || !oauthEmail.trim()}
+                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+                  oauthModal === 'apple'
+                    ? 'bg-black text-white hover:bg-gray-900 border border-gray-700'
+                    : 'bg-[#4285F4] text-white hover:bg-[#3367D6]'
+                }`}
+              >
+                {isOAuthLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    {isAr ? 'متابعة' : 'Continue'}
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

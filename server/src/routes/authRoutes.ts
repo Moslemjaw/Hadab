@@ -118,6 +118,68 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// OAuth Login (Google & Apple)
+router.post('/oauth', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { provider, email, name, phone } = req.body;
+
+    if (!email || !provider) {
+      res.status(400).json({ message: 'Email and provider are required' });
+      return;
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    let user = await User.findOne({ email: normalizedEmail });
+
+    const isSuperAdmin = normalizedEmail === 'byhadab@gmail.com';
+
+    if (!user) {
+      const defaultName = name?.trim() || (provider === 'google' ? 'Google Member' : 'Apple Member');
+      user = await User.create({
+        name: defaultName,
+        email: normalizedEmail,
+        phone: phone || '',
+        role: isSuperAdmin ? 'admin' : 'customer',
+        status: isSuperAdmin ? 'vip' : 'active',
+        authProvider: provider,
+        country: 'Kuwait',
+      });
+    } else {
+      if (user.isDisabled) {
+        res.status(403).json({ message: 'This account has been disabled. Please contact support.' });
+        return;
+      }
+
+      if (isSuperAdmin && user.role !== 'admin') {
+        user.role = 'admin';
+        await user.save();
+      }
+    }
+
+    const effectiveRole = isSuperAdmin ? 'admin' : user.role;
+    const secret = process.env.JWT_SECRET || 'hadab_secret_fallback';
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: effectiveRole },
+      secret,
+      { expiresIn: '30d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: effectiveRole,
+        status: user.status,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'OAuth authentication failed' });
+  }
+});
+
 // Get current user profile
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {

@@ -23,6 +23,17 @@ export const api = {
     return data;
   },
 
+  async oauthLogin(payload: { provider: 'google' | 'apple'; email: string; name?: string; phone?: string }) {
+    const res = await fetch(`${API_BASE}/auth/oauth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'OAuth authentication failed');
+    return data;
+  },
+
   async register(userData: { name: string; email: string; password: string; phone?: string }) {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',

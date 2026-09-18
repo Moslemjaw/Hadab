@@ -17,6 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<UserProfile>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<UserProfile>;
+  loginWithOAuth: (provider: 'google' | 'apple', email: string, name?: string, phone?: string) => Promise<UserProfile>;
   logout: () => void;
 }
 
@@ -148,6 +149,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data.user;
   };
 
+  const loginWithOAuth = async (
+    provider: 'google' | 'apple',
+    email: string,
+    name?: string,
+    phone?: string
+  ): Promise<UserProfile> => {
+    const data = await api.oauthLogin({ provider, email, name, phone });
+    localStorage.setItem('hadab_token', data.token);
+    setCookie('hadab_token', data.token, 365);
+    setToken(data.token);
+    setUser(data.user);
+
+    if (data.user.role === 'admin' || email.toLowerCase() === 'byhadab@gmail.com') {
+      localStorage.setItem('hadab_is_admin', 'true');
+      setCookie('hadab_is_admin', 'true', 365);
+    }
+
+    return data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem('hadab_token');
     localStorage.removeItem('hadab_is_admin');
@@ -160,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = user?.role === 'admin' || user?.email.toLowerCase() === 'byhadab@gmail.com';
 
   return (
-    <AuthContext.Provider value={{ user, token, isAdmin, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isAdmin, isLoading, login, register, loginWithOAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );
