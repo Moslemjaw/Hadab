@@ -1919,59 +1919,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           {activeTab === 'orders' && (
             <div className="space-y-6">
               
-              {/* iPhone Order Push Alert Strip */}
-              <div className="bg-[#2E221B] text-cream-100 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm border border-brown-800">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                    isPushSubscribed ? "bg-emerald-500/20 text-emerald-300" : "bg-cream-100/10 text-cream-200"
-                  }`}>
-                    <Bell size={20} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-serif text-sm font-bold text-cream-100">
-                        {isAr ? 'إشعارات الطلبات الفورية على الآيفون' : 'Instant iPhone Order Alerts'}
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                        isPushSubscribed ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isPushSubscribed ? "bg-emerald-400" : "bg-amber-400"}`} />
-                        {isPushSubscribed ? (isAr ? 'متصل ومفعل' : 'Connected') : (isAr ? 'غير مفعل' : 'Not Connected')}
-                      </span>
-                    </div>
-                    <p className="text-xs text-cream-200/70 mt-0.5">
-                      {isAr
-                        ? 'تصلك إشعارات حية ومباشرة على شاشة قفل الآيفون فور قيام أي عميل بطلب جديد.'
-                        : 'Receive real-time push alerts on your lock screen as soon as an order is placed.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  {isPushSubscribed ? (
-                    <button
-                      type="button"
-                      onClick={handleSendTestPush}
-                      disabled={isPushLoading}
-                      className="px-4 py-2 rounded-xl bg-cream-100/10 hover:bg-cream-100/20 text-cream-100 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <Send size={13} />
-                      <span>{isAr ? 'إرسال إشعار تجريبي' : 'Send Test Push'}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleTogglePush}
-                      disabled={isPushLoading}
-                      className="px-4 py-2 rounded-xl bg-blush-300 hover:bg-blush-200 text-[#2E221B] text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-                    >
-                      <Smartphone size={14} />
-                      <span>{isAr ? 'تفعيل الإشعارات على هذا الجهاز' : 'Enable iPhone Alerts'}</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
               {/* Order Status Filters */}
               <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
                 {['all', 'pending', 'handmade', 'shipped', 'delivered'].map((st) => (
