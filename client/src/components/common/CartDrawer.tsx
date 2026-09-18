@@ -908,8 +908,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                 <p className="text-xs text-brown-600 font-light leading-relaxed max-w-xs">
                   {isAr
-                    ? 'بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى باب منزلك.'
-                    : 'We are preparing your handmade pieces with care in Jordan and shipping them straight to your house.'}
+                    ? 'بدأنا بتجهيز وحياكة قطعك اليدوية بكل حب لشحنها مباشرة إلى باب منزلك.'
+                    : 'We are preparing your handmade pieces with care and shipping them straight to your house.'}
                 </p>
 
                 {/* Prominent Payment Notice — Luxury Cream Card */}

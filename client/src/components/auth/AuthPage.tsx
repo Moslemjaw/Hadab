@@ -169,8 +169,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               </h2>
               <p className="text-xs sm:text-sm text-brown-600 font-light leading-relaxed">
                 {isAr
-                  ? 'مشروعنا المنزلي مقره الأردن ونشحن جميع القطع المحبوكة يدوياً مباشرة إلى الكويت. سجلي دخولك لمتابعة طلباتك.'
-                  : 'Handmade crochet & knitwear crafted with care in Jordan and shipped directly to Kuwait. Sign in to track your orders.'}
+                  ? 'قطع كروشيه مشغولة يدوياً بحب وعناية ونشحنها إلى جميع أنحاء العالم. سجلي دخولك لمتابعة طلباتك.'
+                  : 'Handmade crochet & knitwear crafted with care and shipped directly to your doorstep worldwide. Sign in to track your orders.'}
               </p>
             </div>
 

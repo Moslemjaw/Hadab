@@ -286,7 +286,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
               <span>•</span>
               <span className="flex items-center gap-1">
                 <MapPin size={11} className="text-burgundy-600" />
-                <span>{isAr ? 'الكويت' : 'Kuwait'}</span>
+                <span>{(user as any)?.city || (user as any)?.country || (isAr ? 'عميل مميز' : 'Valued Patron')}</span>
               </span>
             </p>
           </div>
@@ -605,12 +605,12 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
           <div className="bg-white/80 rounded-2xl p-5 sm:p-7 border border-brown-200/70 shadow-xs space-y-4">
             <div>
               <h2 className="font-serif text-lg text-brown-950 font-normal">
-                {isAr ? 'عنوان التوصيل في الكويت' : 'Kuwait Delivery Address'}
+                {isAr ? 'عنوان التوصيل' : 'Delivery Address'}
               </h2>
               <p className="text-xs text-brown-500 font-light mt-0.5">
                 {isAr
-                  ? 'يتم استخدام هذا العنوان لتسليم جميع طلباتك المشحونة من مشغلنا بالأردن.'
-                  : 'Used for direct doorstep delivery of all your handcrafted pieces across Kuwait.'}
+                  ? 'يتم استخدام هذا العنوان لتسليم جميع طلباتك المشحونة مباشرة إلى باب منزلك.'
+                  : 'Used for direct doorstep delivery of all your handcrafted pieces.'}
               </p>
             </div>
 
@@ -753,7 +753,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
               <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">
                 <div className="font-semibold text-brown-900">{isAr ? '1. حياكة يدوية' : '1. Handmade'}</div>
                 <p className="text-[11px] text-brown-500 font-light">
-                  {isAr ? 'تُحاك كل قطعة بعناية في مشغلنا بالأردن.' : 'Crafted with care in our Jordan workshop.'}
+                  {isAr ? 'تُحاك كل قطعة بعناية فائقة يدوياً.' : 'Crafted with immense care and attention to detail.'}
                 </p>
               </div>
               <div className="p-3.5 rounded-xl bg-white/80 border border-brown-200/60 space-y-1">

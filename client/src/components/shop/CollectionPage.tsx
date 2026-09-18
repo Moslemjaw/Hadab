@@ -280,7 +280,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             <div>
               <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream-100/10 border border-cream-200/20 text-[10px] uppercase font-semibold tracking-[0.26em] text-blush-200 mb-3">
                 <Sparkles size={11} className="text-blush-300" />
-                <span>{language === 'ar' ? 'الأرشيف الدائم • الأردن والكويت' : 'The Permanent Archive • Jordan & Kuwait'}</span>
+                <span>{language === 'ar' ? 'الأرشيف الدائم' : 'The Permanent Archive'}</span>
               </div>
               <div className="flex items-baseline gap-2.5">
                 <h1 className="font-serif text-2xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-cream-100 leading-tight">
@@ -525,8 +525,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             </h3>
             <p className="text-xs sm:text-sm text-brown-600 font-light mt-2 max-w-md leading-relaxed">
               {language === 'ar'
-                ? 'يعمل حرفيونا في الأردن حالياً على حياكة قطع وتصاميم كروشيه جديدة بحبال وخيوط قطنية طبيعية. ترقبوا التشكيلة الجديدة قريباً!'
-                : 'Our artisan team in Jordan is currently hand-hooking new bespoke crochet pieces from natural cotton cords. Stay tuned for our new drop!'}
+                ? 'يعمل فريقنا الحرفي حالياً على حياكة قطع وتصاميم كروشيه جديدة بحبال وخيوط قطنية طبيعية. ترقبوا التشكيلة الجديدة قريباً!'
+                : 'Our artisan team is currently hand-hooking new bespoke crochet pieces from natural cotton cords. Stay tuned for our new drop!'}
             </p>
             {isAdmin && (
               <a

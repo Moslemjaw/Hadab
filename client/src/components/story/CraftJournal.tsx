@@ -48,7 +48,7 @@ export const CraftJournal: React.FC = () => {
 
             <div className="pt-2 flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-brown-700">
               <span className="w-1.5 h-1.5 rounded-full bg-burgundy-500" />
-              <span>{language === 'ar' ? 'الأردن • الكويت' : 'Jordan • Kuwait'}</span>
+              <span>{language === 'ar' ? 'صنع يدوي • شحن لكافة أنحاء العالم' : 'Handmade • Worldwide Shipping'}</span>
             </div>
           </div>
 

@@ -1446,7 +1446,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   <div className="font-serif text-3xl font-medium text-brown-900">{inCraftCount}</div>
                   <div className="mt-4 flex flex-col gap-2">
                     <div className="text-[11px] text-brown-500 font-light">
-                      {isAr ? 'محبوكة حالياً بواسطة الحرفيين' : 'Hand-hooked in Jordan & Kuwait'}
+                      {isAr ? 'محبوكة حالياً بواسطة الحرفيين' : 'Handcrafted by our artisans'}
                     </div>
                     <div className="w-full h-1 bg-brown-100 rounded-full overflow-hidden flex">
                        <div className="h-full bg-blush-400" style={{ width: '40%' }}></div>
