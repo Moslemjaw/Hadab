@@ -192,7 +192,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   };
 
   // Fulfillment badge (if order is in production/transit)
-  const getFulfillmentPill = (status: string, statusArabic?: string) => {
+  const getFulfillmentPill = (status: string, _statusArabic?: string) => {
     switch (status) {
       case 'delivered':
         return {
@@ -206,21 +206,17 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
           icon: Truck,
           color: 'text-sky-700 bg-sky-100/50',
         };
+      case 'handmade':
       case 'finishing':
-        return {
-          label: isAr ? 'تشطيب وتغليف' : 'Finishing',
-          icon: Clock,
-          color: 'text-amber-700 bg-amber-100/50',
-        };
       case 'hooking':
         return {
-          label: isAr ? (statusArabic || 'قيد الحياكة') : 'Handcrafting',
+          label: isAr ? 'حياكة يدوية' : 'Handmade',
           icon: Clock,
           color: 'text-amber-700 bg-amber-100/50',
         };
       case 'pending':
         return {
-          label: isAr ? 'قيد الانتظار' : 'Order Received',
+          label: isAr ? 'تم الاستلام' : 'Pending',
           icon: Clock,
           color: 'text-brown-700 bg-brown-100/50',
         };
@@ -498,11 +494,9 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                                 ? isAr ? 'تم التسليم' : 'Delivered'
                                 : order.status === 'shipped'
                                 ? isAr ? 'تم الشحن' : 'Shipped'
-                                : order.status === 'finishing'
-                                ? isAr ? 'تشطيب وتغليف' : 'Finishing & Wrapping'
-                                : order.status === 'hooking'
-                                ? isAr ? 'قيد الحياكة اليدوية' : 'Handcrafting'
-                                : isAr ? 'قيد الانتظار' : 'Order Received'}
+                                : order.status === 'handmade' || order.status === 'hooking' || order.status === 'finishing'
+                                ? isAr ? 'حياكة يدوية' : 'Handmade'
+                                : isAr ? 'تم الاستلام' : 'Pending'}
                             </span>
                           </div>
                         </div>
@@ -568,9 +562,9 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                         <div className="pt-2 border-t border-brown-200/50">
                           <div className="grid grid-cols-4 gap-1 text-center">
                             {[
-                              { title: isAr ? 'تأكيد الحجز' : 'Confirmed', active: true },
-                              { title: isAr ? 'حياكة بالأردن' : 'Handmade', active: ['hooking', 'finishing', 'shipped', 'delivered'].includes(order.status) },
-                              { title: isAr ? 'شحن للكويت' : 'Shipping', active: order.status === 'shipped' || order.status === 'delivered' },
+                              { title: isAr ? 'تم الاستلام' : 'Pending', active: true },
+                              { title: isAr ? 'حياكة يدوية' : 'Handmade', active: ['handmade', 'hooking', 'finishing', 'shipped', 'delivered'].includes(order.status) },
+                              { title: isAr ? 'تم الشحن' : 'Shipped', active: order.status === 'shipped' || order.status === 'delivered' },
                               { title: isAr ? 'تم التسليم' : 'Delivered', active: order.status === 'delivered' },
                             ].map((step, idx) => (
                               <div key={idx} className="flex flex-col items-center">

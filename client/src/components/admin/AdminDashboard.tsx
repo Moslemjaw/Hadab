@@ -358,7 +358,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         o.orderNumber.toLowerCase().includes(globalSearch.toLowerCase()) ||
         o.customerName.toLowerCase().includes(globalSearch.toLowerCase()) ||
         o.customerEmail.toLowerCase().includes(globalSearch.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all' ||
+        o.status === statusFilter ||
+        (statusFilter === 'handmade' && (o.status === 'hooking' || o.status === 'finishing'));
       return matchesSearch && matchesStatus;
     });
   }, [ordersList, globalSearch, statusFilter]);
@@ -374,7 +377,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   // KPIs
   const totalRevenue = ordersList.reduce((sum, o) => sum + o.total, 0);
   const activeOrdersCount = ordersList.filter((o) => o.status !== 'delivered').length;
-  const inCraftCount = ordersList.filter((o) => o.status === 'hooking' || o.status === 'finishing').length;
+  const inCraftCount = ordersList.filter((o) => o.status === 'handmade' || o.status === 'hooking' || o.status === 'finishing').length;
 
   // Dynamic 6-Month Revenue Data from orders
   const monthlyRevenueData = useMemo(() => {
@@ -417,10 +420,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     tactileAudio.playScrubTick(340);
     const statusLabels: Record<string, string> = {
       pending: isAr ? 'قيد الانتظار' : 'Pending',
-      hooking: isAr ? 'قيد الحياكة اليدوية' : 'Hooking in Progress',
-      finishing: isAr ? 'تشطيب الأطراف والأرشيف' : 'Finishing & Wrapping',
-      shipped: isAr ? 'تم الشحن' : 'Dispatched',
+      handmade: isAr ? 'حياكة يدوية' : 'Handmade',
+      shipped: isAr ? 'تم الشحن' : 'Shipped',
       delivered: isAr ? 'تم التسليم' : 'Delivered',
+      hooking: isAr ? 'حياكة يدوية' : 'Handmade',
+      finishing: isAr ? 'حياكة يدوية' : 'Handmade',
     };
 
     setOrdersList((prev) =>
@@ -1580,13 +1584,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               <td className="py-4">
                                 <span
                                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wide ${
-                                    order.status === 'hooking'
+                                    order.status === 'handmade' || order.status === 'hooking' || order.status === 'finishing'
                                       ? 'bg-blush-50 text-burgundy-700 border border-blush-200'
-                                      : order.status === 'finishing'
-                                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
                                       : order.status === 'shipped'
                                       ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                      : 'bg-sage-50 text-sage-800 border border-sage-200'
+                                      : order.status === 'delivered'
+                                      ? 'bg-sage-50 text-sage-800 border border-sage-200'
+                                      : 'bg-cream-100 text-brown-700 border border-brown-200'
                                   }`}
                                 >
                                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -1853,7 +1857,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               
               {/* Order Status Filters */}
               <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                {['all', 'pending', 'hooking', 'finishing', 'shipped', 'delivered'].map((st) => (
+                {['all', 'pending', 'handmade', 'shipped', 'delivered'].map((st) => (
                   <button
                     key={st}
                     type="button"
@@ -1867,7 +1871,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         : 'bg-[#FAF6F0] text-brown-600 border border-brown-200/60 hover:bg-cream-200'
                     }`}
                   >
-                    {st === 'all' ? (isAr ? 'جميع الطلبات' : 'All Orders') : st}
+                    {st === 'all'
+                      ? (isAr ? 'جميع الطلبات' : 'All Orders')
+                      : st === 'pending'
+                      ? (isAr ? 'قيد الانتظار' : 'Pending')
+                      : st === 'handmade'
+                      ? (isAr ? 'حياكة يدوية' : 'Handmade')
+                      : st === 'shipped'
+                      ? (isAr ? 'تم الشحن' : 'Shipped')
+                      : (isAr ? 'تم التسليم' : 'Delivered')}
                   </button>
                 ))}
               </div>
@@ -1889,8 +1901,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   const isExpanded = expandedOrderId === order.id;
                   
                   // Timeline logic
-                  const stages = ['pending', 'hooking', 'finishing', 'shipped', 'delivered'];
-                  const cleanStatus = stages.includes(order.status) ? order.status : 'pending';
+                  const stages = ['pending', 'handmade', 'shipped', 'delivered'];
+                  const cleanStatus = (order.status === 'hooking' || order.status === 'finishing')
+                    ? 'handmade'
+                    : stages.includes(order.status)
+                    ? order.status
+                    : 'pending';
                   const currentIndex = stages.indexOf(cleanStatus);
 
                   return (
@@ -1951,8 +1967,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                            {/* Order Fulfillment Status Badge */}
                            <span
                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                               order.status === 'hooking' ? 'bg-blush-100 text-burgundy-700' : 
-                               order.status === 'finishing' ? 'bg-amber-100 text-amber-800' : 
+                               order.status === 'handmade' || order.status === 'hooking' || order.status === 'finishing' ? 'bg-blush-100 text-burgundy-700' : 
                                order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
                                order.status === 'delivered' ? 'bg-sage-100 text-sage-800' :
                                'bg-cream-100 text-brown-600'
@@ -1960,10 +1975,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                            >
                              {order.status === 'pending'
                                ? isAr ? 'قيد الانتظار' : 'Pending'
-                               : order.status === 'hooking'
-                               ? isAr ? 'قيد الحياكة' : 'Hooking'
-                               : order.status === 'finishing'
-                               ? isAr ? 'تشطيب' : 'Finishing'
+                               : order.status === 'handmade' || order.status === 'hooking' || order.status === 'finishing'
+                               ? isAr ? 'حياكة يدوية' : 'Handmade'
                                : order.status === 'shipped'
                                ? isAr ? 'تم الشحن' : 'Shipped'
                                : order.status === 'delivered'
@@ -2001,7 +2014,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                                       {isCompleted && <Check size={10} strokeWidth={3} />}
                                     </div>
                                     <span className={`absolute top-8 text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${isCompleted ? 'text-brown-900' : 'text-brown-400'}`}>
-                                      {stage}
+                                      {stage === 'pending'
+                                        ? (isAr ? 'قيد الانتظار' : 'Pending')
+                                        : stage === 'handmade'
+                                        ? (isAr ? 'حياكة يدوية' : 'Handmade')
+                                        : stage === 'shipped'
+                                        ? (isAr ? 'تم الشحن' : 'Shipped')
+                                        : (isAr ? 'تم التسليم' : 'Delivered')}
                                     </span>
                                   </div>
                                 );
@@ -2168,45 +2187,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                                   
                                   <div className="h-px bg-brown-200/50"></div>
                                   
-                                  {/* Payment Status Dropdown (Admin Only) */}
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs font-semibold text-brown-700">
-                                      {isAr ? 'حالة الدفع:' : 'Payment Status:'}
-                                    </span>
-                                    <select
-                                      value={order.paymentStatus || 'unpaid'}
-                                      onChange={(e) => handleUpdatePaymentStatus(order.id, e.target.value as any)}
-                                      className={`flex-1 max-w-[150px] px-2.5 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer shadow-xs focus:outline-none transition-colors ${
-                                        (order.paymentStatus || 'unpaid') === 'paid'
-                                          ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                                          : (order.paymentStatus || 'unpaid') === 'contacting'
-                                          ? 'bg-sky-50 border-sky-300 text-sky-800'
-                                          : 'bg-amber-50 border-amber-300 text-amber-800'
-                                      }`}
-                                    >
-                                      <option value="unpaid">{isAr ? 'غير مدفوع' : 'Unpaid'}</option>
-                                      <option value="contacting">{isAr ? 'جاري التواصل' : 'Contacting'}</option>
-                                      <option value="paid">{isAr ? 'تم الدفع' : 'Paid'}</option>
-                                    </select>
-                                  </div>
+                                   {/* Payment Status Dropdown (Admin Only) */}
+                                   <div className="flex items-center justify-between gap-2">
+                                     <span className="text-xs font-semibold text-brown-700">
+                                       {isAr ? 'حالة الدفع:' : 'Payment Status:'}
+                                     </span>
+                                     <select
+                                       value={order.paymentStatus || 'unpaid'}
+                                       onChange={(e) => handleUpdatePaymentStatus(order.id, e.target.value as any)}
+                                       className={`flex-1 max-w-[150px] px-2.5 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer shadow-xs focus:outline-none transition-colors ${
+                                         (order.paymentStatus || 'unpaid') === 'paid'
+                                           ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                                           : (order.paymentStatus || 'unpaid') === 'contacting'
+                                           ? 'bg-sky-50 border-sky-300 text-sky-800'
+                                           : 'bg-amber-50 border-amber-300 text-amber-800'
+                                       }`}
+                                     >
+                                       <option value="unpaid">{isAr ? 'غير مدفوع' : 'Unpaid'}</option>
+                                       <option value="contacting">{isAr ? 'جاري التواصل' : 'Contacting'}</option>
+                                       <option value="paid">{isAr ? 'تم الدفع' : 'Paid'}</option>
+                                     </select>
+                                   </div>
 
-                                  {/* Order Fulfillment Status Dropdown (Admin Only) */}
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs font-semibold text-brown-700">
-                                      {isAr ? 'حالة الطلب:' : 'Order Status:'}
-                                    </span>
-                                    <select
-                                      value={stages.includes(order.status) ? order.status : 'pending'}
-                                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
-                                      className="flex-1 max-w-[150px] px-2.5 py-1.5 rounded-lg bg-white border border-brown-300 text-xs font-semibold text-brown-900 focus:outline-none focus:border-blush-400 cursor-pointer shadow-xs"
-                                    >
-                                      <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
-                                      <option value="hooking">{isAr ? 'قيد الحياكة' : 'Hooking in Progress'}</option>
-                                      <option value="finishing">{isAr ? 'تشطيب وتغليف' : 'Finishing & Wrapping'}</option>
-                                      <option value="shipped">{isAr ? 'تم الشحن' : 'Shipped'}</option>
-                                      <option value="delivered">{isAr ? 'تم التسليم' : 'Delivered'}</option>
-                                    </select>
-                                  </div>
+                                   {/* Order Fulfillment Status Dropdown (Admin Only) */}
+                                   <div className="flex items-center justify-between gap-2">
+                                     <span className="text-xs font-semibold text-brown-700">
+                                       {isAr ? 'حالة الطلب:' : 'Order Status:'}
+                                     </span>
+                                     <select
+                                       value={order.status === 'hooking' || order.status === 'finishing' ? 'handmade' : stages.includes(order.status) ? order.status : 'pending'}
+                                       onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as any)}
+                                       className="flex-1 max-w-[150px] px-2.5 py-1.5 rounded-lg bg-white border border-brown-300 text-xs font-semibold text-brown-900 focus:outline-none focus:border-blush-400 cursor-pointer shadow-xs"
+                                     >
+                                       <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
+                                       <option value="handmade">{isAr ? 'حياكة يدوية' : 'Handmade'}</option>
+                                       <option value="shipped">{isAr ? 'تم الشحن' : 'Shipped'}</option>
+                                       <option value="delivered">{isAr ? 'تم التسليم' : 'Delivered'}</option>
+                                     </select>
+                                   </div>
                                 </div>
                               </div>
                             </div>
