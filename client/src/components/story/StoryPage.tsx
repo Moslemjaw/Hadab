@@ -26,7 +26,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         aria-label="Breadcrumb"
         className="sticky top-[53px] sm:top-[63px] z-30 border-b border-brown-200/60 bg-cream-200/90 backdrop-blur-md transition-all"
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-3.5 flex items-center justify-between">
           <button
             type="button"
             onClick={onBackToHome}
@@ -55,15 +55,15 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-5 sm:px-8 pt-14 sm:pt-24 space-y-16 sm:space-y-24">
-        {/* Section 1: Minimal Opening */}
-        <header className="text-center space-y-5 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cream-200/70 border border-brown-200/80 text-brown-600 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] font-semibold">
-            <Sparkles size={12} className="text-brown-500" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-12 sm:pt-20 lg:pt-28 space-y-20 sm:space-y-32 lg:space-y-40">
+        {/* Section 1: Editorial Opening Hero */}
+        <header className="text-center space-y-6 sm:space-y-8 max-w-5xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cream-100/80 border border-brown-200/80 text-brown-600 text-[10px] sm:text-xs uppercase tracking-[0.3em] font-semibold shadow-2xs">
+            <Sparkles size={12} className="text-burgundy-600" />
             <span>{isAr ? 'قصتنا' : 'Our Story'}</span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl text-brown-900 font-normal leading-[1.18] tracking-tight">
+          <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5rem] text-brown-950 font-normal leading-[1.14] tracking-tight">
             {isAr ? (
               <>
                 بدأت <span className="font-arabic italic">هَدَب</span> بحب صنع الأشياء باليد.
@@ -75,35 +75,35 @@ export const StoryPage: React.FC<StoryPageProps> = ({
             )}
           </h1>
 
-          <div className="w-12 h-px bg-brown-300/70 mx-auto mt-6" />
+          <div className="w-16 h-px bg-brown-300/80 mx-auto mt-6 sm:mt-8" />
         </header>
 
-        {/* Section 2: Personal Memory (Teta at 12) with Artistic Asymmetric Photo */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center">
-          <div className="md:col-span-5 order-2 md:order-1">
-            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-warm border border-brown-200/80 bg-cream-100 group">
+        {/* Section 2: Personal Memory (Teta at 12) with Rich Editorial Spread */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center">
+          <div className="lg:col-span-5 order-2 lg:order-1">
+            <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-3xl lg:rounded-[2.5rem] overflow-hidden shadow-warm border border-brown-200/80 bg-cream-100 group max-w-md lg:max-w-none mx-auto">
               <img
                 src="/products/hadab-bag.jpg"
                 alt={isAr ? 'حياكة يدوية' : 'Handmade crochet piece'}
                 className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brown-950/40 via-transparent to-transparent" />
-              <div className="absolute bottom-4 inset-x-4 text-center">
-                <span className="text-[10px] uppercase tracking-[0.24em] text-cream-100/90 font-medium">
+              <div className="absolute bottom-5 inset-x-6 text-center">
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.26em] text-cream-100/95 font-medium">
                   {isAr ? 'حياكة يدوية بالغرزة الواحدة' : 'Handmade stitch by stitch'}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="md:col-span-7 order-1 md:order-2 space-y-4">
-            <span className="text-[11px] uppercase tracking-[0.28em] text-brown-400 font-semibold block">
+          <div className="lg:col-span-7 order-1 lg:order-2 space-y-5 sm:space-y-7 lg:pl-4">
+            <span className="text-xs uppercase tracking-[0.3em] text-brown-400 font-semibold block">
               {isAr ? 'البداية • من الذاكرة' : 'The Beginning'}
             </span>
-            <p className="font-serif text-xl sm:text-2xl md:text-3xl text-brown-900 font-normal leading-relaxed">
+            <p className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] text-brown-950 font-normal leading-[1.28]">
               {isAr ? (
                 <>
-                  تعلّمتُ الكروشيه من <span className="italic font-arabic text-brown-900 font-medium">تيتة</span> عندما كنتُ في الثانية عشرة من عمري.
+                  تعلّمتُ الكروشيه من <span className="italic font-arabic text-brown-950 font-medium">تيتة</span> عندما كنتُ في الثانية عشرة من عمري.
                 </>
               ) : (
                 <>
@@ -111,7 +111,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
                 </>
               )}
             </p>
-            <p className="text-sm sm:text-base md:text-lg text-brown-600 font-light leading-relaxed pt-2">
+            <p className="text-base sm:text-lg md:text-xl text-brown-600 font-light leading-relaxed max-w-2xl">
               {isAr ? (
                 'ما بدأ كشيء أصنعه لمجرد المتعة، تحوّل رويداً رويداً إلى وسيلة لأبتكر قطعاً صغيرة تحمل روحاً خاصة، مختلفة، ومصنوعة لتُحب.'
               ) : (
@@ -122,29 +122,29 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         </section>
 
         {/* Section 3: The Centerpiece — Etymology of HADAB — هَدَب */}
-        <section className="p-8 sm:p-14 md:p-16 rounded-3xl bg-cream-100/90 border border-brown-300/60 shadow-warm relative overflow-hidden text-center space-y-6">
+        <section className="p-8 sm:p-14 lg:p-20 xl:p-24 rounded-3xl lg:rounded-[2.5rem] bg-cream-100/90 border border-brown-300/60 shadow-warm relative overflow-hidden text-center space-y-8 lg:space-y-10">
           {/* Subtle Watermark Motifs */}
-          <div className="absolute -bottom-10 -right-10 opacity-[0.03] select-none pointer-events-none font-arabic text-[14rem] leading-none text-brown-900">
+          <div className="absolute -bottom-12 -right-12 opacity-[0.03] select-none pointer-events-none font-arabic text-[16rem] lg:text-[24rem] leading-none text-brown-900">
             هَدَب
           </div>
 
-          <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+          <div className="relative z-10 max-w-4xl mx-auto space-y-7 lg:space-y-9">
             {/* Arabic Calligraphy & Pronunciation */}
-            <div className="space-y-2">
-              <span className="font-arabic text-5xl sm:text-6xl md:text-7xl text-brown-900 font-normal block leading-tight">
+            <div className="space-y-3">
+              <span className="font-arabic text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-brown-950 font-normal block leading-tight">
                 هَدَب
               </span>
-              <div className="flex items-center justify-center gap-3 text-xs uppercase tracking-[0.25em] text-brown-500 font-mono">
+              <div className="flex items-center justify-center gap-3 text-xs sm:text-sm uppercase tracking-[0.3em] text-brown-500 font-mono">
                 <span>[ ha · dab ]</span>
                 <span>•</span>
                 <span>{isAr ? 'اسم عربي' : 'Arabic Noun'}</span>
               </div>
             </div>
 
-            <div className="w-10 h-px bg-brown-300/80 mx-auto" />
+            <div className="w-14 h-px bg-brown-300/80 mx-auto" />
 
             {/* The Definition */}
-            <p className="font-serif text-lg sm:text-xl md:text-2xl text-brown-900 font-normal leading-relaxed">
+            <p className="font-serif text-xl sm:text-2xl md:text-3xl lg:text-[2rem] text-brown-950 font-normal leading-relaxed max-w-3xl mx-auto">
               {isAr ? (
                 <>
                   اسم <span className="font-arabic font-medium">هَدَب</span> يأتي من التفاصيل الصغيرة. في العربية،{' '}
@@ -159,11 +159,11 @@ export const StoryPage: React.FC<StoryPageProps> = ({
             </p>
 
             {/* Essence Highlight */}
-            <div className="pt-4 border-t border-brown-300/50 space-y-2">
-              <p className="text-xs uppercase tracking-[0.28em] font-bold text-brown-500">
+            <div className="pt-6 sm:pt-8 border-t border-brown-300/50 max-w-2xl mx-auto space-y-3">
+              <p className="text-xs uppercase tracking-[0.3em] font-bold text-brown-500">
                 {isAr ? 'هذا هو جوهر هَدَب' : 'That’s what HADAB is about'}
               </p>
-              <p className="font-serif italic text-base sm:text-lg md:text-xl text-brown-900">
+              <p className="font-serif italic text-lg sm:text-xl md:text-2xl lg:text-3xl text-brown-900 leading-snug">
                 {isAr
                   ? '«قطع مصنوعة يدوياً، تفاصيل مليئة بالعناية، وأشياء تشبهك.»'
                   : '“Handmade pieces, thoughtful details, and things that feel like you.”'}
@@ -173,19 +173,19 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         </section>
 
         {/* Section 4: Evolution & The Creative Space */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center">
-          <div className="md:col-span-7 space-y-4">
-            <span className="text-[11px] uppercase tracking-[0.28em] text-brown-400 font-semibold block">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center">
+          <div className="lg:col-span-7 order-2 lg:order-1 space-y-5 sm:space-y-7 lg:pr-4">
+            <span className="text-xs uppercase tracking-[0.3em] text-brown-400 font-semibold block">
               {isAr ? 'رؤيتنا • أكثر من حرفة' : 'The Evolution'}
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-brown-900 font-normal leading-snug">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] text-brown-950 font-normal leading-[1.28]">
               {isAr ? (
                 'بدأنا بالكروشيه، لكن هَدَب لم تكن يوماً لتقتصر على حرفة واحدة.'
               ) : (
                 'We started with crochet, but HADAB was never meant to be limited to one craft.'
               )}
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-brown-600 font-light leading-relaxed pt-2">
+            <p className="text-base sm:text-lg md:text-xl text-brown-600 font-light leading-relaxed max-w-2xl">
               {isAr ? (
                 'إنها مساحة حرة للابتكار، والتجربة، وتحويل الأفكار الصغيرة إلى قطع تقتنيها وتبقى معك.'
               ) : (
@@ -194,16 +194,16 @@ export const StoryPage: React.FC<StoryPageProps> = ({
             </p>
           </div>
 
-          <div className="md:col-span-5">
-            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-warm border border-brown-200/80 bg-cream-100 group">
+          <div className="lg:col-span-5 order-1 lg:order-2">
+            <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-3xl lg:rounded-[2.5rem] overflow-hidden shadow-warm border border-brown-200/80 bg-cream-100 group max-w-md lg:max-w-none mx-auto">
               <img
                 src="/products/hadab-cardigan.jpg"
                 alt={isAr ? 'تفاصيل حرفية هَدَب' : 'HADAB craft detail'}
                 className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brown-950/40 via-transparent to-transparent" />
-              <div className="absolute bottom-4 inset-x-4 text-center">
-                <span className="text-[10px] uppercase tracking-[0.24em] text-cream-100/90 font-medium">
+              <div className="absolute bottom-5 inset-x-6 text-center">
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.26em] text-cream-100/95 font-medium">
                   {isAr ? 'إبداع مستمر' : 'Craft & Exploration'}
                 </span>
               </div>
@@ -212,23 +212,23 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         </section>
 
         {/* Section 5: Signature Close & Invitation */}
-        <footer className="pt-8 sm:pt-12 pb-6 text-center space-y-8 border-t border-brown-200/60">
-          <div className="space-y-3">
-            <p className="font-serif italic text-2xl sm:text-3xl md:text-4xl text-brown-900 font-normal">
+        <footer className="pt-12 sm:pt-20 lg:pt-24 pb-8 text-center space-y-8 sm:space-y-10 border-t border-brown-200/60 max-w-4xl mx-auto">
+          <div className="space-y-4">
+            <p className="font-serif italic text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-brown-950 font-normal">
               {isAr ? '«لمسة من هَدَب، صُنعت لأجلك.»' : '“A little bit of HADAB, made for you.”'}
             </p>
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <span className="w-8 h-px bg-brown-300" />
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <span className="w-10 h-px bg-brown-300" />
               <img src="/motif-cream.png" alt="HADAB" className="w-5 h-5 opacity-40 invert object-contain" />
-              <span className="w-8 h-px bg-brown-300" />
+              <span className="w-10 h-px bg-brown-300" />
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <button
               type="button"
               onClick={onExploreCollection}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-brown-900 hover:bg-brown-950 text-cream-100 text-xs uppercase tracking-[0.2em] font-semibold shadow-warm transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
+              className="w-full sm:w-auto px-9 py-4 rounded-full bg-brown-900 hover:bg-brown-950 text-cream-100 text-xs uppercase tracking-[0.22em] font-semibold shadow-warm transition-all duration-300 hover:shadow-lg active:scale-95 cursor-pointer flex items-center justify-center gap-2.5 min-h-[48px]"
             >
               <span>{isAr ? 'استكشف المجموعة' : 'Explore the Pieces'}</span>
               <ArrowRight size={14} className={isAr ? 'rotate-180' : ''} />
@@ -237,7 +237,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
             <button
               type="button"
               onClick={onBackToHome}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-full border border-brown-300 hover:border-brown-400 bg-white hover:bg-cream-200/60 text-brown-800 text-xs uppercase tracking-[0.2em] font-semibold transition-all duration-300 active:scale-95 cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto px-8 py-4 rounded-full border border-brown-300 hover:border-brown-400 bg-white hover:bg-cream-100 text-brown-800 text-xs uppercase tracking-[0.22em] font-semibold transition-all duration-300 active:scale-95 cursor-pointer min-h-[48px]"
             >
               <span>{isAr ? 'العودة للرئيسية' : 'Back to Home'}</span>
             </button>
