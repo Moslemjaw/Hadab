@@ -1107,8 +1107,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         `}
       >
         <div>
-          {/* Brand Header: Logo Only, Prominent & Clean */}
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#3D2D25]/70">
+          {/* Brand Header: Logo Centered & Clean */}
+          <div className="relative flex items-center justify-center pb-6 mb-6 border-b border-[#3D2D25]/70">
             <button
               type="button"
               onClick={() => {
@@ -1116,18 +1116,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 setActiveTab('overview');
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }}
-              className="flex items-center cursor-pointer group py-1"
+              className="flex items-center justify-center cursor-pointer group py-1"
               title={isAr ? 'الصفحة الرئيسية - هَدَب' : 'HADAB Overview'}
             >
               <img
                 src={isAr ? '/arabic.png' : '/PNG-HADAB-CREAM.png'}
                 alt="HADAB"
-                className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-10 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </button>
             <button
               type="button"
-              className="md:hidden p-2 text-brown-400 hover:text-white rounded-xl active:bg-white/10"
+              className={`md:hidden absolute ${isAr ? 'left-0' : 'right-0'} p-2 text-brown-400 hover:text-white rounded-xl active:bg-white/10`}
               onClick={() => setIsSidebarOpen(false)}
               aria-label="Close sidebar"
             >
