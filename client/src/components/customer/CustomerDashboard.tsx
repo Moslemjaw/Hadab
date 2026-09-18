@@ -230,10 +230,10 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-brown-800 font-sans pb-24 selection:bg-blush-200 selection:text-brown-900">
+    <div className="min-h-screen bg-cream-200 text-brown-800 font-sans pb-24 selection:bg-blush-200 selection:text-brown-900">
       
       {/* Top Header Bar - Minimal & Airy */}
-      <header className="sticky top-0 z-30 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-brown-200/50">
+      <header className="sticky top-0 z-30 bg-cream-200/95 backdrop-blur-md border-b border-brown-200/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <button
             type="button"
@@ -473,7 +473,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 
                     {/* Expanded Clean Section (NO nested boxes!) */}
                     {isExpanded && (
-                      <div className="border-t border-brown-200/50 bg-[#FAF7F2]/50 p-4 sm:p-5 space-y-4 animate-fade-in text-xs">
+                      <div className="border-t border-brown-200/50 bg-cream-100/60 p-4 sm:p-5 space-y-4 animate-fade-in text-xs">
                         
                         {/* Payment & Order Status Strip (Managed by Admin) */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-white rounded-xl border border-brown-200/60 shadow-xs">
@@ -633,7 +633,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
                     placeholder="e.g. Salmiya, Rawda..."
-                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
+                    className="w-full py-2.5 px-3 rounded-xl bg-cream-50 border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
                 <div>
@@ -646,7 +646,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     value={block}
                     onChange={(e) => setBlock(e.target.value)}
                     placeholder="e.g. 4"
-                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
+                    className="w-full py-2.5 px-3 rounded-xl bg-cream-50 border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
               </div>
@@ -662,7 +662,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
                     placeholder="e.g. Salem Al Mubarak"
-                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
+                    className="w-full py-2.5 px-3 rounded-xl bg-cream-50 border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
                 <div>
@@ -675,7 +675,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     value={house}
                     onChange={(e) => setHouse(e.target.value)}
                     placeholder="e.g. House 5"
-                    className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
+                    className="w-full py-2.5 px-3 rounded-xl bg-cream-50 border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                   />
                 </div>
               </div>
@@ -684,7 +684,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                 <label className="block font-medium text-brown-700 text-[11px] mb-1">
                   {isAr ? 'رقم الهاتف / الواتساب *' : 'WhatsApp Phone *'}
                 </label>
-                <div className="relative flex items-center rounded-xl bg-[#FAF7F2] border border-brown-200/70 focus-within:ring-1 focus-within:ring-burgundy-500">
+                <div className="relative flex items-center rounded-xl bg-cream-50 border border-brown-200/70 focus-within:ring-1 focus-within:ring-burgundy-500">
                   <CountryCodeDropdown
                     selectedCountry={addressCountry}
                     onSelectCountry={setAddressCountry}
@@ -803,7 +803,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                   required
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full py-2.5 px-3 rounded-xl bg-[#FAF7F2] border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
+                  className="w-full py-2.5 px-3 rounded-xl bg-cream-50 border border-brown-200/70 text-brown-900 focus:outline-none focus:ring-1 focus:ring-burgundy-500"
                 />
               </div>
 
@@ -823,7 +823,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                 <label className="block font-medium text-brown-700 text-[11px] mb-1">
                   {isAr ? 'رقم الهاتف / الواتساب' : 'Phone / WhatsApp'}
                 </label>
-                <div className="relative flex items-center rounded-xl bg-[#FAF7F2] border border-brown-200/70 focus-within:ring-1 focus-within:ring-burgundy-500">
+                <div className="relative flex items-center rounded-xl bg-cream-50 border border-brown-200/70 focus-within:ring-1 focus-within:ring-burgundy-500">
                   <CountryCodeDropdown
                     selectedCountry={profileCountry}
                     onSelectCountry={setProfileCountry}

@@ -20,11 +20,11 @@ export const StoryPage: React.FC<StoryPageProps> = ({
   }, []);
 
   return (
-    <article className="w-full bg-[#FAF7F2] text-brown-800 font-sans selection:bg-blush-200 selection:text-brown-900 min-h-screen pb-24">
+    <article className="w-full bg-cream-200 text-brown-800 font-sans selection:bg-blush-200 selection:text-brown-900 min-h-screen pb-24">
       {/* Minimal Sticky Sub-Header Navigation */}
       <nav
         aria-label="Breadcrumb"
-        className="sticky top-[53px] sm:top-[63px] z-30 border-b border-brown-200/60 bg-[#FAF7F2]/90 backdrop-blur-md transition-all"
+        className="sticky top-[53px] sm:top-[63px] z-30 border-b border-brown-200/60 bg-cream-200/90 backdrop-blur-md transition-all"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between">
           <button
@@ -122,7 +122,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({
         </section>
 
         {/* Section 3: The Centerpiece — Etymology of HADAB — هَدَب */}
-        <section className="p-8 sm:p-14 md:p-16 rounded-3xl bg-[#F3ECE1]/80 border border-brown-200/80 shadow-warm relative overflow-hidden text-center space-y-6">
+        <section className="p-8 sm:p-14 md:p-16 rounded-3xl bg-cream-100/90 border border-brown-300/60 shadow-warm relative overflow-hidden text-center space-y-6">
           {/* Subtle Watermark Motifs */}
           <div className="absolute -bottom-10 -right-10 opacity-[0.03] select-none pointer-events-none font-arabic text-[14rem] leading-none text-brown-900">
             هَدَب
