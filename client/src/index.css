@@ -25,6 +25,14 @@ body {
   font-weight: 400;
 }
 
+/* Standalone PWA Safe View: Add top margin only when running as an installed mobile app */
+@media all and (display-mode: standalone) {
+  header.sticky {
+    padding-top: max(env(safe-area-inset-top, 0px), 16px);
+    background-color: #F2E8DD;
+  }
+}
+
 /* Enhanced heading typography */
 h1, h2, h3, h4 {
   line-height: 1.25;

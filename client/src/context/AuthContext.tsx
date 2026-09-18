@@ -20,17 +20,43 @@ interface AuthContextType {
   logout: () => void;
 }
 
+// Cookie helpers for persistent PWA & iOS Safari state sharing
+const setCookie = (name: string, value: string, days = 365) => {
+  if (typeof document === 'undefined') return;
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : null;
+};
+
+const removeCookie = (name: string) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('hadab_token'));
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem('hadab_token') || getCookie('hadab_token');
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('hadab_token');
+      // Check both localStorage and cookies (crucial for iOS Safari PWA standalone isolation)
+      let storedToken = localStorage.getItem('hadab_token') || getCookie('hadab_token');
+
       if (storedToken) {
+        // Sync to both storages
+        localStorage.setItem('hadab_token', storedToken);
+        setCookie('hadab_token', storedToken);
+
         // Instantly recover user profile from token payload without waiting for network
         try {
           const parts = storedToken.split('.');
@@ -39,17 +65,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (payload.exp && payload.exp * 1000 < Date.now()) {
               // Token actually expired
               localStorage.removeItem('hadab_token');
+              localStorage.removeItem('hadab_is_admin');
+              removeCookie('hadab_token');
+              removeCookie('hadab_is_admin');
               setToken(null);
               setUser(null);
               setIsLoading(false);
               return;
             }
+
             const isSuper = payload.email?.toLowerCase() === 'byhadab@gmail.com';
+            const userRole = isSuper || payload.role === 'admin' ? 'admin' : 'customer';
+
+            if (userRole === 'admin') {
+              localStorage.setItem('hadab_is_admin', 'true');
+              setCookie('hadab_is_admin', 'true');
+            }
+
             setUser({
               id: payload.id,
               name: payload.name || (isSuper ? 'HADAB Admin' : 'Customer'),
               email: payload.email,
-              role: isSuper || payload.role === 'admin' ? 'admin' : 'customer',
+              role: userRole,
             });
           }
         } catch (e) {
@@ -61,12 +98,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = await api.getMe();
           if (profile) {
             setUser(profile);
+            if (profile.role === 'admin' || profile.email?.toLowerCase() === 'byhadab@gmail.com') {
+              localStorage.setItem('hadab_is_admin', 'true');
+              setCookie('hadab_is_admin', 'true');
+            }
           }
         } catch (err: any) {
           const msg = err?.message || '';
           // Only clear token if the backend explicitly rejected credentials
           if (msg.includes('401') || msg.includes('403') || msg.includes('expired') || msg.includes('Invalid')) {
             localStorage.removeItem('hadab_token');
+            localStorage.removeItem('hadab_is_admin');
+            removeCookie('hadab_token');
+            removeCookie('hadab_is_admin');
             setToken(null);
             setUser(null);
           }
@@ -80,15 +124,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<UserProfile> => {
     const data = await api.login({ email, password });
+    
+    // Save to localStorage, sessionStorage, and persistent Cookie
     localStorage.setItem('hadab_token', data.token);
+    setCookie('hadab_token', data.token, 365);
     setToken(data.token);
     setUser(data.user);
+
+    if (data.user.role === 'admin' || email.toLowerCase() === 'byhadab@gmail.com') {
+      localStorage.setItem('hadab_is_admin', 'true');
+      setCookie('hadab_is_admin', 'true', 365);
+    }
+
     return data.user;
   };
 
   const register = async (name: string, email: string, password: string, phone?: string): Promise<UserProfile> => {
     const data = await api.register({ name, email, password, phone });
     localStorage.setItem('hadab_token', data.token);
+    setCookie('hadab_token', data.token, 365);
     setToken(data.token);
     setUser(data.user);
     return data.user;
@@ -96,6 +150,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('hadab_token');
+    localStorage.removeItem('hadab_is_admin');
+    removeCookie('hadab_token');
+    removeCookie('hadab_is_admin');
     setToken(null);
     setUser(null);
   };

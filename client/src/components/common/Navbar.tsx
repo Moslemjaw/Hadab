@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, Search, Menu, X, Globe, User, ChevronDown, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface NavbarProps {
   cartCount?: number;
@@ -11,6 +12,7 @@ interface NavbarProps {
   onGoHome?: () => void;
   onOpenStory?: () => void;
   onOpenAuth?: (initialMode?: 'signin' | 'signup') => void;
+  onOpenAdmin?: () => void;
   currentPage?: 'home' | 'story' | 'collection' | 'categories' | 'auth';
 }
 
@@ -22,10 +24,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoHome,
   onOpenStory,
   onOpenAuth,
+  onOpenAdmin,
   currentPage = 'home',
 }) => {
   const { language, toggleLanguage, t } = useLanguage();
   const { currency, setCurrency, supportedCurrencies } = useCurrency();
+  const { isAdmin } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
@@ -67,7 +71,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full transition-all duration-500 font-sans">
+    <header
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        backgroundColor: '#F2E8DD',
+      }}
+      className="sticky top-0 z-50 w-full transition-all duration-500 font-sans"
+    >
       {/* Top Luxury Ticker — Warm Cream */}
       <div className="bg-cream-200 text-brown-700 py-1.5 px-3 sm:px-6 text-center text-[9.5px] xs:text-[10px] sm:text-[10.5px] uppercase tracking-[0.22em] sm:tracking-[0.28em] font-medium border-b border-brown-200/60 flex items-center justify-center gap-3 sm:gap-6 overflow-hidden">
         <span className="hidden sm:inline text-brown-500 font-semibold shrink-0">{t.tickerLocation}</span>
@@ -376,6 +386,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                   if (onOpenAuth) onOpenAuth('signin');
                 },
               },
+              ...(isAdmin || (typeof localStorage !== 'undefined' && localStorage.getItem('hadab_is_admin') === 'true')
+                ? [
+                    {
+                      label: language === 'ar' ? '👑 لوحة الإدارة' : '👑 Admin Portal',
+                      action: () => {
+                        if (onOpenAdmin) onOpenAdmin();
+                        else window.location.hash = 'admin';
+                      },
+                    },
+                  ]
+                : []),
             ].map((item, i) => (
               <button
                 key={item.label}
@@ -513,6 +534,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="text-[10px] text-cream-300/60 font-light uppercase tracking-[0.2em]">
               {t.tickerLocation}
             </span>
+
+            {/* Direct Admin Access Link for Store Owner */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (onOpenAdmin) onOpenAdmin();
+                else window.location.hash = 'admin';
+              }}
+              className="text-[9.5px] text-cream-200/40 hover:text-cream-100 uppercase tracking-widest transition-colors py-1 cursor-pointer"
+            >
+              {language === 'ar' ? '• دخول لوحة إدارة المتجر •' : '• Store Admin Access •'}
+            </button>
           </div>
         </div>
       </div>

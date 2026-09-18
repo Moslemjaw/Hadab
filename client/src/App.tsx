@@ -18,7 +18,8 @@ import { useAuth, type UserProfile } from './context/AuthContext';
 import { useNotification } from './context/NotificationContext';
 import { useLanguage } from './context/LanguageContext';
 import { IosInstallBanner } from './components/common/IosInstallBanner';
-import { registerServiceWorker } from './services/pushNotifications';
+import { AdminPushPrompt } from './components/common/AdminPushPrompt';
+import { registerServiceWorker, isStandalone } from './services/pushNotifications';
 
 interface BagItem {
   product: Product;
@@ -158,7 +159,13 @@ export function App() {
       } else if (hash === '#admin' || hash === '#dashboard') {
         setCurrentView('admin');
       } else if (hash === '' || hash === '#' || hash === '#home') {
-        setCurrentView('home');
+        const isSavedAdmin = localStorage.getItem('hadab_is_admin') === 'true' || document.cookie.includes('hadab_is_admin=true');
+        if (isStandalone() && isSavedAdmin) {
+          setCurrentView('admin');
+          window.location.hash = 'admin';
+        } else {
+          setCurrentView('home');
+        }
       }
     };
     handleHash();
@@ -292,6 +299,7 @@ export function App() {
           onGoHome={handleGoHome}
           onOpenStory={handleOpenStory}
           onOpenAuth={handleOpenAuth}
+          onOpenAdmin={handleOpenAdmin}
           currentPage={
             currentView === 'story'
               ? 'story'
@@ -429,6 +437,9 @@ export function App() {
 
       {/* iOS Safari Add-to-Home-Screen Guidance */}
       <IosInstallBanner />
+
+      {/* Instant Order Alerts Setup Prompt for iPhone / Mobile */}
+      <AdminPushPrompt />
     </div>
   );
 }
