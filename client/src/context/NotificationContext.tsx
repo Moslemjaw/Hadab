@@ -142,7 +142,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       {/* Floating Atelier Toasts Container */}
       <div 
-        className="fixed top-4 sm:top-6 inset-x-0 z-[9999] pointer-events-none flex flex-col items-center gap-2.5 px-4 max-w-md mx-auto"
+        style={{
+          top: 'max(calc(env(safe-area-inset-top, 0px) + 24px), 24px)',
+        }}
+        className="fixed inset-x-0 z-[9999] pointer-events-none flex flex-col items-center gap-2.5 px-4 max-w-md mx-auto"
         dir={isRtl ? 'rtl' : 'ltr'}
       >
         {toasts.map((toast) => {
