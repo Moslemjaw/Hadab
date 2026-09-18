@@ -846,13 +846,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       {isAr ? 'رابط دفع / تحويل' : 'Payment Link / Transfer'}
                     </span>
                   </div>
-                  <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
-                    <p className="text-[11.5px] text-brown-900 font-bold">
+                  <div className="bg-cream-200/70 p-3 rounded-xl border border-brown-200/80">
+                    <p className="text-[11.5px] text-brown-900 font-semibold">
                       {isAr
                         ? 'سيتواصل معك فريق خدمة العملاء الآن لإتمام عملية الدفع'
                         : 'Now our customer service will contact you for the payment'}
                     </p>
-                    <p className="text-[10.5px] text-brown-600 font-light mt-0.5">
+                    <p className="text-[10.5px] text-brown-600 font-light mt-0.5 leading-relaxed">
                       {isAr
                         ? 'سنرسل لك رابط دفع إلكتروني مخصص أو تأكيد الدفع عند الاستلام.'
                         : 'We will send you a secure payment link or confirm cash on delivery.'}
@@ -908,21 +908,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                 <p className="text-xs text-brown-600 font-light leading-relaxed max-w-xs">
                   {isAr
-                    ? `بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى ${currentCountryObj.nameAr}.`
-                    : `We are preparing your handmade pieces with care in Jordan and shipping them straight to ${currentCountryObj.name}.`}
+                    ? 'بدأنا بتجهيز وحياكة قطعك اليدوية بحب في الأردن لشحنها مباشرة إلى باب منزلك.'
+                    : 'We are preparing your handmade pieces with care in Jordan and shipping them straight to your house.'}
                 </p>
 
-                {/* Prominent Payment Notice */}
-                <div className="w-full p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-center space-y-1">
-                  <div className="inline-flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-                    <Sparkles size={14} className="text-burgundy-600" />
-                    <span>
-                      {isAr
-                        ? 'سيتواصل معك فريق خدمة العملاء الآن لإتمام عملية الدفع'
-                        : 'Now our customer service will contact you for the payment'}
-                    </span>
+                {/* Prominent Payment Notice — Luxury Cream Card */}
+                <div className="w-full p-4 rounded-2xl bg-cream-200/90 border border-brown-300/80 text-center flex flex-col items-center shadow-xs space-y-1.5">
+                  <div className="w-7 h-7 rounded-full bg-cream-100 border border-brown-200 flex items-center justify-center text-burgundy-600 mb-0.5 shadow-xs">
+                    <Sparkles size={13} />
                   </div>
-                  <p className="text-[11px] text-brown-600 font-light">
+                  <h5 className="font-semibold text-xs text-brown-900 leading-snug">
+                    {isAr
+                      ? 'سيتواصل معك فريق خدمة العملاء الآن لإتمام عملية الدفع'
+                      : 'Now our customer service will contact you for the payment'}
+                  </h5>
+                  <p className="text-[11px] text-brown-600 font-light leading-relaxed max-w-[280px]">
                     {isAr
                       ? 'يرجى مراجعة رسائل الواتساب للحصول على رابط الدفع الإلكتروني وتأكيد موعد الشحن.'
                       : 'Please check your WhatsApp messages for the secure payment link and delivery confirmation.'}
