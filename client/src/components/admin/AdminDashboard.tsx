@@ -1093,13 +1093,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       {/* =========================================================================
           1. SIDEBAR NAVIGATION
       ========================================================================== */}
-      <aside className={`
-        fixed inset-y-0 ${isAr ? 'right-0' : 'left-0'} z-50 md:static w-72 
-        bg-gradient-to-b from-[#261C16] to-[#1A120E] text-[#EFE4D6] p-5 
-        flex flex-col justify-between shrink-0 border-e border-[#3D2D25] shadow-2xl md:shadow-xl
-        transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0' : (isAr ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0')}
-      `}>
+      <aside
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 24px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 28px)',
+        }}
+        className={`
+          fixed inset-y-0 ${isAr ? 'right-0' : 'left-0'} z-50 md:static w-72 
+          bg-gradient-to-b from-[#261C16] to-[#1A120E] text-[#EFE4D6] px-5 
+          flex flex-col justify-between shrink-0 border-e border-[#3D2D25] shadow-2xl md:shadow-xl
+          transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? 'translate-x-0' : (isAr ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0')}
+        `}
+      >
         <div>
           {/* Brand Header */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#3D2D25]/70">
@@ -1113,8 +1119,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               className="flex items-center gap-3 text-left cursor-pointer group"
               title={isAr ? 'الذهاب للوحة المؤشرات' : 'Go to Dashboard Overview'}
             >
-              <div className="w-10 h-10 rounded-2xl bg-[#EFE4D6] p-1.5 flex items-center justify-center shadow-md overflow-hidden relative group-hover:ring-2 ring-blush-300 transition-all">
-                <img src="/frames/ezgif-frame-001.jpg" alt="HADAB" className="w-full h-full object-cover mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
+              <div className="h-10 px-2.5 rounded-2xl bg-cream-100/10 border border-cream-200/20 flex items-center justify-center shrink-0">
+                <img
+                  src={isAr ? '/arabic.png' : '/PNG-HADAB-CREAM.png'}
+                  alt="HADAB"
+                  className="h-6 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                />
               </div>
               <div>
                 <span className="font-serif tracking-widest text-lg font-bold block text-[#FAF6F0] group-hover:text-blush-200 transition-colors">HADAB</span>
@@ -1211,10 +1221,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           {/* Return to Public Storefront */}
           <button
             type="button"
-            onClick={onBackToStore}
-            className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs uppercase tracking-[0.15em] font-semibold text-blush-200 hover:bg-blush-300/10 transition-colors cursor-pointer"
+            onClick={() => {
+              tactileAudio.playScrubTick(300);
+              setIsSidebarOpen(false);
+              onBackToStore();
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs uppercase tracking-[0.16em] font-bold text-[#2E221B] bg-blush-300 hover:bg-blush-200 transition-all shadow-md cursor-pointer active:scale-95"
           >
-            <ArrowLeft size={14} className={isAr ? 'rotate-180' : ''} />
+            <ArrowLeft size={15} className={isAr ? 'rotate-180' : ''} />
             <span>{isAr ? 'العودة للمتجر الرئيسي' : 'Return to Store'}</span>
           </button>
         </div>

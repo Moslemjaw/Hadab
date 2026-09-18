@@ -157,9 +157,12 @@ export function App() {
         setCurrentView('auth');
       } else if (hash === '#admin' || hash === '#dashboard') {
         setCurrentView('admin');
+      } else if (hash === '#store' || hash === '#shop-home') {
+        setCurrentView('home');
       } else if (hash === '' || hash === '#' || hash === '#home') {
         const isSavedAdmin = localStorage.getItem('hadab_is_admin') === 'true' || document.cookie.includes('hadab_is_admin=true');
-        if (isStandalone() && isSavedAdmin) {
+        const userExplicitlyExitedAdmin = sessionStorage.getItem('hadab_exit_admin') === 'true';
+        if (isStandalone() && isSavedAdmin && !userExplicitlyExitedAdmin) {
           setCurrentView('admin');
           window.location.hash = 'admin';
         } else {
@@ -246,8 +249,9 @@ export function App() {
   };
 
   const handleGoHome = () => {
+    sessionStorage.setItem('hadab_exit_admin', 'true');
     setCurrentView('home');
-    window.location.hash = '';
+    window.location.hash = 'store';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -275,6 +279,7 @@ export function App() {
   };
 
   const handleOpenAdmin = () => {
+    sessionStorage.removeItem('hadab_exit_admin');
     setCurrentView('admin');
     window.location.hash = 'admin';
     window.scrollTo({ top: 0, behavior: 'smooth' });
