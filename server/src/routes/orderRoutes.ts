@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Order } from '../models/Order';
 import { User } from '../models/User';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
+import { sendPushToRole, sendPushToUser } from '../config/webPush';
 
 const router = Router();
 
@@ -102,6 +103,47 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       paymentStatusArabic: req.body.paymentStatusArabic || 'غير مدفوع',
     });
 
+    // 🔔 DISPATCH REAL-TIME WEB PUSH NOTIFICATION TO STORE OWNER / ADMIN
+    try {
+      const itemsSummary = order.items && order.items.length > 0
+        ? `${order.items.length} قطعة`
+        : '';
+      const destinationInfo = order.destination ? `(${order.destination})` : '';
+
+      sendPushToRole('admin', {
+        title: '🛍️ طلب جديد وصل! | New Order',
+        body: `طلب جديد #${order.orderNumber} بقيمة ${order.total} د.ك من ${order.customerName} ${destinationInfo} ${itemsSummary}`,
+        icon: '/apple-touch-icon.png',
+        badge: '/apple-touch-icon.png',
+        url: '/#admin',
+        tag: `order-${order.orderNumber}`,
+        data: {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          total: order.total,
+          type: 'new_order',
+        },
+      }).catch((err) => {
+        console.error('[WebPush] Admin order push notification background error:', err);
+      });
+    } catch (pushErr) {
+      console.error('[WebPush] Failed to trigger admin push notification:', pushErr);
+    }
+
+    // Optional: send confirmation to customer if they are registered and have subscribed devices
+    if (resolvedUserId) {
+      try {
+        sendPushToUser(resolvedUserId, {
+          title: '✨ تم استلام طلبك بنجاح | HADAB',
+          body: `شكراً لطلبك #${order.orderNumber}! يجري تجهيز قطعك بحب وعناية.`,
+          icon: '/apple-touch-icon.png',
+          badge: '/apple-touch-icon.png',
+          url: '/#account',
+          tag: `customer-order-${order.orderNumber}`,
+        }).catch(() => {});
+      } catch {}
+    }
+
     res.status(201).json(order);
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Failed to place order' });
@@ -124,6 +166,26 @@ router.patch('/:id/status', authenticateToken, requireAdmin, async (req: Request
       res.status(404).json({ message: 'Order not found' });
       return;
     }
+
+    // 🔔 DISPATCH REAL-TIME WEB PUSH TO CUSTOMER ON STATUS UPDATE
+    if (updated.userId && (status || statusArabic)) {
+      try {
+        const displayStatus = updated.statusArabic || updated.status;
+        sendPushToUser(updated.userId, {
+          title: '🧵 تحديث حالة طلبك | HADAB',
+          body: `حالة طلبك #${updated.orderNumber} الآن: ${displayStatus}`,
+          icon: '/apple-touch-icon.png',
+          badge: '/apple-touch-icon.png',
+          url: '/#account',
+          tag: `order-update-${updated.orderNumber}`,
+          data: {
+            orderId: updated._id,
+            status: updated.status,
+          },
+        }).catch(() => {});
+      } catch {}
+    }
+
     res.json(updated);
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Failed to update order status' });

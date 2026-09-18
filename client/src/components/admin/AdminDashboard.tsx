@@ -43,7 +43,15 @@ import {
   StickyNote,
   Ban,
   UserCheck,
+  Smartphone,
+  Send,
 } from 'lucide-react';
+import {
+  subscribeToPush,
+  unsubscribeFromPush,
+  sendTestPush,
+  getCurrentSubscription,
+} from '../../services/pushNotifications';
 import type { Product, ColorVariant } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -294,6 +302,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       );
     });
   }, [shippingRatesState, newCountrySearch]);
+
+  // Web Push Notification State for Store Owner
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+  const [isPushLoading, setIsPushLoading] = useState(false);
+  const [pushTestStatus, setPushTestStatus] = useState<string | null>(null);
+  const [pushStats, setPushStats] = useState<{ total: number; admins: number; customers: number; iosDevices: number } | null>(null);
+
+  useEffect(() => {
+    getCurrentSubscription().then((sub) => {
+      setIsPushSubscribed(!!sub);
+    });
+    api.getPushStats().then(setPushStats).catch(() => {});
+  }, []);
+
+  const handleTogglePush = async () => {
+    setIsPushLoading(true);
+    setPushTestStatus(null);
+    try {
+      if (isPushSubscribed) {
+        await unsubscribeFromPush();
+        setIsPushSubscribed(false);
+        showToast(isAr ? 'تم إلغاء تفعيل الإشعارات على هذا الجهاز' : 'Push notifications disabled on this device', 'info');
+      } else {
+        const res = await subscribeToPush('admin');
+        if (res.success) {
+          setIsPushSubscribed(true);
+          showToast(isAr ? 'تم تفعيل إشعارات الطلبات على الآيفون بنجاح!' : 'iPhone order push alerts enabled successfully!', 'success');
+          api.getPushStats().then(setPushStats).catch(() => {});
+        } else {
+          if (res.error === 'ON_IOS_MUST_ADD_TO_HOME_SCREEN') {
+            alert(isAr ? 'لتفعيل الإشعارات على الآيفون، يجب أولاً إضافة المتجر إلى الشاشة الرئيسية (Add to Home Screen) من متصفح سفاري ثم فتحه كأيقونة تطبيق.' : 'To enable notifications on iPhone, please first tap Share in Safari then select Add to Home Screen.');
+          } else {
+            alert(res.error || 'Failed to enable notifications');
+          }
+        }
+      }
+    } catch (e: any) {
+      alert(e.message || 'Error configuring notifications');
+    } finally {
+      setIsPushLoading(false);
+    }
+  };
+
+  const handleSendTestPush = async () => {
+    setIsPushLoading(true);
+    setPushTestStatus(null);
+    try {
+      await sendTestPush();
+      setPushTestStatus(isAr ? 'تم إرسال إشعار تجريبي بنجاح! تفقد شاشة القفل' : 'Test alert sent! Check your iPhone lock screen');
+      showToast(isAr ? 'تم إرسال إشعار تجريبي!' : 'Test notification sent!', 'success');
+    } catch (e: any) {
+      setPushTestStatus(e.message || 'Failed to send test push');
+    } finally {
+      setIsPushLoading(false);
+    }
+  };
 
   // Load settings from server on mount
   useEffect(() => {
@@ -1855,6 +1919,59 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           {activeTab === 'orders' && (
             <div className="space-y-6">
               
+              {/* iPhone Order Push Alert Strip */}
+              <div className="bg-[#2E221B] text-cream-100 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm border border-brown-800">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                    isPushSubscribed ? "bg-emerald-500/20 text-emerald-300" : "bg-cream-100/10 text-cream-200"
+                  }`}>
+                    <Bell size={20} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-serif text-sm font-bold text-cream-100">
+                        {isAr ? 'إشعارات الطلبات الفورية على الآيفون' : 'Instant iPhone Order Alerts'}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                        isPushSubscribed ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isPushSubscribed ? "bg-emerald-400" : "bg-amber-400"}`} />
+                        {isPushSubscribed ? (isAr ? 'متصل ومفعل' : 'Connected') : (isAr ? 'غير مفعل' : 'Not Connected')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-cream-200/70 mt-0.5">
+                      {isAr
+                        ? 'تصلك إشعارات حية ومباشرة على شاشة قفل الآيفون فور قيام أي عميل بطلب جديد.'
+                        : 'Receive real-time push alerts on your lock screen as soon as an order is placed.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {isPushSubscribed ? (
+                    <button
+                      type="button"
+                      onClick={handleSendTestPush}
+                      disabled={isPushLoading}
+                      className="px-4 py-2 rounded-xl bg-cream-100/10 hover:bg-cream-100/20 text-cream-100 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <Send size={13} />
+                      <span>{isAr ? 'إرسال إشعار تجريبي' : 'Send Test Push'}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleTogglePush}
+                      disabled={isPushLoading}
+                      className="px-4 py-2 rounded-xl bg-blush-300 hover:bg-blush-200 text-[#2E221B] text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      <Smartphone size={14} />
+                      <span>{isAr ? 'تفعيل الإشعارات على هذا الجهاز' : 'Enable iPhone Alerts'}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Order Status Filters */}
               <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
                 {['all', 'pending', 'handmade', 'shipped', 'delivered'].map((st) => (
@@ -2963,6 +3080,109 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Web Push & iPhone PWA Notifications Card */}
+              <div className="bg-[#FAF6F0] rounded-3xl border border-brown-200/60 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-brown-200/50 bg-white/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#2E221B] text-cream-100 flex items-center justify-center shrink-0">
+                      <Bell size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-lg text-brown-900 font-medium">
+                        {isAr ? 'إشعارات الطلبات على الآيفون (Web Push)' : 'iPhone Push Notifications (Web Push)'}
+                      </h3>
+                      <p className="text-xs text-brown-500 font-light mt-0.5">
+                        {isAr ? 'استلام إشعار على شاشة القفل فور قيام أي عميل بالطلب، حتى لو كان الموقع مغلقاً' : 'Receive instant lock-screen alerts for every new order even when HADAB is closed.'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider self-start sm:self-auto ${
+                    isPushSubscribed ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-brown-200/50 text-brown-700 border border-brown-300"
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${isPushSubscribed ? "bg-emerald-500 animate-pulse" : "bg-brown-400"}`} />
+                    {isPushSubscribed ? (isAr ? 'مفعل على هذا الجهاز' : 'Active on this Device') : (isAr ? 'غير مفعل' : 'Not Active')}
+                  </span>
+                </div>
+
+                <div className="p-6 space-y-6 text-xs">
+                  {/* How it works on iOS */}
+                  <div className="bg-cream-100/60 p-4 rounded-2xl border border-brown-200/50 space-y-2">
+                    <div className="font-semibold text-brown-900 text-xs flex items-center gap-2">
+                      <Smartphone size={15} className="text-brown-700" />
+                      <span>{isAr ? 'متطلبات إشعارات الآيفون (iOS 16.4+):' : 'Apple iOS Push Requirements (iOS 16.4+):'}</span>
+                    </div>
+                    <p className="text-brown-600 text-[11.5px] leading-relaxed">
+                      {isAr
+                        ? 'تتيح آبل استقبال الإشعارات عبر الويب للمواقع المضافة إلى الشاشة الرئيسية (Add to Home Screen). إذا كنت تتصفح من سفاري، أضف المتجر لشاشتك الرئيسية ثم افتحه واضغط تفعيل الإشعارات لتصلك التنبيهات دائماً.'
+                        : 'Apple requires websites to be added to the iPhone Home Screen (Add to Home Screen) to deliver push notifications to the lock screen.'}
+                    </p>
+                  </div>
+
+                  {/* Stats Grid */}
+                  {pushStats && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-white p-3.5 rounded-2xl border border-brown-100 text-center">
+                        <div className="text-[10px] uppercase font-bold text-brown-400 mb-1">{isAr ? "إجمالي الأجهزة" : "Total Devices"}</div>
+                        <div className="font-serif text-lg font-bold text-brown-900">{pushStats.total}</div>
+                      </div>
+                      <div className="bg-white p-3.5 rounded-2xl border border-brown-100 text-center">
+                        <div className="text-[10px] uppercase font-bold text-brown-400 mb-1">{isAr ? "أجهزة الإدارة" : "Admin Devices"}</div>
+                        <div className="font-serif text-lg font-bold text-emerald-800">{pushStats.admins}</div>
+                      </div>
+                      <div className="bg-white p-3.5 rounded-2xl border border-brown-100 text-center">
+                        <div className="text-[10px] uppercase font-bold text-brown-400 mb-1">{isAr ? "أجهزة آيفون" : "iOS Devices"}</div>
+                        <div className="font-serif text-lg font-bold text-sky-800">{pushStats.iosDevices}</div>
+                      </div>
+                      <div className="bg-white p-3.5 rounded-2xl border border-brown-100 text-center">
+                        <div className="text-[10px] uppercase font-bold text-brown-400 mb-1">{isAr ? "أجهزة العملاء" : "Customer Devices"}</div>
+                        <div className="font-serif text-lg font-bold text-brown-700">{pushStats.customers}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Feedback status message */}
+                  {pushTestStatus && (
+                    <div className="p-3 bg-emerald-50 text-emerald-900 rounded-xl border border-emerald-200 text-xs flex items-center gap-2">
+                      <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                      <span>{pushTestStatus}</span>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleTogglePush}
+                      disabled={isPushLoading}
+                      className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
+                        isPushSubscribed
+                          ? "bg-brown-200/80 hover:bg-brown-300 text-brown-800 border border-brown-300"
+                          : "bg-[#2E221B] hover:bg-brown-800 text-cream-100"
+                      }`}
+                    >
+                      <Smartphone size={15} />
+                      <span>
+                        {isPushLoading
+                          ? (isAr ? 'جاري المعالجة...' : 'Processing...')
+                          : isPushSubscribed
+                          ? (isAr ? 'إلغاء التفعيل على هذا الجهاز' : 'Unsubscribe This Device')
+                          : (isAr ? 'تفعيل إشعارات الطلبات على الآيفون' : 'Enable iPhone Order Push Alerts')}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSendTestPush}
+                      disabled={isPushLoading}
+                      className="px-5 py-2.5 rounded-xl bg-white hover:bg-cream-100 border border-brown-200 text-brown-800 font-semibold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+                    >
+                      <Send size={14} className="text-brown-600" />
+                      <span>{isAr ? 'إرسال إشعار تجريبي (Test Push)' : 'Send Test Notification'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

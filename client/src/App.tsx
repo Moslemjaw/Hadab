@@ -17,6 +17,8 @@ import type { Product } from './types';
 import { useAuth, type UserProfile } from './context/AuthContext';
 import { useNotification } from './context/NotificationContext';
 import { useLanguage } from './context/LanguageContext';
+import { IosInstallBanner } from './components/common/IosInstallBanner';
+import { registerServiceWorker } from './services/pushNotifications';
 
 interface BagItem {
   product: Product;
@@ -125,6 +127,11 @@ export function App() {
   useEffect(() => {
     saveCartToStorage(currentUserKey, bagItems);
   }, [currentUserKey, bagItems]);
+
+  // Register PWA Service Worker on initial load
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -419,6 +426,9 @@ export function App() {
         onClose={() => setSelectedProduct(null)}
         onAddToBag={handleAddToBag}
       />
+
+      {/* iOS Safari Add-to-Home-Screen Guidance */}
+      <IosInstallBanner />
     </div>
   );
 }

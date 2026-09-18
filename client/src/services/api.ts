@@ -287,4 +287,70 @@ export const api = {
     if (!res.ok) throw new Error(data.message || 'Failed to update settings');
     return data;
   },
+
+  // Web Push Notifications
+  async getVapidKey(): Promise<{ publicKey: string }> {
+    const res = await fetch(`${API_BASE}/notifications/vapid-key`);
+    if (!res.ok) throw new Error('Failed to fetch VAPID key');
+    return await res.json();
+  },
+
+  async subscribePush(payload: {
+    subscription: any;
+    role?: 'admin' | 'customer';
+    device?: string;
+    userAgent?: string;
+    userId?: string;
+  }): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to subscribe to push');
+    return data;
+  },
+
+  async unsubscribePush(endpoint: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/unsubscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ endpoint }),
+    });
+    return await res.json();
+  },
+
+  async sendTestPush(subscription?: any): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ subscription }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to send test notification');
+    return data;
+  },
+
+  async getPushStats(): Promise<{
+    total: number;
+    admins: number;
+    customers: number;
+    iosDevices: number;
+  }> {
+    const res = await fetch(`${API_BASE}/notifications/stats`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) return { total: 0, admins: 0, customers: 0, iosDevices: 0 };
+    return await res.json();
+  },
 };
