@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Sparkles, Layers } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Layers, Clock } from 'lucide-react';
 import { tactileAudio } from '../../utils/audio';
 import { useLanguage } from '../../context/LanguageContext';
 import { useShopData } from '../../context/ShopDataContext';
@@ -46,7 +46,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                 description: c.description || '',
                 descriptionArabic: c.descriptionAr || c.descriptionArabic || '',
                 image: c.image || '/products/hadab-bag.jpg',
-                count: matchingProds.length > 0 ? matchingProds.length : (c.count || 0),
+                count: matchingProds.length,
                 color: c.color || '#D9B99B',
                 accentBg: c.accentBg || 'bg-cream-100',
                 accentBorder: c.accentBorder || 'border-brown-200',
@@ -111,30 +111,48 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
           {categoriesList.map((cat, index) => {
             const catTitle = language === 'ar' ? cat.nameArabic : cat.name;
             const catDesc = language === 'ar' && cat.descriptionArabic ? cat.descriptionArabic : cat.description;
+            const isComingSoon = (cat.count || 0) === 0;
 
             return (
               <div
                 key={cat.id}
                 onClick={() => handleCategoryClick(cat.id)}
-                className="group relative bg-cream-100/90 rounded-3xl border border-brown-200/80 p-5 sm:p-7 shadow-warm hover:shadow-warm-lg transition-all duration-500 flex flex-col justify-between cursor-pointer hover:-translate-y-1.5 active:scale-[0.98] overflow-hidden"
+                className={`group relative bg-cream-100/90 rounded-3xl border p-5 sm:p-7 shadow-warm hover:shadow-warm-lg transition-all duration-500 flex flex-col justify-between cursor-pointer hover:-translate-y-1.5 active:scale-[0.98] overflow-hidden ${
+                  isComingSoon ? 'border-brown-300/50 bg-[#F5EDE4]/70' : 'border-brown-200/80'
+                }`}
               >
                 {/* Category Image Banner */}
                 <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden mb-6 bg-cream-200 shadow-inner">
                   <img
                     src={cat.image}
                     alt={catTitle}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${
+                      isComingSoon ? 'filter brightness-55 contrast-95 grayscale-[30%] opacity-80' : ''
+                    }`}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brown-950/60 via-brown-950/10 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                  <div
+                    className={`absolute inset-0 transition-opacity ${
+                      isComingSoon
+                        ? 'bg-gradient-to-t from-black/85 via-black/45 to-black/25 opacity-85'
+                        : 'bg-gradient-to-t from-brown-950/60 via-brown-950/10 to-transparent opacity-60 group-hover:opacity-40'
+                    }`}
+                  />
 
-                  {/* Top Badge: Number & Item Count */}
+                  {/* Top Badge: Number & Item Count / Coming Soon */}
                   <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between">
                     <span className="px-2.5 py-1 rounded-full bg-cream-100/90 backdrop-blur-md text-brown-900 text-[10px] font-semibold tracking-widest uppercase border border-brown-200/60 shadow-sm">
                       0{index + 1}
                     </span>
-                    <span className="px-3 py-1 rounded-full bg-brown-900/85 backdrop-blur-md text-cream-100 text-[11px] font-medium tracking-wide shadow-sm">
-                      {cat.count} {t.piecesCount}
-                    </span>
+                    {isComingSoon ? (
+                      <span className="px-3 py-1 rounded-full bg-[#1A1412]/90 backdrop-blur-md text-cream-200 border border-cream-200/20 text-[11px] font-medium tracking-wide shadow-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+                        <span>{language === 'ar' ? 'قريباً' : 'Coming Soon'}</span>
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full bg-brown-900/85 backdrop-blur-md text-cream-100 text-[11px] font-medium tracking-wide shadow-sm">
+                        {cat.count} {t.piecesCount}
+                      </span>
+                    )}
                   </div>
 
                   {/* Bottom Overlay Title in Selected Language */}
@@ -161,17 +179,29 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
 
                   {/* Bottom CTA Button */}
                   <div className="pt-4 border-t border-brown-200/60 flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-[0.2em] font-semibold text-brown-700 group-hover:text-burgundy-600 transition-colors flex items-center gap-2">
-                      <span>{t.exploreThisFamily}</span>
-                      <ArrowRight
-                        size={14}
-                        className={`${language === 'ar' ? 'rotate-180 group-hover:-translate-x-1.5' : 'group-hover:translate-x-1.5'} transition-transform duration-300`}
-                      />
-                    </span>
-
-                    <span className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-cream-200/80 group-hover:bg-burgundy-600 group-hover:text-cream-100 text-brown-700 flex items-center justify-center transition-colors duration-300 shadow-sm">
-                      <ArrowRight size={15} className={language === 'ar' ? 'rotate-180' : ''} />
-                    </span>
+                    {isComingSoon ? (
+                      <>
+                        <span className="text-xs uppercase tracking-[0.2em] font-semibold text-brown-500 flex items-center gap-2">
+                          <span>{language === 'ar' ? 'قيد الحياكة • قريباً' : 'In Craft • Coming Soon'}</span>
+                        </span>
+                        <span className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-brown-200/40 text-brown-600 flex items-center justify-center shadow-xs">
+                          <Clock size={15} className="opacity-80" />
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-xs uppercase tracking-[0.2em] font-semibold text-brown-700 group-hover:text-burgundy-600 transition-colors flex items-center gap-2">
+                          <span>{t.exploreThisFamily}</span>
+                          <ArrowRight
+                            size={14}
+                            className={`${language === 'ar' ? 'rotate-180 group-hover:-translate-x-1.5' : 'group-hover:translate-x-1.5'} transition-transform duration-300`}
+                          />
+                        </span>
+                        <span className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-cream-200/80 group-hover:bg-burgundy-600 group-hover:text-cream-100 text-brown-700 flex items-center justify-center transition-colors duration-300 shadow-sm">
+                          <ArrowRight size={15} className={language === 'ar' ? 'rotate-180' : ''} />
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

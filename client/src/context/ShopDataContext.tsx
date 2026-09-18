@@ -47,7 +47,7 @@ export const ShopDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               description: c.description || '',
               descriptionArabic: c.descriptionAr || c.descriptionArabic || '',
               image: c.image || '/products/hadab-bag.jpg',
-              count: matchingCount > 0 ? matchingCount : (c.count || 0),
+              count: matchingCount,
               color: c.color || '#D9B99B',
               accentBg: c.accentBg || 'bg-cream-100',
               accentBorder: c.accentBorder || 'border-brown-200',

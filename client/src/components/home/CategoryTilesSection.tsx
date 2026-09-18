@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useShopData } from '../../context/ShopDataContext';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Clock } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 
@@ -33,7 +33,8 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
         );
       }).length;
 
-      counts[cat.id] = matched > 0 ? matched : (cat.count || 0);
+      // Only categories with actual products get a count; empty categories are 0
+      counts[cat.id] = matched;
     }
     return counts;
   }, [categories, products]);
@@ -71,70 +72,95 @@ export const CategoryTilesSection: React.FC<CategoryTilesSectionProps> = ({ onSe
           <div className="w-10 h-px bg-brown-300/60 mt-3" />
         </div>
 
-      {/* Asymmetric Alternating Full-Bleed Tiles */}
-      <div 
-        ref={gridRef}
-        className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8"
-      >
-        {categories.map((cat, idx) => {
-          const colSpan = getColSpanClass(idx);
-          const isLeftAnim = idx % 2 === 0;
-          const liveCount = categoryCounts[cat.id] || cat.count || 0;
+        {/* Asymmetric Alternating Full-Bleed Tiles */}
+        <div 
+          ref={gridRef}
+          className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8"
+        >
+          {categories.map((cat, idx) => {
+            const colSpan = getColSpanClass(idx);
+            const isLeftAnim = idx % 2 === 0;
+            const liveCount = categoryCounts[cat.id] ?? (cat.count || 0);
+            const isComingSoon = liveCount === 0;
 
-          return (
-            <div
-              key={cat.id}
-              onClick={() => onSelectCategory && onSelectCategory(cat.id)}
-              className={`group relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer shadow-sm transition-all duration-700 hover:shadow-warm-xl ${colSpan} ${
-                isLeftAnim ? 'scroll-reveal-left' : 'scroll-reveal-right'
-              } ${gridRevealed ? 'revealed' : ''}`}
-              style={{ animationDelay: `${(idx % 2) * 150}ms` }}
-            >
-              {/* Full-Bleed Background Image */}
-              <img
-                src={cat.image}
-                alt={cat.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
-                loading="lazy"
-              />
+            return (
+              <div
+                key={cat.id}
+                onClick={() => onSelectCategory && onSelectCategory(cat.id)}
+                className={`group relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer shadow-sm transition-all duration-700 hover:shadow-warm-xl ${colSpan} ${
+                  isLeftAnim ? 'scroll-reveal-left' : 'scroll-reveal-right'
+                } ${gridRevealed ? 'revealed' : ''} ${isComingSoon ? 'ring-1 ring-brown-950/20' : ''}`}
+                style={{ animationDelay: `${(idx % 2) * 150}ms` }}
+              >
+                {/* Full-Bleed Background Image (Shaded / Dimmed if Coming Soon) */}
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105 ${
+                    isComingSoon ? 'filter brightness-55 contrast-95 grayscale-[30%] opacity-75' : ''
+                  }`}
+                  loading="lazy"
+                />
 
-              {/* Stronger Gradient for Text Readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5 transition-opacity duration-500 group-hover:from-black/80" />
+                {/* Shady / Moody Gradient Overlay */}
+                {isComingSoon ? (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40 transition-opacity duration-500 group-hover:from-black/95" />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5 transition-opacity duration-500 group-hover:from-black/80" />
+                )}
 
-              {/* Top Tag — Distinct Luxury Piece Counter Badge */}
-              <div className="absolute top-3.5 sm:top-5 inset-x-4 sm:inset-x-5 flex justify-between items-center z-10 pointer-events-none">
-                <span className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-cream-50/95 backdrop-blur-md text-brown-950 border border-brown-200/80 shadow-md text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-transform duration-300 group-hover:scale-105">
-                  <span className="w-1.5 h-1.5 rounded-full bg-burgundy-700 inline-block animate-pulse" />
-                  <span>
-                    {liveCount} {isAr ? 'قطعة' : liveCount === 1 ? 'Piece' : 'Pieces'}
-                  </span>
-                </span>
-              </div>
-
-              {/* Bottom Content — Larger Text for Visibility */}
-              <div className="absolute bottom-3.5 sm:bottom-6 inset-x-4 sm:inset-x-6 z-10 flex items-end justify-between gap-3 sm:gap-4">
-                <div className="space-y-1 sm:space-y-2">
-                  <h3 className="font-serif text-xl sm:text-3xl lg:text-4xl text-white font-normal tracking-tight drop-shadow-lg">
-                    {isAr ? cat.nameArabic : cat.name}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-white/85 font-light line-clamp-2 max-w-md drop-shadow-md leading-relaxed">
-                    {isAr ? cat.descriptionArabic : cat.description}
-                  </p>
+                {/* Top Tag — Distinct Luxury Piece Counter or Coming Soon Badge */}
+                <div className="absolute top-3.5 sm:top-5 inset-x-4 sm:inset-x-5 flex justify-between items-center z-10 pointer-events-none">
+                  {isComingSoon ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#1A1412]/85 backdrop-blur-md text-cream-200 border border-cream-200/25 shadow-md text-[11px] sm:text-xs font-medium tracking-widest uppercase">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+                      <span>{isAr ? 'قريباً' : 'Coming Soon'}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-cream-50/95 backdrop-blur-md text-brown-950 border border-brown-200/80 shadow-md text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-transform duration-300 group-hover:scale-105">
+                      <span className="w-1.5 h-1.5 rounded-full bg-burgundy-700 inline-block animate-pulse" />
+                      <span>
+                        {liveCount} {isAr ? 'قطعة' : liveCount === 1 ? 'Piece' : 'Pieces'}
+                      </span>
+                    </span>
+                  )}
                 </div>
 
-                {/* Minimalist Hover Arrow Icon */}
-                <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full bg-cream-100/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-cream-100 shrink-0 transition-all duration-300 group-hover:bg-cream-100 group-hover:text-brown-900 group-hover:scale-110 shadow-warm">
-                  {isAr ? (
-                    <ArrowLeft size={14} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
+                {/* Bottom Content */}
+                <div className="absolute bottom-3.5 sm:bottom-6 inset-x-4 sm:inset-x-6 z-10 flex items-end justify-between gap-3 sm:gap-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    {isComingSoon && (
+                      <span className="text-[10px] sm:text-xs uppercase tracking-[0.26em] text-cream-300/80 font-mono font-medium block">
+                        {isAr ? 'قيد التحضير في المشغل' : 'In Craft • Preview'}
+                      </span>
+                    )}
+                    <h3 className="font-serif text-xl sm:text-3xl lg:text-4xl text-white font-normal tracking-tight drop-shadow-lg">
+                      {isAr ? cat.nameArabic : cat.name}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/85 font-light line-clamp-2 max-w-md drop-shadow-md leading-relaxed">
+                      {isAr ? cat.descriptionArabic : cat.description}
+                    </p>
+                  </div>
+
+                  {/* Minimalist Hover Action Icon */}
+                  {isComingSoon ? (
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-cream-200/80 shrink-0 transition-all duration-300 group-hover:bg-cream-100/20 group-hover:text-cream-100 group-hover:border-cream-100/40 shadow-warm">
+                      <Clock size={15} className="opacity-80" />
+                    </div>
                   ) : (
-                    <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full bg-cream-100/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-cream-100 shrink-0 transition-all duration-300 group-hover:bg-cream-100 group-hover:text-brown-900 group-hover:scale-110 shadow-warm">
+                      {isAr ? (
+                        <ArrowLeft size={14} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
+                      ) : (
+                        <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
