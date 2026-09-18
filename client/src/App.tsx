@@ -18,7 +18,6 @@ import { useAuth, type UserProfile } from './context/AuthContext';
 import { useNotification } from './context/NotificationContext';
 import { useLanguage } from './context/LanguageContext';
 import { IosInstallBanner } from './components/common/IosInstallBanner';
-import { AdminPushPrompt } from './components/common/AdminPushPrompt';
 import { registerServiceWorker, isStandalone } from './services/pushNotifications';
 
 interface BagItem {
@@ -437,9 +436,6 @@ export function App() {
 
       {/* iOS Safari Add-to-Home-Screen Guidance */}
       <IosInstallBanner />
-
-      {/* Instant Order Alerts Setup Prompt for iPhone / Mobile */}
-      <AdminPushPrompt />
     </div>
   );
 }
