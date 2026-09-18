@@ -2111,6 +2111,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                                   );
                                 })}
                               </div>
+
+                              {/* Order Financial Breakdown: Subtotal, Delivery Fee, Total */}
+                              {(() => {
+                                const itemsSubtotal = order.items.reduce((sum: number, it: any) => {
+                                  const p = Number(it.price ?? it.product?.price ?? 0);
+                                  const q = Number(it.quantity || 1);
+                                  return sum + (p * q);
+                                }, 0);
+                                const deliveryFee = Math.max(0, Number(order.total) - itemsSubtotal);
+                                return (
+                                  <div className="mt-3 p-3 bg-cream-50/80 rounded-xl border border-brown-200/60 text-xs space-y-1.5">
+                                    <div className="flex justify-between text-brown-500 text-[11px]">
+                                      <span>{isAr ? 'مجموع القطع:' : 'Items Subtotal:'}</span>
+                                      <span className="font-semibold text-brown-800">{itemsSubtotal.toFixed(2)} {isAr ? 'د.ك' : 'KD'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-brown-500 text-[11px]">
+                                      <span>{isAr ? `رسوم التوصيل (${order.destination}):` : `Delivery Fee (${order.destination}):`}</span>
+                                      <span className={`font-semibold ${deliveryFee > 0 ? 'text-brown-800' : 'text-emerald-700'}`}>
+                                        {deliveryFee > 0 ? `${deliveryFee.toFixed(2)} ${isAr ? 'د.ك' : 'KD'}` : (isAr ? 'مجاني' : 'Free')}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between text-brown-900 font-bold pt-1.5 border-t border-brown-200/70 text-xs">
+                                      <span>{isAr ? 'المجموع الكلي:' : 'Total Amount:'}</span>
+                                      <span className="font-serif text-sm text-brown-950">{Number(order.total).toFixed(2)} {isAr ? 'د.ك' : 'KD'}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
 
                             {/* Customer & Management */}

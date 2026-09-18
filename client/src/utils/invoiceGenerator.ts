@@ -1,4 +1,4 @@
-﻿// Utility to generate and download a clean, high-fashion HADAB PDF invoice / bill
+// Utility to generate and download a clean, high-fashion HADAB PDF invoice / bill
 export interface OrderInvoiceData {
   orderNumber: string;
   createdAt: string;
@@ -10,6 +10,9 @@ export interface OrderInvoiceData {
   address?: string;
   notes?: string;
   total: number;
+  subtotal?: number;
+  deliveryFee?: number;
+  shippingFee?: number;
   status: string;
   paymentStatus?: string;
   items: Array<{
@@ -53,6 +56,19 @@ export const downloadOrderInvoicePdf = (
       `;
     })
     .join('');
+
+  const itemsSubtotal = order.items.reduce((sum, item) => {
+    const price = Number(item.price ?? item.product?.price ?? 0);
+    const qty = Number(item.quantity || 1);
+    return sum + (price * qty);
+  }, 0);
+
+  const rawDelivery = typeof order.deliveryFee === 'number'
+    ? order.deliveryFee
+    : typeof order.shippingFee === 'number'
+    ? order.shippingFee
+    : Number(order.total) - itemsSubtotal;
+  const deliveryFee = Math.max(0, Number(rawDelivery || 0));
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -394,6 +410,16 @@ export const downloadOrderInvoicePdf = (
           <!-- Totals -->
           <div class="totals-wrap">
             <div class="totals-table">
+              <div class="totals-row">
+                <span style="color: #8A7A6D;">Items Subtotal:</span>
+                <span style="font-weight: 600; color: #2D2421;">${itemsSubtotal.toFixed(2)} ${currencyCode}</span>
+              </div>
+              <div class="totals-row">
+                <span style="color: #8A7A6D;">Delivery Fee${order.destination ? ` (${order.destination})` : ''}:</span>
+                <span style="font-weight: 600; color: ${deliveryFee > 0 ? '#2D2421' : '#065F46'};">
+                  ${deliveryFee > 0 ? `${deliveryFee.toFixed(2)} ${currencyCode}` : 'FREE / مجاني'}
+                </span>
+              </div>
               <div class="totals-row totals-grand">
                 <span>Total Amount:</span>
                 <span>${Number(order.total).toFixed(2)} ${currencyCode}</span>
