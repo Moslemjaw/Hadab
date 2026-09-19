@@ -1627,15 +1627,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           ====================================================================== */}
           {activeTab === 'overview' && (
             <div className="space-y-8">
-              {/* Metric Cards Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between text-brown-500 mb-4">
-                    <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'إجمالي المبيعات' : 'Total Revenue'}</span>
-                    <div className="p-2 rounded-xl bg-sage-100 text-sage-600 group-hover:scale-110 transition-transform"><DollarSign size={16} /></div>
+              {/* Metric Cards Row - 1 row on mobile */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-5">
+                <div className="bg-[#FAF6F0] p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-brown-200/60 shadow-xs sm:shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-1 sm:mb-4 gap-1">
+                    <span className="text-[9px] xs:text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold truncate">
+                      {isAr ? 'المبيعات' : 'Revenue'}
+                    </span>
+                    <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-sage-100 text-sage-600 group-hover:scale-110 transition-transform shrink-0">
+                      <DollarSign size={13} className="sm:hidden" />
+                      <DollarSign size={16} className="hidden sm:block" />
+                    </div>
                   </div>
-                  <div className="font-serif text-3xl font-medium text-brown-900">{totalRevenue.toLocaleString()} {isAr ? 'د.ك' : 'KD'}</div>
-                  <div className="mt-4 flex flex-col gap-2">
+                  <div className="font-serif text-sm xs:text-base sm:text-3xl font-medium text-brown-900 truncate">
+                    {totalRevenue.toLocaleString()} {isAr ? 'د.ك' : 'KD'}
+                  </div>
+                  <div className="mt-4 hidden sm:flex flex-col gap-2">
                     <div className="flex items-center gap-1.5 text-[11px] text-sage-600 font-medium">
                       <TrendingUp size={13} />
                       <span>+18.4% {isAr ? 'مقارنة بالشهر الماضي' : 'vs last month'}</span>
@@ -1647,13 +1654,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between text-brown-500 mb-4">
-                    <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'طلبات قيد الحياكة' : 'Active In-Stitch'}</span>
-                    <div className="p-2 rounded-xl bg-blush-100 text-burgundy-600 group-hover:scale-110 transition-transform"><Scissors size={16} /></div>
+                <div className="bg-[#FAF6F0] p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-brown-200/60 shadow-xs sm:shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-1 sm:mb-4 gap-1">
+                    <span className="text-[9px] xs:text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold truncate">
+                      {isAr ? 'قيد الحياكة' : 'In-Stitch'}
+                    </span>
+                    <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-blush-100 text-burgundy-600 group-hover:scale-110 transition-transform shrink-0">
+                      <Scissors size={13} className="sm:hidden" />
+                      <Scissors size={16} className="hidden sm:block" />
+                    </div>
                   </div>
-                  <div className="font-serif text-3xl font-medium text-brown-900">{inCraftCount}</div>
-                  <div className="mt-4 flex flex-col gap-2">
+                  <div className="font-serif text-sm xs:text-base sm:text-3xl font-medium text-brown-900 truncate">
+                    {inCraftCount}
+                  </div>
+                  <div className="mt-4 hidden sm:flex flex-col gap-2">
                     <div className="text-[11px] text-brown-500 font-light">
                       {isAr ? 'محبوكة حالياً بواسطة الحرفيين' : 'Handcrafted by our artisans'}
                     </div>
@@ -1664,13 +1678,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between text-brown-500 mb-4">
-                    <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">{isAr ? 'القطع المتاحة' : 'Archived Pieces'}</span>
-                    <div className="p-2 rounded-xl bg-cream-200 text-brown-700 group-hover:scale-110 transition-transform"><Package size={16} /></div>
+                <div className="bg-[#FAF6F0] p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-brown-200/60 shadow-xs sm:shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between text-brown-500 mb-1 sm:mb-4 gap-1">
+                    <span className="text-[9px] xs:text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold truncate">
+                      {isAr ? 'القطع' : 'Pieces'}
+                    </span>
+                    <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-cream-200 text-brown-700 group-hover:scale-110 transition-transform shrink-0">
+                      <Package size={13} className="sm:hidden" />
+                      <Package size={16} className="hidden sm:block" />
+                    </div>
                   </div>
-                  <div className="font-serif text-3xl font-medium text-brown-900">{productsList.length}</div>
-                  <div className="mt-4 flex flex-col gap-2">
+                  <div className="font-serif text-sm xs:text-base sm:text-3xl font-medium text-brown-900 truncate">
+                    {productsList.length}
+                  </div>
+                  <div className="mt-4 hidden sm:flex flex-col gap-2">
                     <div className="text-[11px] text-brown-500 font-light">
                       {isAr ? 'عبر ٤ تصنيفات رئيسية' : 'Across 4 signature families'}
                     </div>
@@ -2846,46 +2867,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           {activeTab === 'messages' && (
             <div className="space-y-6">
               {/* Quick Metrics Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-xs flex items-center justify-between">
-                  <div>
-                    <span className="text-[10.5px] uppercase tracking-wider font-semibold text-brown-500">
-                      {isAr ? 'إجمالي الرسائل' : 'Total Messages'}
+              {/* Quick Metrics Bar - 1 row on mobile */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div className="bg-[#FAF6F0] p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-brown-200/60 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-brown-500 mb-1 sm:mb-3 gap-1">
+                    <span className="text-[9px] xs:text-[10px] sm:text-[10.5px] uppercase tracking-wider font-semibold text-brown-500 truncate">
+                      <span className="sm:hidden">{isAr ? 'الرسائل' : 'Total'}</span>
+                      <span className="hidden sm:inline">{isAr ? 'إجمالي الرسائل' : 'Total Messages'}</span>
                     </span>
-                    <div className="font-serif text-2xl font-medium text-brown-950 mt-1">
-                      {messagesList.length}
+                    <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-cream-100 border border-brown-200/70 flex items-center justify-center text-brown-700 shrink-0">
+                      <MessageSquare size={13} className="sm:hidden" />
+                      <MessageSquare size={18} className="hidden sm:block" />
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-cream-100 border border-brown-200/70 flex items-center justify-center text-brown-700">
-                    <MessageSquare size={18} />
+                  <div className="font-serif text-sm xs:text-base sm:text-2xl font-medium text-brown-950 truncate">
+                    {messagesList.length}
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-xs flex items-center justify-between">
-                  <div>
-                    <span className="text-[10.5px] uppercase tracking-wider font-semibold text-amber-700">
-                      {isAr ? 'بانتظار الرد' : 'Awaiting Reply'}
+                <div className="bg-[#FAF6F0] p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-brown-200/60 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-amber-700 mb-1 sm:mb-3 gap-1">
+                    <span className="text-[9px] xs:text-[10px] sm:text-[10.5px] uppercase tracking-wider font-semibold text-amber-700 truncate">
+                      <span className="sm:hidden">{isAr ? 'انتظار' : 'Pending'}</span>
+                      <span className="hidden sm:inline">{isAr ? 'بانتظار الرد' : 'Awaiting Reply'}</span>
                     </span>
-                    <div className="font-serif text-2xl font-medium text-amber-900 mt-1">
-                      {unreadMessagesCount}
+                    <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+                      <Clock size={13} className="sm:hidden" />
+                      <Clock size={18} className="hidden sm:block" />
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-                    <Clock size={18} />
+                  <div className="font-serif text-sm xs:text-base sm:text-2xl font-medium text-amber-900 truncate">
+                    {unreadMessagesCount}
                   </div>
                 </div>
 
-                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-xs flex items-center justify-between">
-                  <div>
-                    <span className="text-[10.5px] uppercase tracking-wider font-semibold text-emerald-700">
-                      {isAr ? 'تم الرد والمعالجة' : 'Resolved'}
+                <div className="bg-[#FAF6F0] p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-brown-200/60 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-emerald-700 mb-1 sm:mb-3 gap-1">
+                    <span className="text-[9px] xs:text-[10px] sm:text-[10.5px] uppercase tracking-wider font-semibold text-emerald-700 truncate">
+                      <span className="sm:hidden">{isAr ? 'معالجة' : 'Resolved'}</span>
+                      <span className="hidden sm:inline">{isAr ? 'تم الرد والمعالجة' : 'Resolved'}</span>
                     </span>
-                    <div className="font-serif text-2xl font-medium text-emerald-900 mt-1">
-                      {messagesList.filter((m) => m.status === 'resolved').length}
+                    <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
+                      <CheckCircle2 size={13} className="sm:hidden" />
+                      <CheckCircle2 size={18} className="hidden sm:block" />
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
-                    <CheckCircle2 size={18} />
+                  <div className="font-serif text-sm xs:text-base sm:text-2xl font-medium text-emerald-900 truncate">
+                    {messagesList.filter((m) => m.status === 'resolved').length}
                   </div>
                 </div>
               </div>
