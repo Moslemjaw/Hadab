@@ -75,7 +75,7 @@ export const Footer: React.FC<FooterProps> = ({
 
             <div className="flex items-center gap-2.5 pt-1">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/byhadab_?stkn=MXRpYmsxZmlibTU3OQ=="
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full border border-brown-700/80 hover:border-blush-300 hover:text-blush-200 text-cream-200 flex items-center justify-center transition-all bg-brown-800/40 active:scale-95"
