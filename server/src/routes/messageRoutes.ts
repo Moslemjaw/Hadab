@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import mongoose from 'mongoose';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { Message } from '../models/Message';
 import { sendPushToRole } from '../config/webPush';
@@ -95,6 +96,11 @@ router.get('/', authenticateToken, requireAdmin, async (_req: AuthRequest, res: 
 router.put('/:id/reply', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    if (!id || typeof id !== 'string' || id === 'undefined' || !mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: 'Valid message ID is required' });
+      return;
+    }
+
     const { adminReply, status = 'resolved' } = req.body;
 
     const messageDoc = await Message.findById(id);
@@ -131,7 +137,17 @@ router.put('/:id/reply', authenticateToken, requireAdmin, async (req: AuthReques
 router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    await Message.findByIdAndDelete(id);
+    if (!id || typeof id !== 'string' || id === 'undefined' || !mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: 'Valid message ID is required' });
+      return;
+    }
+
+    const messageDoc = await Message.findByIdAndDelete(id);
+    if (!messageDoc) {
+      res.status(404).json({ message: 'Message not found or already removed' });
+      return;
+    }
+
     res.json({ success: true, message: 'Message removed successfully' });
   } catch (error: any) {
     console.error('Error deleting message:', error);

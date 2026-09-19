@@ -403,10 +403,11 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to reply to message');
-    return data;
+    return data.data || data;
   },
 
   async deleteMessage(id: string) {
+    if (!id || id === 'undefined') throw new Error('Valid message ID is required');
     const res = await fetch(`${API_BASE}/messages/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),

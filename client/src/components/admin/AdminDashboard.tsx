@@ -264,8 +264,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         setCustomersList([]);
       }
 
-      if (liveMessages.status === 'fulfilled' && Array.isArray(liveMessages.value)) {
-        setMessagesList(liveMessages.value);
+      if (liveMessages.status === 'fulfilled') {
+        const raw = liveMessages.value;
+        const list = Array.isArray(raw) ? raw : ((raw as any)?.data && Array.isArray((raw as any).data)) ? (raw as any).data : [];
+        setMessagesList(list.map((m: any) => ({
+          ...m,
+          _id: m._id || m.id,
+        })));
       } else {
         setMessagesList([]);
       }
@@ -506,11 +511,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
   const handleSendReply = async () => {
     if (!replyModalMessage || !replyText.trim()) return;
+    const targetId = replyModalMessage._id || (replyModalMessage as any).id;
+    if (!targetId || targetId === 'undefined') {
+      showToast(isAr ? 'معرف الرسالة غير صالح، يرجى تحديث الصفحة' : 'Invalid message ID, please refresh', 'error');
+      return;
+    }
     setIsSendingReply(true);
     try {
-      const updated = await api.replyMessage(replyModalMessage._id, replyText.trim(), replyStatus);
+      const res = await api.replyMessage(targetId, replyText.trim(), replyStatus);
+      const updatedDoc = res?.data || res;
       setMessagesList((prev) =>
-        prev.map((m) => (m._id === replyModalMessage._id ? updated : m))
+        prev.map((m) => {
+          const mId = m._id || (m as any).id;
+          return mId === targetId ? { ...m, ...updatedDoc, _id: targetId } : m;
+        })
       );
       showToast(isAr ? 'تم إرسال الرد بنجاح' : 'Reply sent successfully', 'success');
       setReplyModalMessage(null);
@@ -523,7 +537,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     }
   };
 
-  const handleDeleteMessage = async (msgId: string) => {
+  const handleDeleteMessage = async (msgId?: string) => {
+    if (!msgId || msgId === 'undefined') {
+      showToast(isAr ? 'معرف الرسالة غير صالح، يرجى تحديث الصفحة' : 'Invalid message ID, please refresh', 'error');
+      return;
+    }
     const ok = await confirmDialog({
       title: isAr ? 'حذف الرسالة' : 'Delete Message',
       message: isAr
@@ -537,7 +555,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
     try {
       await api.deleteMessage(msgId);
-      setMessagesList((prev) => prev.filter((m) => m._id !== msgId));
+      setMessagesList((prev) =>
+        prev.filter((m) => {
+          const mId = m._id || (m as any).id;
+          return mId !== msgId;
+        })
+      );
       showToast(isAr ? 'تم حذف الرسالة بنجاح' : 'Message deleted successfully', 'success');
     } catch (err: any) {
       console.error('Failed to delete message:', err);
@@ -3078,9 +3101,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                               <button
                                 type="button"
                                 onClick={async () => {
+                                  const targetId = msg._id || (msg as any).id;
+                                  if (!targetId || targetId === 'undefined') {
+                                    showToast(isAr ? 'معرف الرسالة غير صالح، يرجى تحديث الصفحة' : 'Invalid message ID, please refresh', 'error');
+                                    return;
+                                  }
                                   try {
-                                    const updated = await api.replyMessage(msg._id, msg.adminReply || '', 'resolved');
-                                    setMessagesList((prev) => prev.map((m) => (m._id === msg._id ? updated : m)));
+                                    const updated = await api.replyMessage(targetId, msg.adminReply || '', 'resolved');
+                                    const updatedDoc = updated?.data || updated;
+                                    setMessagesList((prev) =>
+                                      prev.map((m) => {
+                                        const mId = m._id || (m as any).id;
+                                        return mId === targetId ? { ...m, ...updatedDoc, _id: targetId } : m;
+                                      })
+                                    );
                                     showToast(isAr ? 'تم تعليم الرسالة كمكتملة' : 'Marked as resolved', 'success');
                                   } catch (err: any) {
                                     showToast(err.message, 'error');
@@ -3096,7 +3130,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
                           <button
                             type="button"
-                            onClick={() => handleDeleteMessage(msg._id)}
+                            onClick={() => handleDeleteMessage(msg._id || (msg as any).id)}
                             className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium text-rose-700 hover:bg-rose-50 border border-rose-200/60 transition-colors cursor-pointer"
                           >
                             <Trash2 size={12} />
