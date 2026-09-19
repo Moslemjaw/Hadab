@@ -85,9 +85,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF8F3] text-brown-900 flex flex-col justify-between selection:bg-burgundy-600/20">
+    <div className="min-h-screen bg-cream-200 text-brown-900 flex flex-col justify-between selection:bg-burgundy-600/20">
       {/* Top Editorial Bar */}
-      <div className="border-b border-brown-200/60 bg-white/70 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5">
+      <div className="border-b border-brown-200/60 bg-cream-200/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <button
             type="button"
