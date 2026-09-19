@@ -213,23 +213,37 @@ export const LegalModal: React.FC<LegalModalProps> = ({
             <div className="space-y-5 animate-in fade-in duration-150">
               <div>
                 <h3 className="text-base sm:text-lg font-serif text-brown-900 font-semibold mb-2">
-                  {isAr ? 'سياسة الشحن وأوقات التجهيز والتسليم' : 'Shipping & Fulfillment Policy'}
+                  {isAr ? 'سياسة الشحن وأوقات التجهيز والتسليم' : 'Shipping & Delivery Policy'}
                 </h3>
                 <p className="text-brown-500 text-[11px] mb-3">
-                  {isAr ? 'شحن من دولة الكويت إلى كافة أنحاء العالم' : 'Dispatched from Kuwait worldwide'}
+                  {isAr ? 'شحن وتوصيل لجميع الدول (داخل الكويت وكافة أنحاء العالم)' : 'Worldwide delivery across all countries'}
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F5EDE1] border border-brown-200 space-y-2">
+              {/* Delivery Timelines Card */}
+              <div className="p-4 rounded-2xl bg-[#F5EDE1] border border-brown-200 space-y-3">
                 <div className="font-semibold text-brown-900 text-xs sm:text-sm flex items-center gap-2">
                   <Truck size={15} className="text-burgundy-600" />
-                  <span>{isAr ? 'مدة تجهيز القطع اليدوية' : 'Artisan Crafting & Processing Window'}</span>
+                  <span>{isAr ? 'المدد الزمنية للتجهيز والتوصيل (لكافة الدول)' : 'Delivery Timelines (All Countries)'}</span>
                 </div>
-                <p className="text-brown-700">
-                  {isAr
-                    ? 'القطع الجاهزة للشحن يتم إرسالها خلال 24-48 ساعة عمل. أما القطع المخصصة أو التي تُحاك حسب الطلب فتحتاج من 3 إلى 7 أيام عمل ليكتمل حياكتها وتغليفها بدقة.'
-                    : 'Ready-to-ship archival pieces are packaged within 24-48 hours. Made-to-order and custom-hooked items require 3 to 7 business days to complete prior to dispatch.'}
-                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                  <div className="bg-white/80 p-3.5 rounded-xl border border-brown-200/70">
+                    <div className="font-semibold text-brown-900 mb-1">
+                      {isAr ? 'القطع الجاهزة للشحن' : 'Ready-to-Ship Pieces'}
+                    </div>
+                    <div className="text-brown-600 leading-relaxed">
+                      {isAr ? 'تستغرق من ٥ إلى ٧ أيام عمل لجميع الدول.' : 'Delivered within 5 to 7 business days to all countries.'}
+                    </div>
+                  </div>
+                  <div className="bg-white/80 p-3.5 rounded-xl border border-brown-200/70">
+                    <div className="font-semibold text-brown-900 mb-1">
+                      {isAr ? 'القطع المخصصة (حسب الطلب)' : 'Custom & Made-to-Order'}
+                    </div>
+                    <div className="text-brown-600 leading-relaxed">
+                      {isAr ? 'تستغرق من ٧ إلى ١٤ يوم عمل لجميع الدول.' : 'Delivered within 7 to 14 business days to all countries.'}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -245,23 +259,12 @@ export const LegalModal: React.FC<LegalModalProps> = ({
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
-                  {isAr ? 'التوصيل المحلي (داخل الكويت)' : 'Domestic Delivery (Within Kuwait)'}
+                  {isAr ? 'تجهيز الطلبات وتتبع الشحنات' : 'Fulfillment & Order Tracking'}
                 </h4>
                 <p>
                   {isAr
-                    ? 'يتم التوصيل إلى جميع مناطق ومحافظات الكويت عبر مندوبنا الخاص خلال 1-2 يوم عمل بعد تجهيز القطعة.'
-                    : 'Delivered across all Kuwait governorates within 1 to 2 business days following order preparation.'}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
-                  {isAr ? 'الشحن الخليجي والدولي' : 'GCC & International Express Shipping'}
-                </h4>
-                <p>
-                  {isAr
-                    ? 'نشحن إلى دول الخليج العربي (السعودية، الإمارات، قطر، البحرين، عمان) وباقي دول العالم عبر شركات البريد السريع الممتاز (DHL / FedEx / Aramex). مدة الشحن الدولي تتراوح بين 4 إلى 8 أيام عمل مع تزويدك برابط تتبع مباشر للحقيبة.'
-                    : 'Express courier options (DHL, FedEx, Aramex) deliver to GCC nations and worldwide within 4 to 8 business days, complete with real-time tracking links sent via email.'}
+                    ? 'نشحن كافة الطلبات مباشرة من مشغلنا في دولة الكويت إلى جميع محافظات الكويت ومختلف دول العالم عبر شركات البريد والشحن السريع المعتمدة. عند إرسال طلبكِ، يتم تزويدك برقم ورابط تتبع مباشر لمتابعة خط سير الشحنة حتى باب منزلك.'
+                    : 'All orders are securely packed and dispatched directly from our studio in Kuwait across all local governorates and worldwide to all countries via premier tracked couriers. Upon dispatch, a live tracking link will be provided so you can monitor your parcel’s journey to your doorstep.'}
                 </p>
               </div>
 
