@@ -285,47 +285,52 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                   {isAr ? 'سياسة الاستبدال والاسترجاع' : 'Returns & Exchanges Policy'}
                 </h3>
                 <p className="text-brown-500 text-[11px] mb-3">
-                  {isAr ? 'راحتك ورضاكِ هي أولويتنا في هَدَب' : 'Your satisfaction is our utmost care'}
+                  {isAr ? 'مشغولات يدوية مصممة ومحبوكة خصيصاً لكِ' : 'Handcrafted artisanal crochet creations'}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#F5EDE1] border border-brown-200 space-y-1.5">
+                <div className="font-semibold text-brown-900 text-xs sm:text-sm flex items-center gap-2">
+                  <RotateCcw size={15} className="text-burgundy-600" />
+                  <span>{isAr ? 'سياسة البيع النهائي والاسترجاع' : 'All Sales Final Policy'}</span>
+                </div>
+                <p className="text-brown-700">
+                  {isAr
+                    ? 'نظراً للطبيعة الحرفية الخاصة لمنتجات "هَدَب" وكونها مشغولة يدوياً بالكامل (Handmade Crochet)، لا يوجد استرجاع أو استبدال نهائياً، باستثناء الحالات التي يكون فيها عيب مصنعي أو مشكلة في المنتج واردة من جانبنا.'
+                    : 'Due to the delicate handmade and artisanal nature of HADAB creations, all sales are final. We do not accept returns or exchanges except in the case of a product defect or an issue originating from our side.'}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
-                  {isAr ? '1. فترة وشروط الاسترجاع والاستبدال' : '1. Return Window & Eligibility'}
+                  {isAr ? '1. عدم وجود استرجاع أو استبدال' : '1. No Returns or Exchanges'}
                 </h4>
                 <p>
                   {isAr
-                    ? 'يحق للعميل طلب استبدال أو استرجاع المنتج خلال 7 أيام من تاريخ استلام الشحنة، بشرط أن تكون القطعة في حالتها الأصلية تماماً: غير ملبوسة، غير مغسولة، مع وجود البطاقات والتغليف الأصلي.'
-                    : 'Eligible items may be exchanged or returned within 7 days of delivery receipt, provided they remain unworn, unwashed, unaltered, and nestled in their original artisanal packaging with all tags attached.'}
+                    ? 'جميع قطع هَدَب تُحاك وتُصنع يدوياً بعناية فائقة. لذلك، لا يمكن إرجاع أو استبدال المنتجات بعد استلامها بناءً على رغبة العميل أو تغيير اختياره.'
+                    : 'Every HADAB piece is meticulously crafted by hand. Consequently, items cannot be returned or exchanged due to a change of mind, personal preference, or styling decisions.'}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
-                  {isAr ? '2. القطع غير القابلة للاسترجاع' : '2. Non-Returnable Items'}
+                  {isAr ? '2. الاستثناء: عيب مصنعي أو مشكلة من طرفنا' : '2. Exceptions: Product Defects & Store Errors'}
                 </h4>
-                <ul className="list-disc list-inside space-y-1 text-brown-600 ps-1">
-                  <li>
-                    {isAr
-                      ? 'القطع التي تمت حياكتها بتصميم أو مقاس أو ألوان مخصصة بطلب مباشر من العميل (Custom Orders).'
-                      : 'Custom bespoke pieces hooked with custom dimensions or specific color requests.'}
-                  </li>
-                  <li>
-                    {isAr
-                      ? 'القطع التي تعرضت لسوء استخدام أو غسيل مخالف لتعليمات العناية المرفقة.'
-                      : 'Items damaged through non-adherence to hand-wash care instructions.'}
-                  </li>
-                </ul>
+                <p>
+                  {isAr
+                    ? 'الحالة الوحيدة المؤهلة للاسترجاع أو الاستبدال هي استلام منتج يحتوي على عيب مصنعي واضح، أو تلف عند الاستلام، أو استلام قطعة مختلفة عن طلبكِ نتيجة خطأ من جانبنا. في هذه الحالة، نتحمل كامل المسؤولية لمعالجة الأمر فوراً عبر استبدال القطعة أو إرجاعها واسترداد كامل المبلغ.'
+                    : 'The only exception eligible for return, exchange, or refund is if an item arrives with a genuine manufacturing defect, damage upon arrival, or if an incorrect item was delivered due to an error from our side. In such cases, HADAB assumes full responsibility to promptly replace the item or issue a full refund.'}
+                </p>
               </div>
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
-                  {isAr ? '3. تكاليف الشحن وإعادة المبلغ' : '3. Shipping Costs & Refunds'}
+                  {isAr ? '3. آلية الإبلاغ واسترداد المبلغ' : '3. Reporting an Issue & Refunds'}
                 </h4>
                 <p>
                   {isAr
-                    ? 'في حال كان الاسترجاع بسبب وجود عيب مصنعي أو خطأ في إرسال القطعة، تتحمل هَدَب كافة رسوم الشحن. أما في حالات الرغبة الشخصية في الاستبدال أو الإرجاع، يتحمل العميل رسوم التوصيل/الشحن. يتم رد المبلغ إلى وسيلة الدفع الأصلية خلال 3 إلى 7 أيام عمل بعد استلام وفحص القطعة.'
-                    : 'If an item arrives damaged or flawed, HADAB covers all transit expenses. For standard returns due to change of preference, shipping costs remain the customer’s responsibility. Refunds are credited to the original payment method within 3 to 7 business days following inspection.'}
+                    ? 'في حال وجود أي عيب أو خطأ من جانبنا، يُرجى إشعارنا خلال 48 ساعة من تاريخ استلام الشحنة عبر صفحة "تواصل معنا" أو مراسلتنا عبر البريد الإلكتروني (Byhadab@gmail.com) مع توضيح رقم الطلب وإرفاق صور واضحة توضح المشكلة. عند التحقق، تتكفل "هَدَب" بكافة تكاليف الشحن والتوصيل، ويتم استرداد كامل المبلغ إلى وسيلة الدفع الأصلية خلال 3 إلى 7 أيام عمل.'
+                    : 'If you encounter an issue or defect from our side, please notify us within 48 hours of delivery receipt via our "Contact Us" page or email at Byhadab@gmail.com, including your order number and clear photos showing the issue. Once verified, HADAB will cover all return/replacement transit expenses, and full refunds are issued to your original payment method within 3 to 7 business days.'}
                 </p>
               </div>
             </div>
