@@ -24,12 +24,15 @@ import {
   RefreshCw,
   Check,
   FileText,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 import { downloadOrderInvoicePdf } from '../../utils/invoiceGenerator';
 
 interface CustomerDashboardProps {
   onBackToStore: () => void;
   onOpenCollection: () => void;
+  onOpenContact?: () => void;
 }
 
 type OrderPaymentStatus = 'unpaid' | 'contacting' | 'paid';
@@ -37,6 +40,7 @@ type OrderPaymentStatus = 'unpaid' | 'contacting' | 'paid';
 export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   onBackToStore,
   onOpenCollection,
+  onOpenContact,
 }) => {
   const { user, logout } = useAuth();
   const { language } = useLanguage();
@@ -52,10 +56,15 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     return cleaned || '96599000000';
   }, [storePhone]);
 
-  const [activeTab, setActiveTab] = useState<'orders' | 'address' | 'support' | 'profile'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'messages' | 'address' | 'support' | 'profile'>('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
+  // Messages State
+  const [myMessages, setMyMessages] = useState<any[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [expandedMsgId, setExpandedMsgId] = useState<string | null>(null);
 
   // Address Form state
   const [area, setArea] = useState(localStorage.getItem('hadab_customer_area') || 'Salmiya');
@@ -94,7 +103,21 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 
   useEffect(() => {
     fetchOrders();
+    fetchMyMessages();
   }, [user]);
+
+  const fetchMyMessages = async () => {
+    setIsLoadingMessages(true);
+    try {
+      const msgs = await api.getMyMessages();
+      setMyMessages(Array.isArray(msgs) ? msgs : []);
+    } catch (err) {
+      console.error('Failed to load user messages:', err);
+      setMyMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setIsLoadingOrders(true);
@@ -307,6 +330,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
         <div className="flex items-center justify-between w-full border-b border-brown-200/50 pb-px overflow-x-auto custom-scrollbar gap-1 sm:gap-2">
           {[
             { id: 'orders', label: isAr ? 'الطلبات والمتابعة' : 'Orders & Tracking', icon: Package, count: orders.length },
+            { id: 'messages', label: isAr ? 'رسائلي واستفساراتي' : 'My Messages', icon: MessageSquare, count: myMessages.length },
             { id: 'address', label: isAr ? 'عنوان التوصيل' : 'Delivery Address', icon: MapPin },
             { id: 'support', label: isAr ? 'خدمة العملاء' : 'Concierge & Payment', icon: MessageCircle },
             { id: 'profile', label: isAr ? 'الملف الشخصي' : 'Account Profile', icon: User },
@@ -583,6 +607,214 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                           </div>
                         </div>
 
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB: CUSTOMER INQUIRIES & MESSAGES */}
+        {/* ============================================================ */}
+        {activeTab === 'messages' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-serif text-lg text-brown-950 font-normal">
+                  {isAr ? 'رسائلي واستفساراتي' : 'My Inquiries & Messages'}
+                </h2>
+                <p className="text-xs text-brown-500 font-light mt-0.5">
+                  {isAr
+                    ? 'تابع استفساراتك الموجهة لإدارة هَدَب والردود الواردة عليها.'
+                    : 'Track your submitted messages and view responses from the HADAB concierge team.'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchMyMessages}
+                  className="inline-flex items-center gap-1.5 text-xs text-brown-500 hover:text-brown-900 transition-colors cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-brown-100/50"
+                >
+                  <RefreshCw size={11} className={isLoadingMessages ? 'animate-spin' : ''} />
+                  <span>{isAr ? 'تحديث' : 'Refresh'}</span>
+                </button>
+                {onOpenContact && (
+                  <button
+                    type="button"
+                    onClick={onOpenContact}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-cream-100 bg-[#2A201B] hover:bg-brown-900 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Send size={11} />
+                    <span>{isAr ? 'رسالة جديدة' : 'New Message'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Empty State */}
+            {isLoadingMessages ? (
+              <div className="bg-white/60 rounded-2xl p-12 text-center border border-brown-200/50 space-y-3">
+                <RefreshCw size={24} className="mx-auto text-brown-400 animate-spin" />
+                <p className="text-xs text-brown-500 font-light">
+                  {isAr ? 'جاري تحميل الرسائل...' : 'Loading messages...'}
+                </p>
+              </div>
+            ) : myMessages.length === 0 ? (
+              <div className="bg-white/60 rounded-2xl p-10 text-center border border-brown-200/50 space-y-3">
+                <MessageSquare size={36} className="mx-auto text-brown-300 stroke-1" />
+                <h3 className="font-serif text-base text-brown-900">
+                  {isAr ? 'لا توجد رسائل سابقة' : 'No messages yet'}
+                </h3>
+                <p className="text-xs text-brown-500 font-light max-w-sm mx-auto">
+                  {isAr
+                    ? 'هل لديك أي استفسار أو طلب تفصيل خاص؟ يسعدنا تواصلك معنا دائماً.'
+                    : 'Have an inquiry or custom crochet request? We would love to assist you.'}
+                </p>
+                {onOpenContact && (
+                  <button
+                    type="button"
+                    onClick={onOpenContact}
+                    className="px-5 py-2 rounded-full bg-[#2A201B] text-cream-100 text-xs font-medium cursor-pointer hover:bg-brown-900 transition-colors"
+                  >
+                    {isAr ? 'تواصل معنا الآن' : 'Contact Us Now'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              myMessages.map((msg) => {
+                const isExpanded = expandedMsgId === msg._id;
+                const dateFormatted = msg.createdAt
+                  ? new Date(msg.createdAt).toLocaleDateString(isAr ? 'ar-KW' : 'en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })
+                  : '';
+
+                const replyDateFormatted = msg.repliedAt
+                  ? new Date(msg.repliedAt).toLocaleDateString(isAr ? 'ar-KW' : 'en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })
+                  : '';
+
+                // Status configuration
+                let statusBadge = {
+                  text: isAr ? 'قيد المراجعة' : 'Pending',
+                  classes: 'bg-amber-50 text-amber-800 border-amber-200/70',
+                };
+                if (msg.status === 'in_progress') {
+                  statusBadge = {
+                    text: isAr ? 'جاري المتابعة' : 'In Progress',
+                    classes: 'bg-blue-50 text-blue-800 border-blue-200/70',
+                  };
+                } else if (msg.status === 'resolved') {
+                  statusBadge = {
+                    text: isAr ? 'تم الرد' : 'Resolved',
+                    classes: 'bg-emerald-50 text-emerald-800 border-emerald-200/70',
+                  };
+                }
+
+                return (
+                  <div
+                    key={msg._id}
+                    className="bg-white/80 rounded-2xl border border-brown-200/70 shadow-xs overflow-hidden transition-all"
+                  >
+                    <div
+                      onClick={() => {
+                        tactileAudio.playScrubTick(320);
+                        setExpandedMsgId(isExpanded ? null : msg._id);
+                      }}
+                      className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-brown-50/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-cream-200/70 border border-brown-200/70 flex items-center justify-center shrink-0">
+                          <MessageSquare size={17} className="text-brown-700" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-serif text-sm font-medium text-brown-950">
+                              {msg.subject}
+                            </h4>
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${statusBadge.classes}`}
+                            >
+                              {statusBadge.text}
+                            </span>
+                            {msg.orderNumber && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream-200/60 text-brown-800 border border-brown-200/50 font-mono">
+                                #{msg.orderNumber}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-brown-400 font-light block mt-0.5">
+                            {dateFormatted}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        {msg.adminReply && (
+                          <span className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-medium">
+                            {isAr ? 'يوجد رد' : 'Reply received'}
+                          </span>
+                        )}
+                        <span className="text-brown-400">
+                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Message Details Accordion */}
+                    {isExpanded && (
+                      <div className="p-4 sm:p-5 pt-0 border-t border-brown-100 space-y-4">
+                        {/* Customer's Original Message */}
+                        <div className="pt-3">
+                          <span className="text-[11px] uppercase tracking-wider text-brown-400 font-medium block mb-1">
+                            {isAr ? 'نص رسالتك' : 'Your Message'}
+                          </span>
+                          <p className="text-xs sm:text-sm text-brown-800 font-light leading-relaxed bg-brown-50/50 p-3.5 rounded-xl border border-brown-100 whitespace-pre-wrap">
+                            {msg.message}
+                          </p>
+                        </div>
+
+                        {/* Admin Reply or Pending Message */}
+                        {msg.adminReply ? (
+                          <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">
+                                  ✓
+                                </div>
+                                <span className="text-xs font-semibold text-emerald-950">
+                                  {isAr ? 'رد إدارة هَدَب' : 'HADAB Concierge Reply'}
+                                </span>
+                              </div>
+                              {replyDateFormatted && (
+                                <span className="text-[10px] text-emerald-700 font-light">
+                                  {replyDateFormatted}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-emerald-900 leading-relaxed font-light whitespace-pre-wrap">
+                              {msg.adminReply}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/60 flex items-start gap-2.5">
+                            <Clock size={15} className="text-amber-700 shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-800 font-light leading-relaxed">
+                              {isAr
+                                ? 'رسالتك قيد المراجعة حالياً من قبل فريق خدمة العملاء، وسنقوم بالرد عليك هنا قريباً.'
+                                : 'Your message is being reviewed by our concierge team. Our reply will appear here soon.'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

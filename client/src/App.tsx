@@ -7,6 +7,7 @@ import { CollectionPage } from './components/shop/CollectionPage';
 import { CategoriesPage } from './components/shop/CategoriesPage';
 import { StoryPage } from './components/story/StoryPage';
 import { AuthPage } from './components/auth/AuthPage';
+import { ContactPage } from './components/contact/ContactPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { CustomerDashboard } from './components/customer/CustomerDashboard';
 import { ProductModal } from './components/shop/ProductModal';
@@ -74,7 +75,7 @@ export function App() {
   const { user, isAdmin } = useAuth();
   const { showToast } = useNotification();
   const { isArabic: isAr } = useLanguage();
-  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'auth' | 'admin' | 'customer'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'categories' | 'story' | 'contact' | 'auth' | 'admin' | 'customer'>('home');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [collectionCategory, setCollectionCategory] = useState<string>('all');
   
@@ -145,6 +146,8 @@ export function App() {
         setCurrentView('categories');
       } else if (hash === '#collection' || hash === '#shop') {
         setCurrentView('collection');
+      } else if (hash === '#contact' || hash === '#contact-us' || hash === '#support' || hash === '#help') {
+        setCurrentView('contact');
       } else if (hash === '#signin' || hash === '#login') {
         setAuthMode('signin');
         setCurrentView('auth');
@@ -261,6 +264,12 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenContact = () => {
+    setCurrentView('contact');
+    window.location.hash = 'contact';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
     if (user) {
       if (isAdmin) {
@@ -367,6 +376,20 @@ export function App() {
             onExploreCollection={() => handleOpenCollection('all')}
             onOpenCategories={handleOpenCategories}
           />
+        ) : currentView === 'contact' ? (
+          /* Dedicated Contact Us Page */
+          <ContactPage
+            onBackToHome={handleGoHome}
+            onOpenAuth={() => {
+              setAuthMode('signin');
+              setCurrentView('auth');
+              window.location.hash = 'signin';
+            }}
+            onOpenCustomerDashboard={() => {
+              setCurrentView('customer');
+              window.location.hash = 'account';
+            }}
+          />
         ) : currentView === 'admin' ? (
           /* Full-Screen Admin Dashboard */
           <AdminDashboard
@@ -377,6 +400,7 @@ export function App() {
           <CustomerDashboard
             onBackToStore={handleGoHome}
             onOpenCollection={() => handleOpenCollection('all')}
+            onOpenContact={handleOpenContact}
           />
         ) : (
           /* Dedicated Sign In / Sign Up Page */
@@ -415,6 +439,7 @@ export function App() {
           onOpenCategories={handleOpenCategories}
           onOpenStory={handleOpenStory}
           onGoHome={handleGoHome}
+          onOpenContact={handleOpenContact}
         />
       )}
 

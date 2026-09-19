@@ -353,4 +353,66 @@ export const api = {
     if (!res.ok) return { total: 0, admins: 0, customers: 0, iosDevices: 0 };
     return await res.json();
   },
+
+  // Messages / Contact Support
+  async sendMessage(payload: {
+    subject: string;
+    message: string;
+    orderNumber?: string;
+    senderName?: string;
+    senderPhone?: string;
+  }) {
+    const res = await fetch(`${API_BASE}/messages`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to send message');
+    return data;
+  },
+
+  async getMyMessages() {
+    const res = await fetch(`${API_BASE}/messages/my`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to load messages');
+    return data;
+  },
+
+  async getAllMessages() {
+    const res = await fetch(`${API_BASE}/messages`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to load all messages');
+    return data;
+  },
+
+  async replyMessage(
+    id: string,
+    reply: string | { adminReply: string; status?: 'in_progress' | 'resolved' },
+    status?: 'in_progress' | 'resolved'
+  ) {
+    const payload = typeof reply === 'string' ? { adminReply: reply, status } : reply;
+    const res = await fetch(`${API_BASE}/messages/${id}/reply`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to reply to message');
+    return data;
+  },
+
+  async deleteMessage(id: string) {
+    const res = await fetch(`${API_BASE}/messages/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete message');
+    return data;
+  },
 };

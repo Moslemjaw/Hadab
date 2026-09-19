@@ -71,7 +71,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
         </div>
 
         {/* Tab Selector Bar */}
-        <div className="px-4 sm:px-6 py-2.5 bg-[#F4EDE2] border-b border-brown-200/60 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar shrink-0">
+        <div className="px-4 sm:px-6 py-3 bg-[#EFE6DA] border-b border-brown-300/70 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -80,13 +80,13 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shadow-xs ${
                   isActive
-                    ? 'bg-brown-900 text-cream-100 shadow-sm'
-                    : 'text-brown-600 hover:text-brown-900 hover:bg-brown-200/40'
+                    ? 'bg-brown-900 text-cream-100 shadow-md'
+                    : 'bg-white/80 hover:bg-white text-brown-800 hover:text-brown-950 border border-brown-300/80 hover:border-brown-400'
                 }`}
               >
-                <Icon size={13} className={isActive ? 'text-cream-200' : 'text-brown-400'} />
+                <Icon size={14} className={isActive ? 'text-cream-200' : 'text-brown-600'} />
                 <span>{isAr ? tab.labelAr : tab.labelEn}</span>
               </button>
             );
@@ -234,12 +234,23 @@ export const LegalModal: React.FC<LegalModalProps> = ({
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
+                  {isAr ? 'رسوم الشحن والتوصيل (حسب الدولة في صفحة الدفع)' : 'Shipping & Delivery Fees (Calculated by Country at Checkout)'}
+                </h4>
+                <p>
+                  {isAr
+                    ? 'يتم تحديد واحتساب رسوم الشحن والتوصيل بدقة وبشكل تلقائي وفقاً للدولة التي تختارينها أثناء إتمام الطلب في صفحة الدفع. تظهر لكِ التكلفة الإجمالية بوضوح وشفافية قبل تأكيد الدفع.'
+                    : 'Shipping rates are calculated dynamically based on the destination country selected during checkout. The applicable rate will be clearly displayed before completing your payment.'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-brown-900 text-xs sm:text-sm">
                   {isAr ? 'التوصيل المحلي (داخل الكويت)' : 'Domestic Delivery (Within Kuwait)'}
                 </h4>
                 <p>
                   {isAr
-                    ? 'يتم التوصيل إلى جميع مناطق ومحافظات الكويت عبر مندوبنا الخاص خلال 1-2 يوم عمل بعد تجهيز الطلب. تبلغ رسوم التوصيل المحلي 2.5 د.ك (أو حسب المنطقة).'
-                    : 'Delivered across all Kuwait governorates within 1 to 2 business days following order preparation. Standard domestic rate is 2.5 KWD.'}
+                    ? 'يتم التوصيل إلى جميع مناطق ومحافظات الكويت عبر مندوبنا الخاص خلال 1-2 يوم عمل بعد تجهيز القطعة.'
+                    : 'Delivered across all Kuwait governorates within 1 to 2 business days following order preparation.'}
                 </p>
               </div>
 

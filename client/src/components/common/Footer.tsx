@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { LegalModal, type LegalDocType } from './LegalModal';
 
@@ -9,6 +9,7 @@ interface FooterProps {
   onOpenStory?: () => void;
   onGoHome?: () => void;
   onOpenLegal?: (doc: LegalDocType) => void;
+  onOpenContact?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -17,10 +18,9 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenStory,
   onGoHome,
   onOpenLegal,
+  onOpenContact,
 }) => {
   const { language, t } = useLanguage();
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
   const [internalLegalDoc, setInternalLegalDoc] = useState<LegalDocType | null>(null);
 
   const handleTriggerLegal = (doc: LegalDocType) => {
@@ -31,13 +31,6 @@ export const Footer: React.FC<FooterProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail('');
-    }
-  };
 
   return (
     <footer className="relative bg-brown-900 text-cream-200 pt-12 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 px-4 xs:px-6 sm:px-12 border-t border-brown-950 overflow-hidden select-none font-sans">
@@ -209,45 +202,26 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
           </div>
 
-          {/* Column 4: Newsletter */}
+          {/* Column 4: Concierge & Contact Us */}
           <div className="pt-2 md:pt-0">
             <h4 className="font-serif text-cream-100 font-semibold tracking-[0.2em] uppercase text-[11px] pb-2.5 md:pb-0 border-b border-brown-800/70 md:border-none">
-              {t.footerNewsletterTitle}
+              {language === 'ar' ? 'تواصل معنا' : 'Stay in Touch'}
             </h4>
-            <p className="mt-3 text-xs text-cream-300/80 font-light leading-relaxed mb-3">
-              {t.footerNewsletterDesc}
+            <p className="mt-3 text-xs text-cream-300/80 font-light leading-relaxed mb-4">
+              {language === 'ar'
+                ? 'لديكِ استفسار أو ترغبين بطلب كروشيه مخصص؟ تواصلي معنا مباشرة وسيسعد فريقنا بمساعدتكِ.'
+                : 'Have an inquiry or seeking custom crochet pieces? Connect with our artisan concierge directly.'}
             </p>
 
-            {subscribed ? (
-              <div className="flex items-center gap-2 text-xs text-sage-300 py-2.5 px-3.5 rounded-xl bg-sage-950/40 border border-sage-800/60">
-                <Check size={14} />
-                <span>{t.footerSubscribed}</span>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit}>
-                <div className="relative max-w-sm">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t.footerEmailPlaceholder}
-                    required
-                    className={`w-full h-11 bg-brown-800/70 border border-brown-700/80 rounded-xl px-3.5 text-xs text-cream-100 placeholder:text-brown-400 focus:outline-none focus:border-blush-300/70 focus:ring-1 focus:ring-blush-300/40 transition-all ${
-                      language === 'ar' ? 'pl-12 pr-3.5' : 'pr-12 pl-3.5'
-                    }`}
-                  />
-                  <button
-                    type="submit"
-                    className={`absolute ${
-                      language === 'ar' ? 'left-1.5' : 'right-1.5'
-                    } top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-brown-700 hover:bg-burgundy-600 text-cream-100 transition-colors flex items-center justify-center active:scale-95 shadow-sm cursor-pointer`}
-                    aria-label={language === 'ar' ? 'اشتراك' : 'Subscribe'}
-                  >
-                    {language === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
-                  </button>
-                </div>
-              </form>
-            )}
+            <button
+              type="button"
+              onClick={onOpenContact}
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#EDE4D8] hover:bg-[#F5EDE1] text-brown-900 text-xs font-medium transition-all active:scale-95 shadow-sm cursor-pointer"
+            >
+              <Mail size={13} className="text-burgundy-600" />
+              <span>{language === 'ar' ? 'إرسال رسالة للمتجر' : 'Send Us a Message'}</span>
+              {language === 'ar' ? <ArrowLeft size={12} /> : <ArrowRight size={12} />}
+            </button>
           </div>
         </div>
 

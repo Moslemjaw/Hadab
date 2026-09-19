@@ -44,6 +44,8 @@ import {
   UserCheck,
   Smartphone,
   Send,
+  MessageSquare,
+  RefreshCw,
 } from 'lucide-react';
 import {
   subscribeToPush,
@@ -115,6 +117,23 @@ interface CategoryRecord {
   image?: string;
 }
 
+interface CustomerMessage {
+  _id: string;
+  senderId?: string;
+  senderName: string;
+  senderEmail: string;
+  senderPhone?: string;
+  subject: string;
+  message: string;
+  orderNumber?: string;
+  status: 'new' | 'in_progress' | 'resolved';
+  adminReply?: string;
+  repliedAt?: string;
+  repliedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { language, toggleLanguage } = useLanguage();
   const { user, logout } = useAuth();
@@ -123,7 +142,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const { showToast, confirmDialog, promptDialog } = useNotification();
   const isAr = language === 'ar';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'settings' | 'categories' | 'customers'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'messages' | 'settings' | 'categories' | 'customers'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -132,6 +151,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [ordersList, setOrdersList] = useState<OrderItem[]>([]);
   const [customersList, setCustomersList] = useState<CustomerRecord[]>([]);
   const [categoryList, setCategoryList] = useState<CategoryRecord[]>([]);
+  const [messagesList, setMessagesList] = useState<CustomerMessage[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
   const [globalSearch, setGlobalSearch] = useState('');
@@ -139,15 +159,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [customerFilter, setCustomerFilter] = useState<'all' | 'active' | 'new'>('all');
+  const [messageSearch, setMessageSearch] = useState('');
+  const [messageStatusFilter, setMessageStatusFilter] = useState<'all' | 'new' | 'in_progress' | 'resolved'>('all');
+  const [replyModalMessage, setReplyModalMessage] = useState<CustomerMessage | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyStatus, setReplyStatus] = useState<'in_progress' | 'resolved'>('resolved');
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   // Load live data from MongoDB Atlas
   const fetchLiveData = async () => {
     try {
-      const [liveProducts, liveOrders, liveCategories, liveCustomers] = await Promise.allSettled([
+      const [liveProducts, liveOrders, liveCategories, liveCustomers, liveMessages] = await Promise.allSettled([
         api.getProducts(),
         api.getOrders(),
         api.getCategories(),
         api.getCustomers(),
+        api.getAllMessages(),
       ]);
 
       const prods: Product[] =
@@ -235,6 +262,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         );
       } else {
         setCustomersList([]);
+      }
+
+      if (liveMessages.status === 'fulfilled' && Array.isArray(liveMessages.value)) {
+        setMessagesList(liveMessages.value);
+      } else {
+        setMessagesList([]);
       }
     } catch (err) {
       console.error('Error fetching live data from MongoDB:', err);
@@ -443,6 +476,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const totalRevenue = ordersList.reduce((sum, o) => sum + o.total, 0);
   const activeOrdersCount = ordersList.filter((o) => o.status !== 'delivered').length;
   const inCraftCount = ordersList.filter((o) => o.status === 'handmade' || o.status === 'hooking' || o.status === 'finishing').length;
+  const unreadMessagesCount = useMemo(() => {
+    return messagesList.filter((m) => m.status === 'new').length;
+  }, [messagesList]);
+
+  const filteredMessages = useMemo(() => {
+    return messagesList.filter((m) => {
+      const q = (messageSearch || globalSearch).toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        m.senderName.toLowerCase().includes(q) ||
+        m.senderEmail.toLowerCase().includes(q) ||
+        m.subject.toLowerCase().includes(q) ||
+        m.message.toLowerCase().includes(q) ||
+        (m.orderNumber && m.orderNumber.toLowerCase().includes(q));
+
+      const matchesStatus =
+        messageStatusFilter === 'all' || m.status === messageStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [messagesList, messageSearch, globalSearch, messageStatusFilter]);
+
+  const handleOpenReplyModal = (msg: CustomerMessage) => {
+    setReplyModalMessage(msg);
+    setReplyText(msg.adminReply || '');
+    setReplyStatus(msg.status === 'new' ? 'resolved' : msg.status);
+  };
+
+  const handleSendReply = async () => {
+    if (!replyModalMessage || !replyText.trim()) return;
+    setIsSendingReply(true);
+    try {
+      const updated = await api.replyMessage(replyModalMessage._id, replyText.trim(), replyStatus);
+      setMessagesList((prev) =>
+        prev.map((m) => (m._id === replyModalMessage._id ? updated : m))
+      );
+      showToast(isAr ? 'تم إرسال الرد بنجاح' : 'Reply sent successfully', 'success');
+      setReplyModalMessage(null);
+      setReplyText('');
+    } catch (err: any) {
+      console.error('Failed to reply to message:', err);
+      showToast(err.message || (isAr ? 'فشل إرسال الرد' : 'Failed to send reply'), 'error');
+    } finally {
+      setIsSendingReply(false);
+    }
+  };
+
+  const handleDeleteMessage = async (msgId: string) => {
+    const ok = await confirmDialog({
+      title: isAr ? 'حذف الرسالة' : 'Delete Message',
+      message: isAr
+        ? 'هل أنت متأكد من رغبتك في حذف هذه الرسالة نهائياً؟'
+        : 'Are you sure you want to permanently delete this message?',
+      confirmText: isAr ? 'نعم، حذف' : 'Yes, Delete',
+      cancelText: isAr ? 'إلغاء' : 'Cancel',
+      isDanger: true,
+    });
+    if (!ok) return;
+
+    try {
+      await api.deleteMessage(msgId);
+      setMessagesList((prev) => prev.filter((m) => m._id !== msgId));
+      showToast(isAr ? 'تم حذف الرسالة بنجاح' : 'Message deleted successfully', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete message:', err);
+      showToast(err.message || (isAr ? 'فشل حذف الرسالة' : 'Failed to delete message'), 'error');
+    }
+  };
 
   // Dynamic 6-Month Revenue Data from orders
   const monthlyRevenueData = useMemo(() => {
@@ -1141,6 +1242,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               { id: 'overview', label: isAr ? 'لوحة المؤشرات' : 'Dashboard Overview', icon: LayoutDashboard },
               { id: 'products', label: isAr ? 'كتالوج المنتجات' : 'Products Catalog', icon: Package, count: productsList.length },
               { id: 'orders', label: isAr ? 'الطلبات' : 'Orders', icon: ShoppingBag, count: activeOrdersCount, pulse: activeOrdersCount > 0 },
+              { id: 'messages', label: isAr ? 'رسائل العملاء' : 'Customer Messages', icon: MessageSquare, count: unreadMessagesCount, pulse: unreadMessagesCount > 0 },
               { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag, count: categoryList.length },
               { id: 'customers', label: isAr ? 'العملاء' : 'Customers', icon: Users, count: customersList.length },
             ].map((item) => {
@@ -1481,6 +1583,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               {activeTab === 'overview' && (isAr ? 'نظرة عامة على المتجر' : 'Store Overview & Performance')}
               {activeTab === 'products' && (isAr ? 'إدارة المنتجات والمخزون' : 'Products & Catalog Management')}
               {activeTab === 'orders' && (isAr ? 'إدارة طلبات المتجر' : 'Store Orders & Fulfillment')}
+              {activeTab === 'messages' && (isAr ? 'رسائل واستفسارات العملاء' : 'Customer Messages & Inquiries')}
               {activeTab === 'settings' && (isAr ? 'إعدادات المتجر' : 'Store Settings')}
               {activeTab === 'categories' && (isAr ? 'إدارة التصنيفات' : 'Product Categories')}
               {activeTab === 'customers' && (isAr ? 'قاعدة العملاء' : 'Customer Directory')}
@@ -1489,6 +1592,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               {activeTab === 'overview' && (isAr ? 'متابعة حية للمبيعات والطلبات وأداء المتجر' : 'Live tracking for store sales, performance, and orders')}
               {activeTab === 'products' && (isAr ? 'إدارة المنتجات وتفاصيل القطع والأسعار' : 'Manage your store products, descriptions, and pricing')}
               {activeTab === 'orders' && (isAr ? 'تتبع حالات الطلبات والشحن للعملاء' : 'Track orders status, shipping, and customer fulfillment')}
+              {activeTab === 'messages' && (isAr ? 'متابعة رسائل واستفسارات العملاء والرد المباشر عليها' : 'Review customer inquiries, custom order requests, and send replies')}
+              {activeTab === 'settings' && (isAr ? 'تعديل تفاصيل المتجر، العملة، الشحن، والإشعارات' : 'Store configuration, base currency, shipping rates, and push notifications')}
+              {activeTab === 'categories' && (isAr ? 'إضافة وتعديل أقسام الكتالوج وتصنيفات المنتجات' : 'Create and manage catalog collections and product categories')}
+              {activeTab === 'customers' && (isAr ? 'سجل بيانات العملاء والطلبات السابقة' : 'Registered customer profiles, spending history, and orders count')}
             </p>
           </div>
 
@@ -2706,6 +2813,300 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   </table>
                 </div>
               </div>
+              )}
+            </div>
+          )}
+
+          {/* =====================================================================
+              TAB: CUSTOMER INQUIRIES & MESSAGES
+          ====================================================================== */}
+          {activeTab === 'messages' && (
+            <div className="space-y-6">
+              {/* Quick Metrics Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[10.5px] uppercase tracking-wider font-semibold text-brown-500">
+                      {isAr ? 'إجمالي الرسائل' : 'Total Messages'}
+                    </span>
+                    <div className="font-serif text-2xl font-medium text-brown-950 mt-1">
+                      {messagesList.length}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-2xl bg-cream-100 border border-brown-200/70 flex items-center justify-center text-brown-700">
+                    <MessageSquare size={18} />
+                  </div>
+                </div>
+
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[10.5px] uppercase tracking-wider font-semibold text-amber-700">
+                      {isAr ? 'بانتظار الرد' : 'Awaiting Reply'}
+                    </span>
+                    <div className="font-serif text-2xl font-medium text-amber-900 mt-1">
+                      {unreadMessagesCount}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+                    <Clock size={18} />
+                  </div>
+                </div>
+
+                <div className="bg-[#FAF6F0] p-5 rounded-3xl border border-brown-200/60 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[10.5px] uppercase tracking-wider font-semibold text-emerald-700">
+                      {isAr ? 'تم الرد والمعالجة' : 'Resolved'}
+                    </span>
+                    <div className="font-serif text-2xl font-medium text-emerald-900 mt-1">
+                      {messagesList.filter((m) => m.status === 'resolved').length}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+                    <CheckCircle2 size={18} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-brown-200/60 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                {/* Search */}
+                <div className="relative w-full sm:w-80">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brown-400" />
+                  <input
+                    type="text"
+                    value={messageSearch}
+                    onChange={(e) => setMessageSearch(e.target.value)}
+                    placeholder={isAr ? 'بحث بالاسم، الإيميل، الموضوع، رقم الطلب...' : 'Search by name, email, subject, #order...'}
+                    className="w-full pl-9 pr-4 py-2 text-xs bg-white rounded-xl border border-brown-200 text-brown-900 placeholder:text-brown-400 focus:outline-none focus:border-brown-400 shadow-xs"
+                  />
+                  {messageSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setMessageSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-brown-400 hover:text-brown-700"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Pills & Refresh */}
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                  {[
+                    { id: 'all', label: isAr ? 'الكل' : 'All' },
+                    { id: 'new', label: isAr ? 'جديد' : 'New', count: unreadMessagesCount },
+                    { id: 'in_progress', label: isAr ? 'متابعة' : 'In Progress' },
+                    { id: 'resolved', label: isAr ? 'تم الرد' : 'Resolved' },
+                  ].map((filter) => {
+                    const isSelected = messageStatusFilter === filter.id;
+                    return (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => setMessageStatusFilter(filter.id as any)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-[#2A201B] text-cream-100 shadow-xs'
+                            : 'bg-white/80 hover:bg-white text-brown-700 border border-brown-200/70'
+                        }`}
+                      >
+                        <span>{filter.label}</span>
+                        {filter.count !== undefined && filter.count > 0 && (
+                          <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-amber-400 text-brown-950 font-bold' : 'bg-amber-100 text-amber-800'}`}>
+                            {filter.count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={fetchLiveData}
+                    title={isAr ? 'تحديث' : 'Refresh'}
+                    className="p-2 rounded-xl bg-white/80 hover:bg-white border border-brown-200/70 text-brown-700 transition-colors cursor-pointer ml-auto"
+                  >
+                    <RefreshCw size={13} className={isLoadingData ? 'animate-spin' : ''} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages List */}
+              {filteredMessages.length === 0 ? (
+                <div className="bg-[#FAF6F0] rounded-3xl p-12 text-center border border-brown-200/60 space-y-3">
+                  <MessageSquare size={40} className="mx-auto text-brown-300 stroke-1" />
+                  <h3 className="font-serif text-lg text-brown-900 font-normal">
+                    {isAr ? 'لا توجد رسائل مطابقة' : 'No messages found'}
+                  </h3>
+                  <p className="text-xs text-brown-500 font-light max-w-sm mx-auto">
+                    {isAr
+                      ? 'لم يتم العثور على أي رسائل بناءً على معايير البحث الحالية.'
+                      : 'No customer inquiries match your current search or status filter.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredMessages.map((msg) => {
+                    const dateFormatted = msg.createdAt
+                      ? new Date(msg.createdAt).toLocaleString(isAr ? 'ar-KW' : 'en-US', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })
+                      : '';
+                    const repliedDateFormatted = msg.repliedAt
+                      ? new Date(msg.repliedAt).toLocaleString(isAr ? 'ar-KW' : 'en-US', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })
+                      : '';
+
+                    let statusBadge = {
+                      text: isAr ? 'جديد / قيد الانتظار' : 'New / Pending',
+                      classes: 'bg-amber-50 text-amber-800 border-amber-300',
+                    };
+                    if (msg.status === 'in_progress') {
+                      statusBadge = {
+                        text: isAr ? 'جاري المتابعة' : 'In Progress',
+                        classes: 'bg-blue-50 text-blue-800 border-blue-300',
+                      };
+                    } else if (msg.status === 'resolved') {
+                      statusBadge = {
+                        text: isAr ? 'تم الرد' : 'Resolved',
+                        classes: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+                      };
+                    }
+
+                    return (
+                      <div
+                        key={msg._id}
+                        className="bg-[#FAF6F0] rounded-3xl border border-brown-200/70 shadow-xs p-5 sm:p-6 space-y-4 transition-all hover:border-brown-300"
+                      >
+                        {/* Top: Customer & Meta Info */}
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-brown-200/50 pb-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-serif text-base font-semibold text-brown-950">
+                                {msg.senderName}
+                              </h3>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${statusBadge.classes}`}>
+                                {statusBadge.text}
+                              </span>
+                              {msg.orderNumber && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream-100 text-brown-800 border border-brown-300 font-mono">
+                                  #{msg.orderNumber}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-brown-600 flex-wrap">
+                              <a
+                                href={`mailto:${msg.senderEmail}`}
+                                className="inline-flex items-center gap-1 hover:text-brown-950 underline decoration-brown-300"
+                              >
+                                <Mail size={12} />
+                                <span>{msg.senderEmail}</span>
+                              </a>
+                              {msg.senderPhone && (
+                                <a
+                                  href={`tel:${msg.senderPhone}`}
+                                  className="inline-flex items-center gap-1 hover:text-brown-950 underline decoration-brown-300"
+                                >
+                                  <Phone size={12} />
+                                  <span>{msg.senderPhone}</span>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right text-[11px] text-brown-400 font-light shrink-0">
+                            {dateFormatted}
+                          </div>
+                        </div>
+
+                        {/* Subject & Message Body */}
+                        <div className="space-y-2">
+                          <h4 className="font-serif text-sm font-medium text-brown-900">
+                            <span className="text-brown-400 text-xs font-sans uppercase tracking-wider mr-2 ml-2">
+                              {isAr ? 'الموضوع:' : 'Subject:'}
+                            </span>
+                            {msg.subject}
+                          </h4>
+
+                          <div className="bg-white/80 p-4 rounded-2xl border border-brown-200/50 text-xs sm:text-sm text-brown-800 font-light leading-relaxed whitespace-pre-wrap">
+                            {msg.message}
+                          </div>
+                        </div>
+
+                        {/* Existing Admin Reply */}
+                        {msg.adminReply && (
+                          <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900">
+                                <CheckCircle2 size={14} className="text-emerald-600" />
+                                <span>{isAr ? 'رد الإدارة المرسل للعميل' : 'Admin Reply Sent to Customer'}</span>
+                              </div>
+                              {repliedDateFormatted && (
+                                <span className="text-[10px] text-emerald-700 font-light">
+                                  {repliedDateFormatted}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-emerald-950 leading-relaxed font-light whitespace-pre-wrap">
+                              {msg.adminReply}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Actions Toolbar */}
+                        <div className="flex items-center justify-between pt-2 border-t border-brown-200/40 flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReplyModal(msg)}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-cream-100 bg-[#2A201B] hover:bg-brown-900 transition-colors cursor-pointer shadow-xs"
+                            >
+                              <Send size={12} />
+                              <span>
+                                {msg.adminReply
+                                  ? isAr ? 'تعديل الرد' : 'Edit Reply'
+                                  : isAr ? 'إرسال رد للعميل' : 'Reply to Customer'}
+                              </span>
+                            </button>
+
+                            {/* Quick status button */}
+                            {msg.status !== 'resolved' && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const updated = await api.replyMessage(msg._id, msg.adminReply || '', 'resolved');
+                                    setMessagesList((prev) => prev.map((m) => (m._id === msg._id ? updated : m)));
+                                    showToast(isAr ? 'تم تعليم الرسالة كمكتملة' : 'Marked as resolved', 'success');
+                                  } catch (err: any) {
+                                    showToast(err.message, 'error');
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                              >
+                                <CheckCircle2 size={12} />
+                                <span>{isAr ? 'تعليم كتم الحل' : 'Mark Resolved'}</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(msg._id)}
+                            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium text-rose-700 hover:bg-rose-50 border border-rose-200/60 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={12} />
+                            <span>{isAr ? 'حذف' : 'Delete'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -3946,6 +4347,121 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 </button>
                 <button type="submit" className="px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] text-cream-100 text-[11px] font-bold uppercase tracking-wider shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
                   {editingCategory ? (isAr ? 'حفظ التعديلات' : 'Update Category') : (isAr ? 'إضافة التصنيف' : 'Add Category')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MESSAGE REPLY MODAL */}
+      {replyModalMessage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brown-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] rounded-[32px] border border-brown-200 shadow-2xl p-6 sm:p-8 max-w-lg w-full transform transition-all space-y-5">
+            <div className="flex items-center justify-between border-b border-brown-200/50 pb-3">
+              <div>
+                <h3 className="font-serif text-xl text-brown-950 font-normal">
+                  {isAr ? 'الرد على استفسار العميل' : 'Reply to Customer Inquiry'}
+                </h3>
+                <p className="text-xs text-brown-500 font-light mt-0.5">
+                  {replyModalMessage.senderName} ({replyModalMessage.senderEmail})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyModalMessage(null)}
+                className="p-1.5 rounded-full hover:bg-brown-100 text-brown-400 hover:text-brown-700 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Original message context */}
+            <div className="bg-white/80 p-3.5 rounded-2xl border border-brown-200/50 space-y-1">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-brown-400 block">
+                {isAr ? 'موضوع الرسالة:' : 'Subject:'} {replyModalMessage.subject}
+              </span>
+              <p className="text-xs text-brown-700 font-light line-clamp-3 italic">
+                "{replyModalMessage.message}"
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendReply();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-[11px] font-semibold text-brown-800 mb-1.5">
+                  {isAr ? 'نص الرد (سيظهر للعميل في لوحته):' : 'Reply Message (Visible in Customer Portal):'}
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={
+                    isAr
+                      ? 'أهلاً بك، شكراً لتواصلك مع هَدَب. بخصوص استفسارك...'
+                      : 'Dear customer, thank you for reaching out to HADAB. Regarding your inquiry...'
+                  }
+                  className="w-full py-3 px-3.5 rounded-2xl bg-white border border-brown-200 text-brown-900 text-xs sm:text-sm resize-none focus:outline-none focus:border-brown-400 shadow-xs"
+                />
+              </div>
+
+              {/* Status Selector */}
+              <div>
+                <label className="block text-[11px] font-semibold text-brown-800 mb-1.5">
+                  {isAr ? 'تحديث حالة الرسالة:' : 'Update Inquiry Status:'}
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReplyStatus('resolved')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                      replyStatus === 'resolved'
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold'
+                        : 'bg-white border-brown-200 text-brown-600 hover:bg-brown-50'
+                    }`}
+                  >
+                    ✓ {isAr ? 'تم الرد والمعالجة (مكتمل)' : 'Mark Resolved'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReplyStatus('in_progress')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                      replyStatus === 'in_progress'
+                        ? 'bg-blue-50 border-blue-400 text-blue-900 font-semibold'
+                        : 'bg-white border-brown-200 text-brown-600 hover:bg-brown-50'
+                    }`}
+                  >
+                    ⏳ {isAr ? 'جاري المتابعة' : 'In Progress'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal buttons */}
+              <div className="pt-3 flex items-center justify-end gap-3 border-t border-brown-200/50">
+                <button
+                  type="button"
+                  onClick={() => setReplyModalMessage(null)}
+                  className="px-5 py-2.5 rounded-full text-xs font-medium text-brown-600 hover:text-brown-900 hover:bg-brown-100 transition-colors cursor-pointer"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingReply || !replyText.trim()}
+                  className="px-6 py-2.5 rounded-full bg-[#2E221B] hover:bg-[#3D2D25] disabled:opacity-50 text-cream-100 text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Send size={12} className={isSendingReply ? 'animate-spin' : ''} />
+                  <span>
+                    {isSendingReply
+                      ? isAr ? 'جاري الإرسال...' : 'Sending...'
+                      : isAr ? 'إرسال الرد' : 'Send Reply'}
+                  </span>
                 </button>
               </div>
             </form>

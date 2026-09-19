@@ -11,6 +11,7 @@ import uploadRoutes from './routes/uploadRoutes';
 import adminRoutes from './routes/adminRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import messageRoutes from './routes/messageRoutes';
 
 import { User } from './models/User';
 import bcrypt from 'bcryptjs';
@@ -70,6 +71,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.listen(PORT, () => {
   console.log(`[HADAB Backend] Handmade Shop Server running on port ${PORT}`);
